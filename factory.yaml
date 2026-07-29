@@ -10,10 +10,10 @@ architecture:
   style: Feature First
 
 workflow:
-  architect: ChatGPT
-  implementation: Cursor
-  design: Stitch
-  qa: Codex
+  architect: Architecture Role
+  implementation: Implementation Role
+  design: Design Role
+  qa: QA Role
 
 template:
   id: flutter_basic_app

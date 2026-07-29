@@ -13,7 +13,7 @@
     "Docs/SETUP.md",
     "README.md"
   ],
-  "handoff_target": "Cursor",
-  "design_owner": "Stitch",
-  "qa": "Cursor QA or Codex"
+  "handoff_target": "Implementation Role",
+  "design_owner": "Design Role",
+  "qa": "QA Role"
 }

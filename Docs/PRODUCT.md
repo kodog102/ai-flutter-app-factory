@@ -68,8 +68,8 @@ Users struggle to remember billing dates and amounts across multiple subscriptio
 1. 처음 실행한 사용자가 1분 안에 첫 구독을 추가할 수 있다.
 2. 홈 화면에서 다음 결제와 월간 예상 비용을 즉시 이해할 수 있다.
 3. iOS와 Android에서 같은 핵심 흐름이 동작한다.
-4. Stitch 결과와 구현 화면 사이에 큰 구조적 차이가 없다.
-5. ChatGPT 없이 Cursor가 문서만 읽고 다음 기능을 진행할 수 있다.
+4. Design Role 결과와 구현 화면 사이에 큰 구조적 차이가 없다.
+5. Architecture Role의 추가 대화 없이 Implementation Role이 문서만 읽고 다음 기능을 진행할 수 있다.
 
 ## 제품 원칙 / Product Principles
 

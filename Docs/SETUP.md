@@ -13,7 +13,7 @@
 - 로그인, 라이선스, 관리자 권한, Apple 서명은 사용자 승인이 필요할 수 있다.
 - 환경 구축 완료 전에 앱 기능 구현을 시작하지 않는다.
 
-## Cursor 환경 구축 절차 / Cursor Setup Procedure
+## 구현 환경 구축 절차 / Implementation Setup Procedure
 
 1. macOS 및 CPU 아키텍처 확인
 2. Homebrew 상태 확인

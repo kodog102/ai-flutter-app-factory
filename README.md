@@ -2,15 +2,27 @@
 
 ## Overview
 
-이 저장소는 Flutter 앱을 생성하기 위한 AI Factory다.
+이 저장소는 Provider에 독립적인 AI 협업으로 Flutter 앱을 생성하기 위한 Factory다.
 
-This repository is an AI Factory for creating Flutter apps.
+This repository is a provider-independent AI collaboration Factory for creating Flutter apps.
 
 ## Mission
 
 아이디어를 문서, 디자인, 구현, 검증으로 연결하는 재사용 가능한 Flutter 개발 기반을 제공한다.
 
 Provide a reusable Flutter development foundation that connects ideas to documentation, design, implementation, and verification.
+
+## Goal
+
+빠른 생성 + 작은 승인 + 빠른 개선
+
+Fast Creation + Small Agreements + Rapid Iteration
+
+## Role Model
+
+- Roles are stable.
+- Providers are replaceable.
+- Product development takes priority over Factory design.
 
 ## Repository Structure
 

@@ -40,7 +40,7 @@
 - 최종 의사결정을 AI Agent에게 위임하지 않는다
 - Do not delegate final decisions to AI agents
 
-## ChatGPT (Factory Architect)
+## Architecture Role
 
 ### Purpose
 
@@ -53,8 +53,8 @@
 - Document product planning and architecture direction
 - Agent 역할과 문서 권한을 정리한다
 - Clarify agent roles and document authority
-- Foundation 완료 후 일상 개발 책임을 Cursor에 인계한다
-- Hand routine development responsibility to Cursor after Foundation is complete
+- 구현 가능한 범위와 구조적 제약을 명확히 한다
+- Clarify implementable scope and structural constraints
 
 ### Inputs
 
@@ -74,12 +74,14 @@
 
 - 코드를 구현하지 않는다
 - Do not implement code
+- 승인 없이 구현하지 않는다
+- Do not implement without approval
 - 최종 제품 결정을 대신하지 않는다
 - Do not make final product decisions
 - 디자인을 소유하지 않는다
 - Do not own design
 
-## Cursor (Implementation Agent)
+## Implementation Role
 
 ### Purpose
 
@@ -90,8 +92,8 @@
 
 - 승인된 기능을 구현한다
 - Implement approved features
-- Stitch 디자인 결과를 Flutter UI로 재현한다
-- Reproduce Stitch design results as Flutter UI
+- Design Role의 결과를 Flutter UI로 재현한다
+- Reproduce Design Role outputs as Flutter UI
 - 테스트, 분석, 빌드를 수행한다
 - Run tests, analysis, and builds
 - 구현에 필요한 문서를 동기화한다
@@ -103,8 +105,8 @@
 
 - 승인된 요구사항과 문서
 - Approved requirements and documents
-- Stitch 디자인 결과
-- Stitch design outputs
+- Design Role 결과
+- Design Role outputs
 - QA 재작업 요청
 - QA rework requests
 
@@ -123,8 +125,8 @@
 - Do not change Architecture
 - 제품 방향을 임의로 바꾸지 않는다
 - Do not arbitrarily change product direction
-- Stitch 디자인을 임의로 재설계하지 않는다
-- Do not arbitrarily redesign Stitch designs
+- Design Role 결과를 임의로 재설계하지 않는다
+- Do not arbitrarily redesign Design Role outputs
 - 자기 작업을 최종 승인하지 않는다
 - Do not give final approval to its own work
 
@@ -141,11 +143,11 @@
 - Single Source of Truth를 유지한다
 - Preserve Single Source of Truth
 
-### Cursor Report Format
+### Implementation Report Format
 
-Cursor Report는 아래 형식을 사용한다.
+Implementation Report는 아래 형식을 사용한다.
 
-Cursor Report uses the following format.
+Implementation Report uses the following format.
 
 - Status
 - Files Modified
@@ -160,7 +162,7 @@ Status allows only the following values.
 - Updated
 - Verified
 
-## Stitch (Design Agent)
+## Design Role
 
 ### Purpose
 
@@ -203,7 +205,7 @@ Status allows only the following values.
 - 최종 제품 결정을 대신하지 않는다
 - Do not make final product decisions
 
-## QA Agent
+## QA Role
 
 ### Purpose
 
@@ -225,8 +227,8 @@ Status allows only the following values.
 
 - 요구사항과 권한 문서
 - Requirements and authoritative documents
-- Stitch 디자인 결과
-- Stitch design outputs
+- Design Role 결과
+- Design Role outputs
 - 구현 변경 diff와 검증 결과
 - Implementation change diffs and verification results
 
@@ -247,3 +249,23 @@ Status allows only the following values.
 - Do not take over the implementation role
 - 최종 제품 결정을 대신하지 않는다
 - Do not make final product decisions
+
+## Provider Policy
+
+### Purpose
+
+- Role과 Provider를 분리한다
+- Separate Roles from Providers
+
+### Rules
+
+- Role은 책임과 권한을 나타낸다
+- Roles describe responsibility and authority
+- Provider는 Role을 수행하는 교체 가능한 실행 도구다
+- Providers are replaceable runtime tools that perform Roles
+- 같은 사람이 여러 Role을 수행할 수 있다
+- The same person may perform multiple Roles
+- 하나의 Provider가 여러 Role을 수행할 수 있다
+- One Provider may perform multiple Roles
+- Provider가 바뀌어도 Factory 원칙, 역할, 워크플로 문서를 수정하지 않는다
+- Changing Providers must not require changes to Factory principles, roles, or workflow documents
