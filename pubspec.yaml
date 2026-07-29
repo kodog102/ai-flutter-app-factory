@@ -1,0 +1,9 @@
+name: ai_flutter_app_factory
+description: Foundation code for the AI Flutter App Factory.
+publish_to: none
+
+environment:
+  sdk: ^3.0.0
+
+dependencies:
+  yaml: ^3.1.0

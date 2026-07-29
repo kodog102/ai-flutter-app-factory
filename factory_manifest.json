@@ -1,0 +1,19 @@
+{
+  "name": "AI Flutter App Factory v1",
+  "first_product": "Subscription Tracker",
+  "created_files": [
+    "AGENTS.md",
+    "Docs/ARCHITECTURE.md",
+    "Docs/DESIGN.md",
+    "Docs/Decisions/DR-001-ai-role-handoff.md",
+    "Docs/Decisions/DR-002-minimal-documentation.md",
+    "Docs/Decisions/README.md",
+    "Docs/PRODUCT.md",
+    "Docs/ROADMAP.md",
+    "Docs/SETUP.md",
+    "README.md"
+  ],
+  "handoff_target": "Cursor",
+  "design_owner": "Stitch",
+  "qa": "Cursor QA or Codex"
+}
