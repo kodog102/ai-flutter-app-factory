@@ -42,6 +42,21 @@
 - Factory는 다음 제품에도 재사용 가능해야 한다
 - The Factory must be reusable for the next product
 
+### Factory-Centered Validation
+
+- Factory가 중심 Product다
+- The Factory is the primary product
+- 테스트 Product는 Factory 가설을 검증하기 위한 실험 수단이다
+- Test Products are experiments used to validate Factory hypotheses
+- Product 완성도는 Factory의 성공 기준이 아니다
+- Product completeness is not a success criterion for the Factory
+- 충분한 증거가 확보되면 테스트 Product를 완성하지 않고 Product 실험을 중단할 수 있다
+- A Product experiment may stop without completing the test Product once sufficient evidence has been obtained
+- 한 Product의 결과를 자동으로 Core Standard로 승격하지 않는다
+- Results from a single Product are not automatically promoted to Core Standards
+- 검증된 학습만 기존 Factory SSOT에 최소 반영한다
+- Only validated learning is incorporated minimally into the existing Factory SSOT
+
 ## Non-Goals
 
 - 특정 제품의 비전을 대신하지 않는다

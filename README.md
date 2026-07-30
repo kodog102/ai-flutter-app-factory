@@ -42,7 +42,8 @@ A Ready Product is a state in which a new work participant can propose the first
 
 - Roles are stable.
 - Providers are replaceable.
-- Product development takes priority over Factory design.
+- Factory 검증은 테스트 Product 완성보다 우선한다.
+- Factory validation takes priority over completing a test Product.
 
 ## Repository Structure
 
