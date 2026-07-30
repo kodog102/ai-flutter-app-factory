@@ -237,6 +237,56 @@ The first Agreement is not stored as a permanent document by default. It is an e
 
 Implement the first Agreement in the Product Repository only after User approval.
 
+#### Approved Operational Baseline Handoff
+
+Operational Bootstrap의 최종 결과에는 새로운 작업 주체가 Product Repository 상태를 판단할 수 있는 승인된 운영 기준선 인계가 포함되어야 한다.
+
+The final outputs of Operational Bootstrap include an approved operational baseline handoff that enables a new work participant to evaluate the Product Repository state.
+
+Bootstrap 실행 중에는 Baseline Handoff Proposal을 먼저 생성하며, User가 Ready 상태와 baseline을 승인한 후에만 Approved Operational Baseline Handoff가 된다.
+
+During Bootstrap, a Baseline Handoff Proposal is created first and becomes an Approved Operational Baseline Handoff only after the User approves the Ready state and baseline.
+
+Baseline의 생명주기는 다음과 같다.
+
+The baseline lifecycle is as follows.
+
+1. Product Repository의 최종 Git 상태를 capture한다. / Capture the final Product Git state.
+2. Baseline Handoff Proposal을 생성한다. / Create a Baseline Handoff Proposal.
+3. Proposal과 Evidence를 User에게 제시한다. / Present the proposal and Evidence to the User.
+4. User가 Ready 상태와 baseline을 승인한다. / The User approves the Ready state and baseline.
+5. Proposal이 Approved Operational Baseline Handoff가 된다. / The proposal becomes an Approved Operational Baseline Handoff.
+6. 승인된 handoff를 새로운 작업 주체에게 전달한다. / Hand the approved handoff to the new work participant.
+
+최소 인계 정보는 다음과 같으며 해당 항목이 없으면 `None`으로 명시한다.
+
+The handoff includes at least the following information and states `None` when an item does not exist.
+
+- Exact Product Repository path
+- Current branch
+- HEAD commit 또는 commit이 없다는 사실 / HEAD commit or the fact that no commit exists
+- Expected staged files
+- Expected modified files
+- Expected untracked files
+- Expected deleted files
+- 해당 상태가 User가 승인한 Bootstrap 기준선인지 여부 / Whether the state is a User-approved Bootstrap baseline
+
+Baseline handoff는 Factory 문서 사본이나 Product 기능 및 Architecture 설명이 아니다. Product Repository와 함께 새로운 작업 주체에게 전달되는 runtime handoff metadata이며, 승인된 상태와 예상 밖 변경을 구분하기 위한 운영 상태 정보다.
+
+The baseline handoff is not a copy of Factory documents or a description of Product features or Architecture. It is runtime handoff metadata delivered with the Product Repository to a new work participant so that approved state can be distinguished from unexpected changes.
+
+Baseline handoff는 영구 Product 문서 생성을 요구하지 않으며 특정 Provider, 모델 또는 IDE를 전제하지 않는다.
+
+The baseline handoff does not require a permanent Product document and does not assume a specific Provider, model, or IDE.
+
+Product Repository가 반드시 clean일 필요는 없다. 승인된 staged, modified 또는 untracked Bootstrap 산출물이 있을 수 있다. 실제 상태가 User가 승인한 handoff와 정확히 일치하면 그 사실만으로 중단하지 않는다.
+
+The Product Repository is not required to be clean. Approved staged, modified, or untracked Bootstrap outputs may exist. Do not stop solely for that reason when the actual state exactly matches the User-approved handoff.
+
+실제 상태가 handoff와 다르면 변경 전에 중단하고 보고한다. 승인 기준선이 제공되지 않은 non-clean 상태는 추측하지 않고 중단한다.
+
+If the actual state differs from the handoff, stop and report before making changes. Stop without guessing when a non-clean state has no approved baseline.
+
 ### Optional Outputs
 
 다음은 모든 Product에 자동으로 생성하지 않는다.
@@ -375,8 +425,18 @@ Do not assume that the Factory must be clean or committed. Changes that can affe
 - Confirm that the Factory Repository is unchanged
 - Product Repository 상태를 보고한다
 - Report the Product Repository state
-- User가 최종 Ready 여부를 승인한다
-- The User gives final approval of the Ready state
+- Product Repository의 최종 Git 상태를 확인한다
+- Confirm the final Git state of the Product Repository
+- Baseline Handoff Proposal을 생성한다
+- Create a Baseline Handoff Proposal
+- Proposal과 Evidence를 User에게 제시한다
+- Present the proposal and Evidence to the User
+- User가 최종 Ready 상태와 baseline을 승인한다
+- The User gives final approval of the Ready state and baseline
+- 승인 후 Proposal을 Approved Operational Baseline Handoff로 확정한다
+- After approval, confirm the proposal as the Approved Operational Baseline Handoff
+- 승인된 handoff를 새로운 작업 주체에게 전달할 수 있는 상태인지 확인한다
+- Confirm that the approved handoff can be handed to a new work participant
 
 ### Stop Conditions
 
@@ -396,6 +456,19 @@ Stop Bootstrap without guessing when any of the following occurs.
 - 민감정보가 발견됨 / Sensitive information is found
 - 승인되지 않은 Product Implementation이 필요함 / Unapproved Product Implementation is required
 - 작업 범위를 벗어나는 구조나 문서를 새로 결정해야 함 / A structure or document outside the work scope must be newly decided
+
+#### During Operational Bootstrap
+
+- 승인된 Bootstrap 범위로 생성된 변경과 예상 밖 변경을 구분한다. / Distinguish changes created within the approved Bootstrap scope from unexpected changes.
+- 실제 Product Git 상태가 Baseline Handoff Proposal에 capture된 상태와 다르면 중단한다. / Stop when the actual Product Git state differs from the state captured in the Baseline Handoff Proposal.
+- Proposal과 Evidence를 User에게 제시하기 전이라는 이유만으로 승인 부재를 중단 조건으로 삼지 않는다. / Do not treat the absence of approval as a stop condition merely because the proposal and Evidence have not yet been presented to the User.
+- 범위 밖 파일, 민감정보 또는 예상하지 못한 Git 상태가 있으면 중단한다. / Stop when out-of-scope files, sensitive information, or an unexpected Git state is present.
+
+#### After Ready Approval or New Work Handoff
+
+- 실제 Product Git 상태가 Approved Operational Baseline Handoff와 다르면 중단한다. / Stop when the actual Product Git state differs from the Approved Operational Baseline Handoff.
+- non-clean 상태에 Approved Operational Baseline Handoff가 제공되지 않으면 추측하지 않고 중단한다. / Stop without guessing when a non-clean state has no Approved Operational Baseline Handoff.
+- 실제 상태가 Approved Operational Baseline Handoff와 정확히 일치하면 non-clean이라는 이유만으로 중단하지 않는다. / Do not stop solely because the state is non-clean when the actual state exactly matches the Approved Operational Baseline Handoff.
 
 중단 보고에는 중단 위치, 확인된 사실, 누락된 입력 또는 결정, 필요한 User 결정, 수행하지 않은 작업을 포함한다.
 
@@ -438,33 +511,37 @@ This document defines only Operational Bootstrap. It does not remove or implemen
 
 All of the following conditions must be met for a Ready Product.
 
+Ready 판정 전 baseline은 Proposal이며, User 승인 후 Approved Operational Baseline Handoff가 되어 새로운 작업 주체에게 전달된다.
+
+Before the Ready decision, the baseline is a Proposal; after User approval, it becomes an Approved Operational Baseline Handoff and is handed to the new work participant.
+
 1. Product의 정확한 Repository 위치가 확정되어 있음
 2. Factory와 분리된 독립 Repository임
 3. Product-local `README.md`가 정체성, 목적, 현재 상태를 설명함
 4. Product-local `AGENTS.md`가 권한, 역할, Agreement, 변경, 검증 및 Git 규칙을 설명함
-5. 새로운 작업 주체가 Factory를 다시 읽지 않고 Product를 이해할 수 있음
-6. Product-local 정보만으로 첫 Agreement를 제안할 수 있음
+5. 승인된 baseline handoff가 새로운 작업 주체에게 전달 가능한 상태이며, 작업 주체는 이를 사용해 Factory를 다시 읽지 않고 Product를 이해할 수 있음
+6. Product-local 문서와 handoff metadata가 실제 Git 상태 비교와 첫 Agreement 제안에 충분함
 7. 첫 Agreement에 필수 다섯 항목이 포함되어 있음
 8. Product Implementation은 아직 시작되지 않았거나 명시적으로 승인된 범위만 존재함
 9. Factory Repository가 Bootstrap으로 인해 변경되지 않음
 10. 예상하지 못한 파일, 민감정보 또는 Repository 충돌이 없음
-11. Git 상태와 미커밋 Bootstrap 산출물이 명확하게 보고됨
-12. User가 최종 Ready 상태를 승인할 수 있도록 Evidence가 제공됨
+11. Git 상태와 미커밋 Bootstrap 산출물이 승인된 baseline handoff에 명확하게 기록되고 실제 상태와 일치함
+12. User가 최종 Ready 상태와 baseline을 승인할 수 있도록 Evidence가 제공됨
 
 1. The exact Product Repository location is confirmed.
 2. It is an independent Repository separate from the Factory.
 3. The Product-local `README.md` explains identity, purpose, and current status.
 4. The Product-local `AGENTS.md` explains authority, roles, Agreement, change, verification, and Git rules.
-5. A new work participant can understand the Product without rereading the Factory.
-6. The first Agreement can be proposed from Product-local information only.
+5. The approved baseline handoff is available for delivery to a new work participant, who can use it to understand the Product without rereading the Factory.
+6. The Product-local documents and handoff metadata are sufficient to compare the actual Git state and propose the first Agreement.
 7. The first Agreement contains all five required fields.
 8. Product Implementation has not started, or only an explicitly approved scope exists.
 9. The Factory Repository was not changed by Bootstrap.
 10. There are no unexpected files, sensitive information, or Repository conflicts.
-11. Git status and uncommitted Bootstrap outputs are clearly reported.
-12. Evidence is available for the User to give final approval of the Ready state.
+11. Git status and uncommitted Bootstrap outputs are clearly recorded in the approved baseline handoff and match the actual state.
+12. Evidence is available for the User to give final approval of the Ready state and baseline.
 
-Commit is not automatically assumed to be a Ready Product requirement. Commit and push require a separate User request.
+Commit is not automatically assumed to be a Ready Product requirement. When Ready Product outputs remain uncommitted, the approved operational baseline handoff must identify their expected Git state. Commit and push require a separate User request.
 
 ## Template and Toolchain Flow
 
