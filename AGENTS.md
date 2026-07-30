@@ -18,6 +18,8 @@
 - Accept or reject proposals, designs, implementations, and QA results
 - 되돌리기 어려운 결정을 확정한다
 - Confirm hard-to-reverse decisions
+- Product 목적, 경계, 첫 Agreement, Ready 상태를 최종 승인한다
+- Give final approval to the Product purpose, boundary, first Agreement, and Ready state
 
 ### Inputs
 
@@ -40,6 +42,29 @@
 - 최종 의사결정을 AI Agent에게 위임하지 않는다
 - Do not delegate final decisions to AI agents
 
+## Product AGENTS.md
+
+### Responsibility
+
+- Architecture Role은 Product Repository가 첫 작업을 시작하기 전에 Product 전용 `AGENTS.md`를 생성한다
+- The Architecture Role creates the Product-specific `AGENTS.md` before the Product Repository begins its first task
+- Product Repository는 Product 전용 내용을 자체 `AGENTS.md`에서 소유한다
+- The Product Repository owns Product-specific content in its own `AGENTS.md`
+
+### Creation Time
+
+- Product 전용 `AGENTS.md`는 첫 Agreement 전에 존재해야 한다
+- The Product-specific `AGENTS.md` must exist before the first Agreement
+
+### Minimum Contents
+
+- Product Repository의 정체성과 Factory Repository와의 경계
+- The identity of the Product Repository and its boundary with the Factory Repository
+- 역할과 책임, User의 최종 승인 권한
+- Roles and responsibilities, including the User's final approval authority
+- 구현 전에 반드시 존재하며 Goal, Included Scope, Excluded Scope, Acceptance Criteria, Verification으로 구성된 Agreement 규칙
+- An Agreement rule that must exist before implementation and consists of Goal, Included Scope, Excluded Scope, Acceptance Criteria, and Verification
+
 ## Architecture Role
 
 ### Purpose
@@ -55,6 +80,16 @@
 - Clarify agent roles and document authority
 - 구현 가능한 범위와 구조적 제약을 명확히 한다
 - Clarify implementable scope and structural constraints
+- User가 승인한 입력을 기준으로 Operational Bootstrap을 조정한다
+- Coordinate Operational Bootstrap based on User-approved inputs
+- Bootstrap 전에 필수 입력과 Factory 및 Product Repository 경계를 확인한다
+- Verify required inputs and the Factory and Product Repository boundary before Bootstrap
+- Target 검증 후 독립 Repository 경계를 준비하거나 해당 작업을 명확히 위임한다
+- After Target validation, prepare the independent Repository boundary or explicitly delegate that work
+- Product-local Authority 초안을 준비한다
+- Prepare the Product-local Authority draft
+- 입력이 누락되거나 경계가 충돌하면 Bootstrap을 실행하지 않고 중단한다
+- Do not execute Bootstrap when inputs are missing or boundaries conflict; stop instead
 
 ### Inputs
 
@@ -74,6 +109,8 @@
 
 - 코드를 구현하지 않는다
 - Do not implement code
+- Operational Bootstrap 조정 책임을 Product Implementation 권한으로 해석하지 않는다
+- Do not treat responsibility for coordinating Operational Bootstrap as authority for Product Implementation
 - 승인 없이 구현하지 않는다
 - Do not implement without approval
 - 최종 제품 결정을 대신하지 않는다
@@ -129,6 +166,8 @@
 - Do not arbitrarily redesign Design Role outputs
 - 자기 작업을 최종 승인하지 않는다
 - Do not give final approval to its own work
+- User가 첫 Agreement를 승인하기 전에는 Product Implementation을 시작하지 않는다
+- Do not begin Product Implementation before the User approves the first Agreement
 
 ### Constraints
 

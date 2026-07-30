@@ -5,15 +5,15 @@
 
 ## Mission
 
-- 아이디어를 문서, 디자인, 구현, 검증으로 연결하는 재사용 가능한 Flutter 개발 기반을 제공한다
-- Provide a reusable Flutter development foundation that connects ideas to documentation, design, implementation, and verification
+- 새로운 Product Repository가 일관된 운영 규칙을 갖고 즉시 첫 작업을 시작할 수 있도록 준비한다
+- Prepare a new Product Repository with consistent operating rules so that it can begin its first task immediately
 
 ## Vision
 
-- AI가 역할을 나누어 제품을 만드는 과정을 문서 중심으로 반복 가능하게 만든다
-- Make AI role-divided product creation repeatable through documents
-- 단일 앱에 종속되지 않는 Factory 기반을 유지한다
-- Keep a Factory foundation that is not tied to a single app
+- Product Repository가 자체 문서만으로 첫 Agreement를 시작할 수 있는 상태를 반복 가능하게 만든다
+- Make it repeatable for a Product Repository to reach a state where it can begin its first Agreement from its own documents
+- 단일 Product에 종속되지 않는 Factory 기반을 유지한다
+- Keep a Factory foundation that is not tied to a single Product
 
 ## Core Principles
 

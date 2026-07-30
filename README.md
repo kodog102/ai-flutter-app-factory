@@ -2,21 +2,41 @@
 
 ## Overview
 
-이 저장소는 Provider에 독립적인 AI 협업으로 Flutter 앱을 생성하기 위한 Factory다.
+이 저장소는 새로운 Product Repository가 일관된 운영 규칙을 갖고 즉시 첫 작업을 시작할 수 있도록 준비하는 Factory다.
 
-This repository is a provider-independent AI collaboration Factory for creating Flutter apps.
+This repository is a Factory that prepares a new Product Repository with consistent operating rules so that it can begin its first task immediately.
 
 ## Mission
 
-아이디어를 문서, 디자인, 구현, 검증으로 연결하는 재사용 가능한 Flutter 개발 기반을 제공한다.
+Product Repository가 자체 문서와 명확한 책임 경계를 갖춘 운영 가능한 상태가 되도록 한다.
 
-Provide a reusable Flutter development foundation that connects ideas to documentation, design, implementation, and verification.
+Make a Product Repository operational through its own documents and clear responsibility boundaries.
 
-## Goal
+## Ready Outcome
+
+Product Repository만으로 첫 Agreement를 시작할 수 있는 상태
+
+A state where the first Agreement can begin from the Product Repository alone
+
+## Operating Principle
 
 빠른 생성 + 작은 승인 + 빠른 개선
 
 Fast Creation + Small Agreements + Rapid Iteration
+
+## Bootstrap Entry
+
+Bootstrap을 시작하기 전에 Product name, Product purpose, 초기 Product 범위 또는 첫 번째 의도된 결과, 정확한 output path, Repository mode, 초기 branch 이름 또는 Repository policy를 제공한다.
+
+Before starting Bootstrap, provide the Product name, Product purpose, initial Product scope or first intended outcome, exact output path, Repository mode, and initial branch name or Repository policy.
+
+Bootstrap Contract의 전체 입력, 출력, 순서, 중단 조건, Ready Product 기준은 [Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md)가 단일 권한을 가진다.
+
+[Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md) is the single authority for the Bootstrap Contract inputs, outputs, sequence, stop conditions, and Ready Product criteria.
+
+Ready Product는 새로운 작업 주체가 Factory를 다시 읽지 않고 Product Repository만으로 첫 Agreement를 제안할 수 있는 상태다.
+
+A Ready Product is a state in which a new work participant can propose the first Agreement from the Product Repository alone without rereading the Factory.
 
 ## Role Model
 
