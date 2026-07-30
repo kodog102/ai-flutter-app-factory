@@ -1,78 +1,29 @@
 # DESIGN.md
 
-> Design Role을 위한 디자인 브리프이자 Flutter 구현 시각 기준  
-> Design brief for the Design Role and visual authority for Flutter implementation
+> Factory와 Product의 디자인 권한 경계
+> Design authority boundary between the Factory and Product
 
-## 디자인 역할 / Design Ownership
+## Factory V1 Design Surface
 
-- Design Role이 UI/UX와 디자인 시스템의 시각적 권한을 가진다.
-- Implementation Role은 Design Role 결과를 Flutter로 충실히 구현한다.
-- Implementation Role이 디자인을 임의로 개선하거나 재해석하지 않는다.
-- 접근성, 플랫폼 제약, 구현 불가능성으로 변경이 필요하면 먼저 차이를 보고한다.
+Factory V1에는 별도 사용자 인터페이스나 시각 디자인 시스템이 없다.
 
-## 제품 인상 / Product Impression
+Factory V1 has no separate user interface or visual design system.
 
-### 한국어
+Flutter scaffold는 기술적 Bootstrap 산출물이며 Product 디자인 결정이 아니다.
 
-차분하고 현대적이며 가벼운 개인 금융 도구. 은행 앱처럼 복잡하거나 경고 중심으로 보이지 않는다. 사용자가 구독 상태를 빠르게 이해하고 정리할 수 있어야 한다.
+The Flutter scaffold is a technical Bootstrap output, not a Product design decision.
 
-### English
+## Product Design Ownership
 
-A calm, modern, lightweight personal finance tool. It should not feel like a dense banking app or an alarm-heavy expense warning system. Users should quickly understand and organize their subscriptions.
+- Product UI/UX, 화면, 디자인 시스템과 시각 기준은 Product Repository가 소유한다
+- The Product Repository owns Product UI/UX, screens, the design system, and visual standards
+- Product 디자인은 승인된 Product-local Agreement와 Design Role 결과에 근거한다
+- Product design is based on an approved Product-local Agreement and Design Role output
+- Factory는 Product 분야나 기능을 근거로 디자인을 임의로 생성하지 않는다
+- The Factory does not infer or create design from a Product domain or feature
 
-## 시각 방향 / Visual Direction
+## Boundary
 
-- 넉넉한 여백
-- 명확한 정보 계층
-- 카드 남용 금지
-- 부드러운 표면과 절제된 강조
-- 숫자는 읽기 쉽고 안정적으로 표시
-- 결제 임박 상태는 명확하되 불안감을 과장하지 않음
-- 장식보다 정보 구조 우선
+Product 디자인이 첫 작업에 필요하면 Product Repository의 기존 Authority를 갱신하거나 실제로 필요한 Authority만 추가한다. Factory 디자인 문서를 Product에 복사하지 않는다.
 
-## 필수 화면 / Required Screens
-
-1. 첫 실행 빈 상태
-2. 홈 대시보드
-3. 구독 추가
-4. 구독 상세
-5. 구독 수정
-6. 전체 구독 목록
-7. 비활성 구독 상태
-8. 오류 또는 입력 검증 상태
-
-## 홈 화면 필수 정보 / Home Requirements
-
-- 이번 달 예상 구독 비용
-- 가장 가까운 다음 결제
-- 예정 결제 목록
-- 구독 추가 주요 CTA
-- 전체 구독으로 이동하는 진입점
-
-## 디자인 산출물 요구 / Design Deliverables
-
-Design Role은 다음을 제공해야 한다.
-
-- 모바일 화면 전체 흐름
-- 핵심 화면의 빈 상태, 기본 상태, 데이터가 많은 상태
-- Typography scale
-- Color roles
-- Spacing rules
-- Radius and surface rules
-- Button, field, list row, summary component
-- 상태별 interaction notes
-- iOS/Android 공통 구현이 가능한 구조
-
-## 구현 전달 규칙 / Handoff Rules
-
-Implementation Role은 Design Role 결과를 받을 때 다음을 정리한다.
-
-- 화면 목록
-- 재사용 컴포넌트
-- 디자인 토큰
-- 이미지와 아이콘 자산
-- interaction
-- 반응형 또는 작은 화면 고려
-- 디자인 결과에서 불명확한 부분
-
-불명확한 항목은 임의 구현보다 질문 또는 명시적 가정을 우선한다.
+When Product design is required for the first task, update existing Product Repository authority or add only the authority that is actually needed. Do not copy the Factory design document into the Product.

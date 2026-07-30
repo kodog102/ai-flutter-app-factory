@@ -2,15 +2,23 @@
 
 ## Overview
 
-이 저장소는 새로운 Product Repository가 일관된 운영 규칙을 갖고 즉시 첫 작업을 시작할 수 있도록 준비하는 Factory다.
+이 저장소는 새로운 Flutter 모바일 Product Repository가 일관된 운영 규칙과 실행 가능한 시작 구조를 갖고 즉시 첫 작업을 시작할 수 있도록 준비하는 Factory다.
 
-This repository is a Factory that prepares a new Product Repository with consistent operating rules so that it can begin its first task immediately.
+This repository is a Factory that prepares a new Flutter mobile Product Repository with consistent operating rules and an executable starting structure so that it can begin its first task immediately.
 
 ## Mission
 
-Product Repository가 자체 문서와 명확한 책임 경계를 갖춘 운영 가능한 상태가 되도록 한다.
+Flutter 모바일 Product Repository가 자체 문서, 명확한 책임 경계, 검증된 기본 구조를 갖춘 운영·실행 가능한 시작 상태가 되도록 한다.
 
-Make a Product Repository operational through its own documents and clear responsibility boundaries.
+Prepare a Flutter mobile Product Repository for an operational and executable start through its own documents, clear responsibility boundaries, and a verified base structure.
+
+Factory V1은 iOS와 Android를 지원한다. Flutter Web, Flutter Desktop, 비 Flutter 기술 스택은 V1 범위가 아니다.
+
+Factory V1 supports iOS and Android. Flutter Web, Flutter Desktop, and non-Flutter technology stacks are outside the V1 scope.
+
+Factory는 특정 Product 분야에 종속되지 않으며, 역할과 계약 및 생성 결과는 특정 실행 환경에 종속되지 않는다.
+
+The Factory is not tied to a specific Product domain, and its roles, contracts, and generated results are not tied to a specific execution environment.
 
 ## Ready Outcome
 
@@ -26,13 +34,13 @@ Fast Creation + Small Agreements + Rapid Iteration
 
 ## Bootstrap Entry
 
-Bootstrap을 시작하기 전에 Product name, Product purpose, 초기 Product 범위 또는 첫 번째 의도된 결과, 정확한 output path, Repository mode, 초기 branch 이름 또는 Repository policy를 제공한다.
+Executable V1 Bootstrap을 시작하려면 Product 정보, Repository 정보, Flutter project identifier, organization identifier, 요청 기술과 대상 플랫폼을 명시해야 한다.
 
-Before starting Bootstrap, provide the Product name, Product purpose, initial Product scope or first intended outcome, exact output path, Repository mode, and initial branch name or Repository policy.
+Starting Executable V1 Bootstrap requires explicit Product information, Repository information, a Flutter project identifier, an organization identifier, the requested technology, and target platforms.
 
-Bootstrap Contract의 전체 입력, 출력, 순서, 중단 조건, Ready Product 기준은 [Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md)가 단일 권한을 가진다.
+Operational Bootstrap과 Executable Flutter Bootstrap의 전체 입력, 출력, 순서, 중단 조건, Ready Product 기준은 [Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md)가 단일 권한을 가진다.
 
-[Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md) is the single authority for the Bootstrap Contract inputs, outputs, sequence, stop conditions, and Ready Product criteria.
+[Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md) is the single authority for the inputs, outputs, sequence, stop conditions, and Ready Product criteria of Operational Bootstrap and Executable Flutter Bootstrap.
 
 Ready Product는 새로운 작업 주체가 Factory를 다시 읽지 않고 Product Repository만으로 첫 Agreement를 제안할 수 있는 상태다.
 
@@ -60,10 +68,13 @@ A Ready Product is a state in which a new work participant can propose the first
     ├── ROADMAP.md
     ├── SETUP.md
     ├── VISION.md
+    ├── Architecture/
+    │   └── Template-Specification.md
     └── Decisions/
         ├── README.md
         ├── DR-001-ai-role-handoff.md
-        └── DR-002-minimal-documentation.md
+        ├── DR-002-minimal-documentation.md
+        └── DR-003-repository-owns-domain-mapping.md
 ```
 
 ## Getting Started
@@ -72,7 +83,6 @@ A Ready Product is a state in which a new work participant can propose the first
 2. `AGENTS.md`
 3. `Docs/VISION.md`
 4. `Docs/ARCHITECTURE.md`
-5. `factory.yaml`
 
 ## Foundation Documents
 
@@ -83,9 +93,9 @@ A Ready Product is a state in which a new work participant can propose the first
 
 ## Development Status
 
-현재 상태: **Foundation Phase**
+현재 상태: **Executable V1 Contract Aligned — Runtime Implementation Pending**
 
-Current status: **Foundation Phase**
+Current status: **Executable V1 Contract Aligned — Runtime Implementation Pending**
 
 ## License
 

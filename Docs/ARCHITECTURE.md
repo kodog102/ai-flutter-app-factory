@@ -7,8 +7,8 @@
 
 - Factory와 Product Repository의 경계, Factory 저장소의 구조, 각 영역의 책임을 정의한다
 - Define the boundary between the Factory and Product Repositories, the structure of the Factory repository, and the responsibility of each area
-- Product 내부 구현 방법, 도구 선택, 세부 구현 절차는 다루지 않는다
-- Do not cover Product implementation methods, tool choices, or detailed implementation procedures
+- Factory Bootstrap의 실행 계약을 정의하되 Product 기능 구현 방법과 세부 도구 호출 절차는 다루지 않는다
+- Define the Factory Bootstrap execution contract without covering Product feature implementation methods or detailed tool invocation procedures
 
 ## Repository First Rule
 
@@ -39,10 +39,13 @@ This is the structure of the current repository.
     ├── ROADMAP.md
     ├── SETUP.md
     ├── VISION.md
+    ├── Architecture/
+    │   └── Template-Specification.md
     └── Decisions/
         ├── README.md
         ├── DR-001-ai-role-handoff.md
-        └── DR-002-minimal-documentation.md
+        ├── DR-002-minimal-documentation.md
+        └── DR-003-repository-owns-domain-mapping.md
 ```
 
 ## Foundation Layers
@@ -117,6 +120,10 @@ This is the structure of the current repository.
 
 Execution within the Product in the stages below is the responsibility of the Product Repository.
 
+Factory Bootstrap은 이 Product 내부 lifecycle 전에 독립 Repository, 운영 Authority와 승인된 기술적 시작 상태를 준비한다.
+
+Factory Bootstrap prepares the independent Repository, operating authority, and approved technical starting state before this internal Product lifecycle.
+
 ### Decision
 
 - 되돌리기 어려운 방향을 확정한다
@@ -145,31 +152,64 @@ Bootstrap is not limited to creating specific code or a Template. Its purpose is
 
 - Bootstrap은 Repository 경계와 운영 컨텍스트를 준비한다
 - Bootstrap prepares the Repository boundary and operating context
-- Product Implementation은 승인된 첫 Agreement 이후 Product 내부에서 수행한다
-- Product Implementation occurs inside the Product after the first Agreement is approved
+- Product Implementation은 Ready 검증, Baseline Handoff Proposal 제시, Ready 상태와 baseline에 대한 User 승인, 첫 Product Agreement 승인이 모두 완료된 이후 Product 내부에서 수행한다
+- Product Implementation occurs inside the Product only after Ready verification, presentation of the Baseline Handoff Proposal, User approval of the Ready state and baseline, and approval of the first Product Agreement are all complete
 - Factory는 Bootstrap 이후 Product 내부 구현에 개입하지 않는다
 - The Factory does not participate in internal Product implementation after Bootstrap
 
+### Operational and Executable Bootstrap
+
+Operational Bootstrap은 모든 Product에 필요한 Repository 경계, Product-local 운영 Authority, 첫 Agreement 준비 상태와 baseline lifecycle을 정의한다.
+
+Operational Bootstrap defines the Repository boundary, Product-local operating authority, first-Agreement readiness, and baseline lifecycle required for every Product.
+
+Executable Flutter Bootstrap은 Factory V1의 Operational Bootstrap 적용 범위다. Operational Bootstrap을 유지하면서 Flutter/Dart 기반 iOS 및 Android 기본 구조와 필수 기술 검증을 추가한다.
+
+Executable Flutter Bootstrap is the Factory V1 application of Operational Bootstrap. It preserves Operational Bootstrap and adds a Flutter/Dart-based iOS and Android base structure and required technical verification.
+
+Flutter scaffold와 기본 검증은 Factory Bootstrap 책임이다. Product 기능, 데이터 모델, UI, backend, 인증, 외부 서비스와 Product별 package는 Product-local Agreement가 소유한다.
+
+The Flutter scaffold and base verification are Factory Bootstrap responsibilities. Product features, data models, UI, backend, authentication, external services, and Product-specific packages are owned by Product-local Agreements.
+
+Factory V1은 Flutter Web, Flutter Desktop 또는 비 Flutter 기술 스택을 지원하지 않는다. 미지원 요청을 다른 기술로 대체하거나 추측하지 않는다.
+
+Factory V1 does not support Flutter Web, Flutter Desktop, or non-Flutter technology stacks. It does not substitute another technology or guess for an unsupported request.
+
 ### Required Inputs
 
-Bootstrap을 시작하기 전에 다음 입력이 모두 명시되어야 한다.
+Executable V1 Bootstrap을 시작하기 전에 다음 입력이 모두 명시되어야 한다.
 
-All of the following inputs must be explicit before Bootstrap begins.
+All of the following inputs must be explicit before Executable V1 Bootstrap begins.
 
-1. Product name / 제품명
+1. Product display name / Product 표시 이름
 2. Product purpose / 한 문장으로 표현한 제품 목적
 3. Initial Product Scope or First Intended Outcome / 초기 Product 범위 또는 첫 번째 의도된 결과
 4. Exact output path / 정확한 Product Repository 출력 경로
 5. Repository mode / 새 Repository 생성 또는 기존 빈 Repository 사용
 6. Initial branch name or Repository policy / 초기 branch 이름 또는 적용할 Repository policy
+7. Flutter project name / Flutter project identifier
+8. Organization identifier / Organization 식별자
+9. Requested technology / 요청 기술
+10. Target platforms / 대상 플랫폼
 
 입력은 현재 작업 요청이나 User가 승인한 컨텍스트에서 제공될 수 있다.
 
 Inputs may be provided in the current work request or User-approved context.
 
-Factory는 출력 경로, 디렉터리 이름, 기존 Repository 사용 여부, branch 이름, Product 목적, Product 범위를 임의로 추측하지 않는다.
+Factory는 어떤 필수 입력도 임의로 추측하지 않는다.
 
-The Factory does not infer the output path, directory name, existing Repository use, branch name, Product purpose, or Product scope.
+The Factory does not infer any required input.
+
+- Requested technology는 Flutter/Dart여야 한다
+- Requested technology must be Flutter/Dart
+- Flutter project name은 Flutter가 허용하는 identifier 형식이어야 한다
+- The Flutter project name must use an identifier format allowed by Flutter
+- Organization identifier는 명시적으로 입력해야 한다
+- The organization identifier must be provided explicitly
+- Target platforms는 iOS와 Android여야 한다
+- Target platforms must be iOS and Android
+- 필수 입력이 누락되거나 모호하거나 지원 범위와 다르면 중단한다
+- Stop when a required input is missing, ambiguous, or outside the supported scope
 
 필수 입력이 없으면 Bootstrap을 시작하지 않고 질문을 반환한다.
 
@@ -187,6 +227,34 @@ If a required input is missing, do not start Bootstrap and return a question.
 - Not a nested Repository or submodule inside the Factory
 - Factory 파일을 Product에 복사하지 않음
 - Do not copy Factory files into the Product
+
+#### Flutter Mobile Scaffold
+
+- 공식 Flutter toolchain으로 생성된 iOS 및 Android 기본 구조
+- An iOS and Android base structure created with the official Flutter toolchain
+- Flutter 기본 dependency가 준비된 상태
+- Default Flutter dependencies are prepared
+- 별도 Factory Template을 생성하거나 복사하지 않음
+- Do not create or copy a separate Factory Template
+- Product별 package나 기능을 추가하지 않음
+- Do not add Product-specific packages or features
+
+#### Technical Verification Evidence
+
+- Flutter dependency 준비 성공
+- Successful preparation of Flutter dependencies
+- 정적 분석 통과
+- Static analysis passes
+- 기본 테스트 통과
+- Default tests pass
+- Android APK build 통과
+- Android APK build passes
+- iOS Simulator build 통과
+- iOS Simulator build passes
+
+환경 또는 toolchain 문제로 필수 검증을 수행할 수 없으면 Ready로 판정하지 않는다.
+
+Do not judge the Product as Ready when an environment or toolchain issue prevents required verification.
 
 #### Product README
 
@@ -236,6 +304,16 @@ The first Agreement is not stored as a permanent document by default. It is an e
 첫 Agreement의 구현은 User 승인 이후 Product Repository에서 수행한다.
 
 Implement the first Agreement in the Product Repository only after User approval.
+
+#### Runtime Reports
+
+First Agreement Proposal, Baseline Handoff Proposal, Bootstrap execution report와 Validation Evidence는 실행 결과로 User에게 제시하며 영구 Product 문서로 만들지 않는다.
+
+The First Agreement Proposal, Baseline Handoff Proposal, Bootstrap execution report, and Validation Evidence are presented to the User as runtime results and are not made permanent Product documents.
+
+User 승인 이후에만 Baseline Handoff Proposal이 Approved Operational Baseline Handoff가 된다.
+
+The Baseline Handoff Proposal becomes an Approved Operational Baseline Handoff only after User approval.
 
 #### Approved Operational Baseline Handoff
 
@@ -340,14 +418,12 @@ Do not assume that the Factory must be clean or committed. Changes that can affe
 
 - 모든 필수 입력을 확인한다
 - Verify all required inputs
-- Product 목적과 정확한 출력 경로를 확인한다
-- Confirm the Product purpose and exact output path
-- 초기 Product 범위 또는 첫 번째 의도된 결과를 확인한다
-- Confirm the initial Product scope or first intended outcome
-- Repository mode 및 branch policy를 확인한다
-- Confirm the Repository mode and branch policy
-- 누락된 입력이 있으면 중단한다
-- Stop when an input is missing
+- Product 정보, Repository 정보, Flutter project name과 organization identifier를 확인한다
+- Verify Product information, Repository information, the Flutter project name, and the organization identifier
+- Requested technology가 Flutter/Dart이고 target platforms가 iOS와 Android인지 확인한다
+- Verify that the requested technology is Flutter/Dart and the target platforms are iOS and Android
+- 입력이 누락되거나 모호하거나 지원 범위와 다르면 중단한다
+- Stop when an input is missing, ambiguous, or outside the supported scope
 
 #### Step 3 — Validate Target
 
@@ -359,11 +435,15 @@ Do not assume that the Factory must be clean or committed. Changes that can affe
 - Stop when it conflicts with existing files, Git history, or user data
 - Factory Repository 내부 경로면 중단한다
 - Stop when the path is inside the Factory Repository
+- 다른 Repository와 충돌하는 경로면 중단한다
+- Stop when the path conflicts with another Repository
 
 #### Step 4 — Prepare Repository Boundary
 
 ##### New Repository Mode
 
+- 명시된 output path가 존재하지 않는지 확인한다
+- Confirm that the explicit output path does not exist
 - Target 검증이 성공한 뒤 명시된 경로를 준비한다
 - Prepare the explicit path after Target validation succeeds
 - 승인된 branch 이름 또는 Repository policy를 사용해 독립 Git metadata를 초기화한다
@@ -375,6 +455,8 @@ Do not assume that the Factory must be clean or committed. Changes that can affe
 
 - 기존 Repository임을 확인한다
 - Confirm that the Target is an existing Repository
+- Product 파일 또는 예상하지 못한 내용이 없는지 확인한다
+- Confirm that no Product files or unexpected content are present
 - 기존 Git history와 사용자 데이터를 덮어쓰지 않는다
 - Do not overwrite existing Git history or user data
 - 이미 존재하는 Git metadata를 다시 초기화하지 않는다
@@ -395,7 +477,16 @@ Do not assume that the Factory must be clean or committed. Changes that can affe
 - 입력과 실제 Target 상태가 다르면 중단한다
 - Stop when the inputs and actual Target state differ
 
-#### Step 5 — Prepare Product-local Authority
+#### Step 5 — Prepare Flutter Scaffold and Product-local Authority
+
+- 공식 Flutter toolchain으로 iOS 및 Android 기본 구조를 준비한다
+- Prepare the iOS and Android base structure with the official Flutter toolchain
+- Flutter 기본 dependency만 준비한다
+- Prepare only the default Flutter dependencies
+- Factory Template을 생성하거나 복사하지 않는다
+- Do not create or copy a Factory Template
+- Product 기능과 Product별 package를 추가하지 않는다
+- Do not add Product features or Product-specific packages
 
 - Product `README.md`를 작성한다
 - Create the Product `README.md`
@@ -412,8 +503,8 @@ Do not assume that the Factory must be clean or committed. Changes that can affe
 - Use Product Repository information only
 - 첫 번째 작은 Agreement를 제안한다
 - Propose the first small Agreement
-- 구현 전에 User 승인을 기다린다
-- Wait for User approval before implementation
+- Step 7의 Ready 검증과 baseline 승인 후 첫 Product Agreement에 대한 User 승인을 기다린다
+- After Step 7 Ready verification and baseline approval, wait for User approval of the first Product Agreement
 - Agreement를 자동으로 파일화하지 않는다
 - Do not automatically create a file for the Agreement
 
@@ -421,6 +512,8 @@ Do not assume that the Factory must be clean or committed. Changes that can affe
 
 - Ready 기준을 검증한다
 - Verify the Ready criteria
+- Flutter dependency 준비, 정적 분석, 기본 테스트, Android APK build와 iOS Simulator build를 검증한다
+- Verify Flutter dependency preparation, static analysis, default tests, the Android APK build, and the iOS Simulator build
 - Factory Repository 무변경을 확인한다
 - Confirm that the Factory Repository is unchanged
 - Product Repository 상태를 보고한다
@@ -445,6 +538,10 @@ Do not assume that the Factory must be clean or committed. Changes that can affe
 Stop Bootstrap without guessing when any of the following occurs.
 
 - 필수 입력 누락 / Required input is missing
+- Requested technology가 Flutter/Dart가 아님 / Requested technology is not Flutter/Dart
+- Target platforms가 iOS와 Android가 아님 / Target platforms are not iOS and Android
+- Flutter project name이 허용된 identifier 형식이 아님 / Flutter project name does not use an allowed identifier format
+- Organization identifier가 누락되거나 모호함 / Organization identifier is missing or ambiguous
 - 출력 경로가 불명확함 / Output path is unclear
 - 출력 경로에 기존 사용자 데이터가 있음 / The output path contains existing user data
 - 예상하지 못한 기존 Git Repository가 있음 / An unexpected existing Git Repository is present
@@ -454,6 +551,8 @@ Stop Bootstrap without guessing when any of the following occurs.
 - 기존 Factory SSOT 사이에 Bootstrap을 바꾸는 충돌이 있음 / Existing Factory SSOT conflict in a way that changes Bootstrap
 - Product를 준비하려면 승인되지 않은 Factory 수정이 필요함 / Preparing the Product requires unapproved Factory changes
 - 민감정보가 발견됨 / Sensitive information is found
+- 필수 Flutter 또는 platform toolchain을 확인할 수 없음 / A required Flutter or platform toolchain cannot be verified
+- dependency 준비, 정적 분석, 기본 테스트 또는 필수 build가 실패함 / Dependency preparation, static analysis, default tests, or a required build fails
 - 승인되지 않은 Product Implementation이 필요함 / Unapproved Product Implementation is required
 - 작업 범위를 벗어나는 구조나 문서를 새로 결정해야 함 / A structure or document outside the work scope must be newly decided
 
@@ -476,17 +575,17 @@ A stop report includes the stop location, confirmed facts, missing input or deci
 
 ### Template and Tooling Policy
 
-현재 Bootstrap Contract는 Template, Generator, CLI 또는 Automation을 전제로 하지 않는다.
+Operational Bootstrap은 Template, Generator, CLI 또는 Automation을 전제로 하지 않는다.
 
-The current Bootstrap Contract does not assume a Template, Generator, CLI, or Automation.
+Operational Bootstrap does not assume a Template, Generator, CLI, or Automation.
 
-Template이 없다는 사실은 운영 컨텍스트 Bootstrap 자체를 막지 않는다. 다만 Template 기반 코드 생성이 현재 Agreement에 포함되어 있다면 Template 부재는 해당 작업의 중단 조건이다.
+Executable Flutter V1은 존재하지 않는 Template에 의존하지 않는다. 공식 Flutter toolchain을 runtime 구성으로 사용해 iOS와 Android 구조를 준비하며, 별도 Factory Template을 생성하거나 복사하지 않는다.
 
-The absence of a Template does not block operational-context Bootstrap itself. If Template-based code generation is included in the current Agreement, the absence of a Template is a stop condition for that work.
+Executable Flutter V1 does not depend on a nonexistent Template. It uses the official Flutter toolchain as a runtime component to prepare the iOS and Android structure and does not create or copy a separate Factory Template.
 
-Operational Bootstrap과 Product Generation or Implementation을 다음과 같이 구분한다.
+실행 도구는 교체 가능한 runtime 구성이며 Factory의 역할, 계약 또는 생성 결과의 권한이 아니다. CLI, Template engine 또는 orchestration은 V1 필수 조건이 아니다.
 
-Operational Bootstrap and Product Generation or Implementation are distinguished as follows.
+Runtime tools are replaceable components and are not authorities for Factory roles, contracts, or generated results. A CLI, Template engine, or orchestration is not a V1 requirement.
 
 ```text
 Operational Bootstrap
@@ -494,16 +593,21 @@ Operational Bootstrap
 - Product-local authority
 - First Agreement readiness
 
-Product Generation or Implementation
-- Source code
-- Platform files
-- Template application
-- Toolchain execution
+Executable Flutter Bootstrap
+- iOS and Android Flutter scaffold
+- Default Flutter dependencies
+- Required technical verification
+
+Product Implementation
+- Product features and data models
+- Product UI
+- Backend, authentication, and external services
+- Product-specific packages
 ```
 
-이번 문서는 Operational Bootstrap만 정의한다. 기존 Template 또는 Toolchain 관련 설계를 삭제하거나 구현하지 않는다.
+기존 Template 및 Generator 설계는 현재 V1 실행 경로가 아니다. 후속 검증과 별도 승인 전까지 V1 계약에 포함하지 않는다.
 
-This document defines only Operational Bootstrap. It does not remove or implement existing Template or Toolchain designs.
+The existing Template and Generator designs are not the current V1 execution path. They remain outside the V1 contract until later validation and separate approval.
 
 ### Ready Product Criteria
 
@@ -517,37 +621,41 @@ Before the Ready decision, the baseline is a Proposal; after User approval, it b
 
 1. Product의 정확한 Repository 위치가 확정되어 있음
 2. Factory와 분리된 독립 Repository임
-3. Product-local `README.md`가 정체성, 목적, 현재 상태를 설명함
-4. Product-local `AGENTS.md`가 권한, 역할, Agreement, 변경, 검증 및 Git 규칙을 설명함
-5. 승인된 baseline handoff가 새로운 작업 주체에게 전달 가능한 상태이며, 작업 주체는 이를 사용해 Factory를 다시 읽지 않고 Product를 이해할 수 있음
-6. Product-local 문서와 handoff metadata가 실제 Git 상태 비교와 첫 Agreement 제안에 충분함
-7. 첫 Agreement에 필수 다섯 항목이 포함되어 있음
-8. Product Implementation은 아직 시작되지 않았거나 명시적으로 승인된 범위만 존재함
-9. Factory Repository가 Bootstrap으로 인해 변경되지 않음
-10. 예상하지 못한 파일, 민감정보 또는 Repository 충돌이 없음
-11. Git 상태와 미커밋 Bootstrap 산출물이 승인된 baseline handoff에 명확하게 기록되고 실제 상태와 일치함
-12. User가 최종 Ready 상태와 baseline을 승인할 수 있도록 Evidence가 제공됨
+3. iOS 및 Android Flutter 기본 구조와 Flutter 기본 dependency가 준비되어 있음
+4. 정적 분석, 기본 테스트, Android APK build와 iOS Simulator build가 통과함
+5. Product-local `README.md`가 정체성, 목적, 현재 상태를 설명함
+6. Product-local `AGENTS.md`가 권한, 역할, Agreement, 변경, 검증 및 Git 규칙을 설명함
+7. 승인된 baseline handoff가 새로운 작업 주체에게 전달 가능한 상태이며, 작업 주체는 이를 사용해 Factory를 다시 읽지 않고 Product를 이해할 수 있음
+8. Product-local 문서와 handoff metadata가 실제 Git 상태 비교와 첫 Agreement 제안에 충분함
+9. 첫 Agreement에 필수 다섯 항목이 포함되어 있음
+10. Bootstrap 중 Product Implementation이 시작되지 않음
+11. Factory Repository가 Bootstrap으로 인해 변경되지 않음
+12. 예상하지 못한 파일, 민감정보 또는 Repository 충돌이 없음
+13. Git 상태와 미커밋 Bootstrap 산출물이 승인된 baseline handoff에 명확하게 기록되고 실제 상태와 일치함
+14. User가 최종 Ready 상태와 baseline을 승인할 수 있도록 Evidence가 제공됨
 
 1. The exact Product Repository location is confirmed.
 2. It is an independent Repository separate from the Factory.
-3. The Product-local `README.md` explains identity, purpose, and current status.
-4. The Product-local `AGENTS.md` explains authority, roles, Agreement, change, verification, and Git rules.
-5. The approved baseline handoff is available for delivery to a new work participant, who can use it to understand the Product without rereading the Factory.
-6. The Product-local documents and handoff metadata are sufficient to compare the actual Git state and propose the first Agreement.
-7. The first Agreement contains all five required fields.
-8. Product Implementation has not started, or only an explicitly approved scope exists.
-9. The Factory Repository was not changed by Bootstrap.
-10. There are no unexpected files, sensitive information, or Repository conflicts.
-11. Git status and uncommitted Bootstrap outputs are clearly recorded in the approved baseline handoff and match the actual state.
-12. Evidence is available for the User to give final approval of the Ready state and baseline.
+3. The iOS and Android Flutter base structure and default Flutter dependencies are prepared.
+4. Static analysis, default tests, the Android APK build, and the iOS Simulator build pass.
+5. The Product-local `README.md` explains identity, purpose, and current status.
+6. The Product-local `AGENTS.md` explains authority, roles, Agreement, change, verification, and Git rules.
+7. The approved baseline handoff is available for delivery to a new work participant, who can use it to understand the Product without rereading the Factory.
+8. The Product-local documents and handoff metadata are sufficient to compare the actual Git state and propose the first Agreement.
+9. The first Agreement contains all five required fields.
+10. Product Implementation has not started during Bootstrap.
+11. The Factory Repository was not changed by Bootstrap.
+12. There are no unexpected files, sensitive information, or Repository conflicts.
+13. Git status and uncommitted Bootstrap outputs are clearly recorded in the approved baseline handoff and match the actual state.
+14. Evidence is available for the User to give final approval of the Ready state and baseline.
 
 Commit is not automatically assumed to be a Ready Product requirement. When Ready Product outputs remain uncommitted, the approved operational baseline handoff must identify their expected Git state. Commit and push require a separate User request.
 
 ## Template and Toolchain Flow
 
-아래 기존 흐름은 별도로 승인된 Product Generation 또는 Implementation을 지원할 수 있다. Bootstrap Contract의 일부가 아니며 Ready Product의 유일한 경로도 아니다.
+아래 기존 Template 중심 흐름은 현재 Executable Flutter V1 실행 경로가 아니다. 별도로 검증·승인되기 전에는 V1 기능으로 주장하지 않는다.
 
-The existing flow below may support separately approved Product Generation or Implementation. It is not part of the Bootstrap Contract and is not the only path to a Ready Product.
+The existing Template-centered flow below is not the current Executable Flutter V1 execution path. It is not claimed as a V1 capability until separately validated and approved.
 
 단방향 진행만 한다.
 
