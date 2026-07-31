@@ -53,7 +53,14 @@ void main() {
           await File(path.join(targetPath, 'lib', 'main.dart')).readAsString(),
           isNot(contains('incrementCounter')),
         );
-        expect(await File(path.join(targetPath, 'README.md')).exists(), isTrue);
+        expect(
+          await File(path.join(targetPath, 'README.md')).readAsString(),
+          allOf(
+            contains('Automated technical validation has passed'),
+            contains('User Ready approval is pending'),
+            contains('First Agreement approval is pending'),
+          ),
+        );
         expect(await File(path.join(targetPath, 'AGENTS.md')).exists(), isTrue);
         expect(
             await Directory(path.join(targetPath, 'Docs')).exists(), isFalse);
@@ -65,15 +72,69 @@ void main() {
           await File(path.join(targetPath, 'Handoff.md')).exists(),
           isFalse,
         );
-        expect(completed.automatedTechnicalValidationStatus, 'Pending');
+        expect(completed.automatedTechnicalValidationStatus, 'Passed');
         expect(completed.userReadyApprovalStatus, 'Pending');
         expect(completed.firstAgreementApprovalStatus, 'Pending');
         expect(completed.firstAgreementProposal.approvalStatus,
             'Proposed — User approval required');
         expect(completed.baselineHandoffProposal.proposalStatus, 'Proposed');
         expect(
+          completed.baselineHandoffProposal.technicalValidationStatus,
+          'Passed',
+        );
+        expect(
+          completed.baselineHandoffProposal.userApprovalStatus,
+          'Pending',
+        );
+        expect(
+          completed.technicalValidationEvidence.completedCommands
+              .map((command) => command.arguments),
+          [
+            ['pub', 'get'],
+            ['analyze'],
+            ['test'],
+            ['build', 'apk'],
+            ['build', 'ios', '--simulator'],
+          ],
+        );
+        expect(
+          completed.technicalValidationEvidence.completedCommands
+              .every((command) => command.succeeded),
+          isTrue,
+        );
+        expect(
+          completed
+              .technicalValidationEvidence.factoryRepositoryUnchangedStatus,
+          'Confirmed',
+        );
+        expect(
           completed.baselineHandoffProposal.gitStatusEntries,
           await _gitStatusEntries(Directory(targetPath)),
+        );
+        expect(
+          await File(
+            path.join(
+              targetPath,
+              'build',
+              'app',
+              'outputs',
+              'flutter-apk',
+              'app-release.apk',
+            ),
+          ).exists(),
+          isTrue,
+        );
+        expect(
+          await Directory(
+            path.join(
+              targetPath,
+              'build',
+              'ios',
+              'iphonesimulator',
+              'Runner.app',
+            ),
+          ).exists(),
+          isTrue,
         );
         await _expectSmokeTestPasses(targetPath);
         expect(_ownedStaging(fixture.root), isEmpty);
@@ -151,7 +212,9 @@ void main() {
           isFalse,
         );
         expect(
-            await File(path.join(target.path, 'README.md')).exists(), isTrue);
+          await File(path.join(target.path, 'README.md')).readAsString(),
+          contains('Automated technical validation has passed'),
+        );
         expect(
             await File(path.join(target.path, 'AGENTS.md')).exists(), isTrue);
         expect(
@@ -161,6 +224,38 @@ void main() {
         expect(completed.baselineHandoffProposal.branch, 'preserved');
         expect(completed.baselineHandoffProposal.headAvailable, isFalse);
         expect(completed.baselineHandoffProposal.remotePresent, isFalse);
+        expect(completed.automatedTechnicalValidationStatus, 'Passed');
+        expect(completed.userReadyApprovalStatus, 'Pending');
+        expect(completed.firstAgreementApprovalStatus, 'Pending');
+        expect(
+          completed.technicalValidationEvidence.completedCommands,
+          hasLength(5),
+        );
+        expect(
+          await File(
+            path.join(
+              target.path,
+              'build',
+              'app',
+              'outputs',
+              'flutter-apk',
+              'app-release.apk',
+            ),
+          ).exists(),
+          isTrue,
+        );
+        expect(
+          await Directory(
+            path.join(
+              target.path,
+              'build',
+              'ios',
+              'iphonesimulator',
+              'Runner.app',
+            ),
+          ).exists(),
+          isTrue,
+        );
         await _expectSmokeTestPasses(target.path);
         expect(_ownedStaging(fixture.root), isEmpty);
         expect(await _factoryStatus(), factoryStatusBefore);
@@ -572,6 +667,7 @@ Future<_IntegrationFixture> _fixture() async {
   );
   final root = Directory(await created.resolveSymbolicLinks());
   final factory = await Directory(path.join(root.path, 'factory')).create();
+  await _runGit(factory, ['init', '--initial-branch=factory-main', '.']);
   return _IntegrationFixture(root, factory);
 }
 

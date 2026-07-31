@@ -11,6 +11,7 @@ import 'bootstrap_preflight_result.dart';
 import 'bootstrap_process_runner.dart';
 import 'bootstrap_request.dart';
 import 'bootstrap_runtime_proposal.dart';
+import 'bootstrap_technical_validation.dart';
 import 'product_authority_renderer.dart';
 import 'repository_mode.dart';
 import 'validated_bootstrap_request.dart';
@@ -52,6 +53,33 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
       'Toolchain-owned cache metadata may have been accessed or refreshed; '
       'no SDK upgrade, installation, channel, license, system configuration, '
       'or persistent environment change was requested.';
+
+  static const _requiredProductValidations = [
+    _RequiredValidation(
+      label: 'Static analysis',
+      arguments: ['analyze'],
+      failureCategory: BootstrapExecutionStopCategory.staticAnalysisFailed,
+      stage: BootstrapExecutionStage.staticAnalysis,
+    ),
+    _RequiredValidation(
+      label: 'Default tests',
+      arguments: ['test'],
+      failureCategory: BootstrapExecutionStopCategory.defaultTestsFailed,
+      stage: BootstrapExecutionStage.defaultTests,
+    ),
+    _RequiredValidation(
+      label: 'Android APK build',
+      arguments: ['build', 'apk'],
+      failureCategory: BootstrapExecutionStopCategory.androidApkBuildFailed,
+      stage: BootstrapExecutionStage.androidApkBuild,
+    ),
+    _RequiredValidation(
+      label: 'iOS Simulator build',
+      arguments: ['build', 'ios', '--simulator'],
+      failureCategory: BootstrapExecutionStopCategory.iosSimulatorBuildFailed,
+      stage: BootstrapExecutionStage.iosSimulatorBuild,
+    ),
+  ];
 
   final Directory _factoryRoot;
   final BootstrapPreflight _preflight;
@@ -127,6 +155,48 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
     if (toolchainFailure != null) {
       return toolchainFailure;
     }
+
+    final factoryBaselineCapture = await _captureGitState(
+      _factoryRoot.path,
+      commands,
+    );
+    if (factoryBaselineCapture.inspectionFailure != null) {
+      final failure = factoryBaselineCapture.inspectionFailure!;
+      return _stopped(
+        category: BootstrapExecutionStopCategory.validationEvidenceUntrusted,
+        stage: BootstrapExecutionStage.factoryBaselineVerification,
+        commands: commands,
+        validationFailure:
+            'The Factory Git baseline inspection could not be trusted.',
+        facts: const ['No Product mutation was started.'],
+        evidence: [
+          'Inspection path: ${failure.path}',
+          'Failed operation: ${failure.operation}',
+          'Error type: ${failure.errorType}',
+          'Safe error message: ${failure.message}',
+        ],
+        notPerformed: _notPerformedFrom(
+          BootstrapExecutionStage.stagingCreation,
+        ),
+      );
+    }
+    if (factoryBaselineCapture.failure != null ||
+        factoryBaselineCapture.state == null) {
+      return _stopped(
+        category: BootstrapExecutionStopCategory.validationEvidenceUntrusted,
+        stage: BootstrapExecutionStage.factoryBaselineVerification,
+        commands: commands,
+        failedCommand: factoryBaselineCapture.failure,
+        validationFailure:
+            'The Factory Git baseline could not be captured read-only.',
+        facts: const ['No Product mutation was started.'],
+        evidence: const ['No staging directory was created.'],
+        notPerformed: _notPerformedFrom(
+          BootstrapExecutionStage.stagingCreation,
+        ),
+      );
+    }
+    final factoryBaseline = factoryBaselineCapture.state!;
 
     final targetPath = ready.normalizedOutputPath;
     _ExistingBaseline? existingBaseline;
@@ -260,35 +330,7 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
       );
     }
 
-    final authorityDocuments = _authorityRenderer.render(
-      ready.validatedRequest,
-    );
-    final authorityWrite = await _writeProductAuthority(
-      staging,
-      authorityDocuments,
-    );
-    if (authorityWrite.inspectionFailure != null) {
-      return _inspectionPartial(
-        stage: BootstrapExecutionStage.scaffoldVerification,
-        targetPath: targetPath,
-        stagingPath: staging.path,
-        commands: commands,
-        failure: authorityWrite.inspectionFailure!,
-        productMutationStarted: false,
-        gitMetadataAffected: false,
-      );
-    }
-    if (authorityWrite.failure != null) {
-      return _stopAfterCleanup(
-        category: BootstrapExecutionStopCategory.filesystemMutationFailed,
-        stage: BootstrapExecutionStage.scaffoldVerification,
-        commands: commands,
-        staging: staging,
-        targetPath: targetPath,
-        validationFailure: authorityWrite.failure,
-      );
-    }
-
+    final completedValidationSteps = <String>[];
     final pubGet = await _run(
       flutterExecutable,
       ['pub', 'get'],
@@ -296,15 +338,26 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
       commands: commands,
     );
     if (!pubGet.succeeded) {
-      return _stopAfterCleanup(
-        category: BootstrapExecutionStopCategory.dependencyPreparationFailed,
+      return _stopAfterValidationFailure(
+        ready: ready,
+        category: pubGet.didStart
+            ? BootstrapExecutionStopCategory.dependencyPreparationFailed
+            : BootstrapExecutionStopCategory.validationProcessStartFailed,
         stage: BootstrapExecutionStage.dependencyPreparation,
         commands: commands,
         staging: staging,
         targetPath: targetPath,
         failedCommand: pubGet,
+        completedValidationSteps: completedValidationSteps,
+        unperformedValidationSteps: const [
+          'Static analysis',
+          'Default tests',
+          'Android APK build',
+          'iOS Simulator build',
+        ],
       );
     }
+    completedValidationSteps.add('Flutter dependency preparation');
 
     String? stagingVerification;
     try {
@@ -349,12 +402,116 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
       );
     }
 
+    for (final validation in _requiredProductValidations) {
+      final result = await _run(
+        flutterExecutable,
+        validation.arguments,
+        workingDirectory: stagingPath,
+        commands: commands,
+      );
+      if (!result.succeeded) {
+        final validationIndex = _requiredProductValidations.indexOf(validation);
+        return _stopAfterValidationFailure(
+          ready: ready,
+          category: result.didStart
+              ? validation.failureCategory
+              : BootstrapExecutionStopCategory.validationProcessStartFailed,
+          stage: validation.stage,
+          commands: commands,
+          staging: staging,
+          targetPath: targetPath,
+          failedCommand: result,
+          completedValidationSteps: completedValidationSteps,
+          unperformedValidationSteps: _requiredProductValidations
+              .skip(validationIndex + 1)
+              .map((step) => step.label)
+              .toList(growable: false),
+        );
+      }
+      completedValidationSteps.add(validation.label);
+    }
+
+    final authorityDocuments = _authorityRenderer.render(
+      ready.validatedRequest,
+    );
+    final authorityWrite = await _writeProductAuthority(
+      staging,
+      authorityDocuments,
+    );
+    if (authorityWrite.inspectionFailure != null) {
+      return _inspectionPartial(
+        stage: BootstrapExecutionStage.scaffoldVerification,
+        targetPath: targetPath,
+        stagingPath: staging.path,
+        commands: commands,
+        failure: authorityWrite.inspectionFailure!,
+        productMutationStarted: false,
+        gitMetadataAffected: false,
+      );
+    }
+    if (authorityWrite.failure != null) {
+      return _stopAfterCleanup(
+        category: BootstrapExecutionStopCategory.filesystemMutationFailed,
+        stage: BootstrapExecutionStage.scaffoldVerification,
+        commands: commands,
+        staging: staging,
+        targetPath: targetPath,
+        validationFailure: authorityWrite.failure,
+      );
+    }
+
+    try {
+      await _runHook(
+        BootstrapExecutionStage.factoryBaselineVerification,
+        staging.path,
+        targetPath,
+      );
+    } catch (error) {
+      return _factoryBaselinePartial(
+        category: BootstrapExecutionStopCategory.validationEvidenceUntrusted,
+        targetPath: targetPath,
+        stagingPath: staging.path,
+        commands: commands,
+        failure: 'Factory baseline verification hook failed: $error',
+      );
+    }
+    final factoryPreInstallCapture = await _captureGitState(
+      _factoryRoot.path,
+      commands,
+    );
+    if (factoryPreInstallCapture.inspectionFailure != null ||
+        factoryPreInstallCapture.failure != null ||
+        factoryPreInstallCapture.state == null) {
+      return _factoryBaselinePartial(
+        category: BootstrapExecutionStopCategory.validationEvidenceUntrusted,
+        targetPath: targetPath,
+        stagingPath: staging.path,
+        commands: commands,
+        failure:
+            'The Factory Git state could not be trusted before Product installation.',
+      );
+    }
+    if (!_sameGitBaseline(
+      factoryBaseline,
+      factoryPreInstallCapture.state!,
+    )) {
+      return _factoryBaselinePartial(
+        category: BootstrapExecutionStopCategory.factoryRepositoryChanged,
+        targetPath: targetPath,
+        stagingPath: staging.path,
+        commands: commands,
+        failure:
+            'The Factory Repository changed during Product validation; staging was preserved.',
+      );
+    }
+
     return switch (ready.confirmedRepositoryMode) {
       RepositoryMode.newRepository => _installNew(
           ready: ready,
           originalRequest: originalRequest,
           staging: staging,
           commands: commands,
+          factoryBaseline: factoryBaseline,
         ),
       RepositoryMode.existingEmptyRepository => _installExisting(
           ready: ready,
@@ -362,6 +519,7 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
           staging: staging,
           commands: commands,
           baseline: existingBaseline!,
+          factoryBaseline: factoryBaseline,
         ),
     };
   }
@@ -451,6 +609,7 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
     required BootstrapRequest originalRequest,
     required Directory staging,
     required List<BootstrapProcessResult> commands,
+    required _GitState factoryBaseline,
   }) async {
     final targetPath = ready.normalizedOutputPath;
     final branch = ready.validatedRequest.initialBranchName!;
@@ -828,6 +987,7 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
       git: finalGit,
       createdRootEntries: entries,
       commands: commands,
+      factoryBaseline: factoryBaseline,
     );
   }
 
@@ -837,6 +997,7 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
     required Directory staging,
     required List<BootstrapProcessResult> commands,
     required _ExistingBaseline baseline,
+    required _GitState factoryBaseline,
   }) async {
     final targetPath = ready.normalizedOutputPath;
     final authoritativeCapture = await _captureSnapshot(
@@ -1197,16 +1358,47 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
       git: verifiedGit,
       createdRootEntries: moved,
       commands: commands,
+      factoryBaseline: factoryBaseline,
     );
   }
 
-  BootstrapExecutionPrepared _preparedResult({
+  Future<BootstrapExecutionResult> _preparedResult({
     required BootstrapPreflightReady ready,
     required _GitState git,
     required List<String> createdRootEntries,
     required List<BootstrapProcessResult> commands,
-  }) {
+    required _GitState factoryBaseline,
+  }) async {
+    final factoryFinalCapture = await _captureGitState(
+      _factoryRoot.path,
+      commands,
+    );
+    if (factoryFinalCapture.inspectionFailure != null ||
+        factoryFinalCapture.failure != null ||
+        factoryFinalCapture.state == null) {
+      return _factoryBaselinePartial(
+        category: BootstrapExecutionStopCategory.validationEvidenceUntrusted,
+        targetPath: ready.normalizedOutputPath,
+        stagingPath: null,
+        commands: commands,
+        failure:
+            'The final Factory Git state could not be captured before returning Prepared.',
+      );
+    }
+    final finalFactory = factoryFinalCapture.state!;
+    if (!_sameGitBaseline(factoryBaseline, finalFactory)) {
+      return _factoryBaselinePartial(
+        category: BootstrapExecutionStopCategory.factoryRepositoryChanged,
+        targetPath: ready.normalizedOutputPath,
+        stagingPath: null,
+        commands: commands,
+        failure:
+            'The Factory Repository changed before the Prepared result; the installed Product was preserved.',
+      );
+    }
     const authorityPaths = ['README.md', 'AGENTS.md'];
+    final validationCommands =
+        commands.where(_isTechnicalValidationCommand).toList(growable: false);
     return BootstrapExecutionPrepared(
       validatedRequest: ready.validatedRequest,
       finalProductPath: ready.normalizedOutputPath,
@@ -1225,6 +1417,13 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
         generatedPaths: authorityPaths,
         productLocalStartingPoint: 'AGENTS.md',
         factoryReferenceRequired: false,
+      ),
+      technicalValidationEvidence: BootstrapTechnicalValidationEvidence.passed(
+        completedCommands: validationCommands,
+        factoryRoot: finalFactory.topLevel,
+        factoryBranch: finalFactory.branch,
+        factoryHeadIdentity: finalFactory.headIdentity,
+        factoryStatusEntries: finalFactory.status,
       ),
       firstAgreementProposal:
           FirstAgreementProposal.fromValidatedRequest(ready.validatedRequest),
@@ -1975,6 +2174,137 @@ void main() {
     return result;
   }
 
+  Future<BootstrapExecutionResult> _stopAfterValidationFailure({
+    required BootstrapPreflightReady ready,
+    required BootstrapExecutionStopCategory category,
+    required BootstrapExecutionStage stage,
+    required List<BootstrapProcessResult> commands,
+    required Directory staging,
+    required String targetPath,
+    required BootstrapProcessResult failedCommand,
+    required List<String> completedValidationSteps,
+    required List<String> unperformedValidationSteps,
+  }) async {
+    final ownedCapture = await _captureSnapshot(
+      staging.path,
+      expectedType: FileSystemEntityType.directory,
+    );
+    if (!ownedCapture.succeeded) {
+      final failure = ownedCapture.inspectionFailure ??
+          _inspectionFailureForCapture(ownedCapture);
+      return _partial(
+        category: BootstrapExecutionStopCategory.validationEvidenceUntrusted,
+        stage: stage,
+        targetPath: targetPath,
+        stagingPath: staging.path,
+        createdOrMovedEntries: const [],
+        rollbackFailed: [staging.path],
+        commands: commands,
+        failure:
+            'Validation failed and exact staging ownership could not be captured. '
+            '${_inspectionFailureDescription(failure, stage, productMutationStarted: false)}',
+        gitMetadataAffected: false,
+        actualManifest: ownedCapture.manifest,
+      );
+    }
+
+    var hookEvidence = <String>[];
+    try {
+      await _runHook(
+        BootstrapExecutionStage.ownershipVerification,
+        staging.path,
+        targetPath,
+      );
+    } catch (_) {
+      hookEvidence = const [
+        'The ownership verification hook failed after the validation failure.',
+      ];
+    }
+
+    final facts = [
+      'Final target: $targetPath',
+      'Failed validation step: ${stage.name}',
+      'Completed validation steps: ${completedValidationSteps.isEmpty ? 'None' : completedValidationSteps.join(', ')}',
+      'Product installation was not started.',
+    ];
+    final evidence = [
+      'Failed executable: ${failedCommand.executable}',
+      'Argument list: ${failedCommand.arguments.join(', ')}',
+      'Working directory: ${failedCommand.workingDirectory}',
+      'Exit code: ${failedCommand.exitCode?.toString() ?? 'Process did not start'}',
+      'stdout captured safely: ${failedCommand.stdout.length} characters',
+      'stderr captured safely: ${failedCommand.stderr.length} characters',
+      ...hookEvidence,
+    ];
+    final notPerformed = [
+      for (final step in unperformedValidationSteps)
+        'Validation not performed: $step',
+      'Final Product installation was not performed.',
+      'Prepared, Ready, Approved, commit, remote, and push were not performed.',
+    ];
+    final validationFailure =
+        '${stage.name} did not pass; no automatic repair or retry was performed.';
+
+    if (ready.confirmedRepositoryMode == RepositoryMode.newRepository) {
+      return _stopNewAfterOwnedCleanup(
+        category: category,
+        stage: stage,
+        commands: commands,
+        staging: staging,
+        targetPath: targetPath,
+        ownedManifest: ownedCapture.manifest,
+        validationFailure: validationFailure,
+        failedCommand: failedCommand,
+        facts: facts,
+        evidence: evidence,
+        notPerformed: notPerformed,
+      );
+    }
+    return _stopExistingAfterOwnedCleanup(
+      category: category,
+      stage: stage,
+      commands: commands,
+      staging: staging,
+      targetPath: targetPath,
+      authoritativeManifest: ownedCapture.manifest,
+      failedCommand: failedCommand,
+      validationFailure: validationFailure,
+      facts: facts,
+      evidence: evidence,
+      notPerformed: notPerformed,
+    );
+  }
+
+  BootstrapExecutionPartialFailure _factoryBaselinePartial({
+    required BootstrapExecutionStopCategory category,
+    required String targetPath,
+    required String? stagingPath,
+    required List<BootstrapProcessResult> commands,
+    required String failure,
+  }) {
+    return _partial(
+      category: category,
+      stage: BootstrapExecutionStage.factoryBaselineVerification,
+      targetPath: targetPath,
+      stagingPath: stagingPath,
+      createdOrMovedEntries: const [],
+      rollbackFailed: const [],
+      commands: commands,
+      failure: failure,
+      gitMetadataAffected: false,
+    );
+  }
+
+  bool _isTechnicalValidationCommand(BootstrapProcessResult command) {
+    if (command.executable != flutterExecutable) {
+      return false;
+    }
+    return _sameList(command.arguments, const ['pub', 'get']) ||
+        _requiredProductValidations.any(
+          (validation) => _sameList(command.arguments, validation.arguments),
+        );
+  }
+
   Future<BootstrapExecutionResult> _stopNewAfterOwnedCleanup({
     required BootstrapExecutionStopCategory category,
     required BootstrapExecutionStage stage,
@@ -1983,6 +2313,10 @@ void main() {
     required String targetPath,
     required Map<String, String> ownedManifest,
     required String validationFailure,
+    BootstrapProcessResult? failedCommand,
+    List<String>? facts,
+    List<String>? evidence,
+    List<String>? notPerformed,
   }) async {
     final stagingCapture = await _captureSnapshot(
       staging.path,
@@ -2094,18 +2428,21 @@ void main() {
       category: category,
       stage: stage,
       commands: commands,
+      failedCommand: failedCommand,
       validationFailure: validationFailure,
-      facts: [
-        'Final target: $targetPath',
-        if (targetExists)
-          'An external target exists and was preserved: $targetPath',
-      ],
+      facts: facts ??
+          [
+            'Final target: $targetPath',
+            if (targetExists)
+              'An external target exists and was preserved: $targetPath',
+          ],
       evidence: [
+        ...?evidence,
         'The execution-owned staging manifest matched exactly and the staging directory was removed.',
         if (targetExists)
           'Target type observed before guarded cleanup: $targetType',
       ],
-      notPerformed: _notPerformedFrom(stage),
+      notPerformed: notPerformed ?? _notPerformedFrom(stage),
       targetUnchangedOrRestored: !targetExists,
     );
   }
@@ -2121,6 +2458,7 @@ void main() {
     bool targetUnchangedOrRestored = true,
     List<String>? facts,
     List<String>? evidence,
+    List<String>? notPerformed,
   }) async {
     try {
       if (await staging.exists()) {
@@ -2137,7 +2475,7 @@ void main() {
           ...?evidence,
           'The execution-owned staging directory was removed.',
         ],
-        notPerformed: _notPerformedFrom(stage),
+        notPerformed: notPerformed ?? _notPerformedFrom(stage),
         targetUnchangedOrRestored: targetUnchangedOrRestored,
       );
     } on FileSystemException catch (error) {
@@ -2167,6 +2505,7 @@ void main() {
     bool targetUnchangedOrRestored = true,
     List<String>? facts,
     List<String>? evidence,
+    List<String>? notPerformed,
   }) async {
     final actualCapture = await _captureSnapshot(
       staging.path,
@@ -2211,6 +2550,7 @@ void main() {
       targetUnchangedOrRestored: targetUnchangedOrRestored,
       facts: facts,
       evidence: evidence,
+      notPerformed: notPerformed,
     );
   }
 
@@ -2806,6 +3146,20 @@ final class _SmokeFailure {
 
   final BootstrapExecutionStopCategory category;
   final String message;
+}
+
+final class _RequiredValidation {
+  const _RequiredValidation({
+    required this.label,
+    required this.arguments,
+    required this.failureCategory,
+    required this.stage,
+  });
+
+  final String label;
+  final List<String> arguments;
+  final BootstrapExecutionStopCategory failureCategory;
+  final BootstrapExecutionStage stage;
 }
 
 final class _AuthorityWriteCapture {

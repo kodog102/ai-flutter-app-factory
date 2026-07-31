@@ -54,8 +54,12 @@ This statement is the current authority for the Product purpose.
 - A Flutter mobile iOS and Android starting structure has been prepared.
 - Product 기능 구현은 아직 시작되지 않았다.
 - Product feature implementation has not started.
-- 자동 기술 검증과 User의 Ready 승인은 대기 중이다.
-- Automated technical validation and User Ready approval are pending.
+- 자동 기술 검증은 통과했다.
+- Automated technical validation has passed.
+- User의 Ready 승인은 대기 중이다.
+- User Ready approval is pending.
+- 첫 Agreement 승인은 대기 중이다.
+- First Agreement approval is pending.
 - 첫 구현 전 User가 첫 Agreement를 승인해야 한다.
 - The User must approve the first Agreement before implementation.
 

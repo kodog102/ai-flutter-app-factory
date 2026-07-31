@@ -1,6 +1,7 @@
 import 'bootstrap_execution_stop_reason.dart';
 import 'bootstrap_process_runner.dart';
 import 'bootstrap_runtime_proposal.dart';
+import 'bootstrap_technical_validation.dart';
 import 'repository_mode.dart';
 import 'validated_bootstrap_request.dart';
 
@@ -24,6 +25,7 @@ final class BootstrapExecutionPrepared extends BootstrapExecutionResult {
     required this.rollbackRequired,
     required this.environmentNote,
     required this.productAuthorityEvidence,
+    required this.technicalValidationEvidence,
     required this.firstAgreementProposal,
     required this.baselineHandoffProposal,
   })  : generatedPlatforms = Set<String>.unmodifiable(generatedPlatforms),
@@ -45,9 +47,11 @@ final class BootstrapExecutionPrepared extends BootstrapExecutionResult {
   final bool rollbackRequired;
   final String environmentNote;
   final ProductAuthorityEvidence productAuthorityEvidence;
+  final BootstrapTechnicalValidationEvidence technicalValidationEvidence;
   final FirstAgreementProposal firstAgreementProposal;
   final BaselineHandoffProposal baselineHandoffProposal;
-  String get automatedTechnicalValidationStatus => 'Pending';
+  String get automatedTechnicalValidationStatus =>
+      technicalValidationEvidence.overallStatus;
   String get userReadyApprovalStatus => 'Pending';
   String get firstAgreementApprovalStatus => 'Pending';
 }

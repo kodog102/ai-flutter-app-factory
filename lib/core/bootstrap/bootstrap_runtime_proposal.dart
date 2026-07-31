@@ -72,7 +72,7 @@ final class BaselineHandoffProposal {
   final List<String> generatedProductAuthorityPaths;
   final List<String> generatedRootEntries;
   String get proposalStatus => 'Proposed';
-  String get technicalValidationStatus => 'Pending';
+  String get technicalValidationStatus => 'Passed';
   String get userApprovalStatus => 'Pending';
 }
 

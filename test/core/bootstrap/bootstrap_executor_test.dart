@@ -24,6 +24,7 @@ void main() {
     factoryRoot = await Directory(
       path.join(fixtureRoot.path, 'factory'),
     ).create();
+    await _runGit(factoryRoot, ['init', '--initial-branch=factory-main', '.']);
     preflight = FileSystemBootstrapPreflight(
       factoryRoot: factoryRoot,
       gitInspector: _FixtureGitInspector(),
@@ -183,7 +184,7 @@ void main() {
       expect(completed.hasRemotes, isFalse);
       expect(completed.generatedPlatforms, {'ios', 'android'});
       expect(completed.rollbackRequired, isFalse);
-      expect(completed.automatedTechnicalValidationStatus, 'Pending');
+      expect(completed.automatedTechnicalValidationStatus, 'Passed');
       expect(completed.userReadyApprovalStatus, 'Pending');
       expect(completed.firstAgreementApprovalStatus, 'Pending');
       expect(
@@ -196,7 +197,7 @@ void main() {
           'Proposed — User approval required');
       expect(completed.baselineHandoffProposal.proposalStatus, 'Proposed');
       expect(completed.baselineHandoffProposal.technicalValidationStatus,
-          'Pending');
+          'Passed');
       expect(completed.baselineHandoffProposal.userApprovalStatus, 'Pending');
       expect(
         completed.baselineHandoffProposal.generatedProductAuthorityPaths,
@@ -211,6 +212,9 @@ void main() {
           contains('Validate executable Bootstrap.'),
           contains('Prepare a neutral Flutter scaffold.'),
           contains('Product feature implementation has not started'),
+          contains('Automated technical validation has passed'),
+          contains('User Ready approval is pending'),
+          contains('First Agreement approval is pending'),
         ),
       );
       expect(
@@ -267,6 +271,45 @@ void main() {
           '--no-pub',
           '.',
         ],
+      );
+      final validationInvocations = runner.invocations
+          .where(
+            (call) =>
+                call.executable == 'flutter' &&
+                const [
+                  'pub get',
+                  'analyze',
+                  'test',
+                  'build apk',
+                  'build ios --simulator',
+                ].contains(call.arguments.join(' ')),
+          )
+          .toList(growable: false);
+      expect(
+        validationInvocations.map((call) => call.arguments),
+        [
+          ['pub', 'get'],
+          ['analyze'],
+          ['test'],
+          ['build', 'apk'],
+          ['build', 'ios', '--simulator'],
+        ],
+      );
+      expect(
+        validationInvocations.map((call) => call.workingDirectory).toSet(),
+        hasLength(1),
+      );
+      expect(
+        path.basename(validationInvocations.first.workingDirectory),
+        contains('.factory-bootstrap-'),
+      );
+      expect(
+        completed.technicalValidationEvidence.completedCommands,
+        hasLength(5),
+      );
+      expect(
+        completed.technicalValidationEvidence.factoryRepositoryUnchangedStatus,
+        'Confirmed',
       );
       expect(_ownedStaging(fixtureRoot), isEmpty);
       expect(_snapshot(factoryRoot.path), factoryBefore);
@@ -755,6 +798,183 @@ void main() {
     });
   });
 
+  group('automated technical validation', () {
+    final failureCases = <({
+      String name,
+      _FakeProcessRunner Function() runner,
+      BootstrapExecutionStopCategory category,
+      List<String> failedArguments,
+    })>[
+      (
+        name: 'static analysis',
+        runner: () => _FakeProcessRunner(failAnalyze: true),
+        category: BootstrapExecutionStopCategory.staticAnalysisFailed,
+        failedArguments: ['analyze'],
+      ),
+      (
+        name: 'default tests',
+        runner: () => _FakeProcessRunner(failDefaultTests: true),
+        category: BootstrapExecutionStopCategory.defaultTestsFailed,
+        failedArguments: ['test'],
+      ),
+      (
+        name: 'Android APK build',
+        runner: () => _FakeProcessRunner(failAndroidBuild: true),
+        category: BootstrapExecutionStopCategory.androidApkBuildFailed,
+        failedArguments: ['build', 'apk'],
+      ),
+      (
+        name: 'iOS Simulator build',
+        runner: () => _FakeProcessRunner(failIosBuild: true),
+        category: BootstrapExecutionStopCategory.iosSimulatorBuildFailed,
+        failedArguments: ['build', 'ios', '--simulator'],
+      ),
+    ];
+
+    for (final failureCase in failureCases) {
+      test('${failureCase.name} failure stops before New installation',
+          () async {
+        final ready = await newReady(
+          path.join(
+            fixtureRoot.path,
+            'validation_${failureCase.name.replaceAll(' ', '_')}',
+          ),
+        );
+        final runner = failureCase.runner();
+
+        final result = await executor(runner: runner).execute(ready);
+
+        final stopped = result as BootstrapExecutionStopped;
+        expect(stopped.category, failureCase.category);
+        expect(stopped.failedCommand?.arguments, failureCase.failedArguments);
+        expect(
+          stopped.confirmedFacts.join('\n'),
+          contains('Completed validation steps:'),
+        );
+        expect(
+          stopped.evidence.join('\n'),
+          allOf(
+            contains('Failed executable: flutter'),
+            contains('Working directory:'),
+            contains('Exit code:'),
+          ),
+        );
+        expect(
+          stopped.notPerformed,
+          contains('Final Product installation was not performed.'),
+        );
+        expect(stopped.targetUnchangedOrRestored, isTrue);
+        expect(await Directory(ready.normalizedOutputPath).exists(), isFalse);
+        expect(_ownedStaging(fixtureRoot), isEmpty);
+        final failedIndex = runner.invocations.indexWhere(
+          (call) =>
+              call.arguments.join('\u0000') ==
+              failureCase.failedArguments.join('\u0000'),
+        );
+        expect(failedIndex, greaterThanOrEqualTo(0));
+        expect(
+          runner.invocations.skip(failedIndex + 1).where(
+                (call) =>
+                    call.executable == 'flutter' &&
+                    const [
+                      'analyze',
+                      'test',
+                      'build apk',
+                      'build ios --simulator',
+                    ].contains(call.arguments.join(' ')),
+              ),
+          isEmpty,
+        );
+      });
+    }
+
+    test('reports a validation process start failure structurally', () async {
+      final ready = await newReady();
+      final result = await executor(
+        runner: _FakeProcessRunner(validationProcessStartFailure: true),
+      ).execute(ready);
+
+      final stopped = result as BootstrapExecutionStopped;
+      expect(
+        stopped.category,
+        BootstrapExecutionStopCategory.validationProcessStartFailed,
+      );
+      expect(stopped.stage, BootstrapExecutionStage.staticAnalysis);
+      expect(stopped.failedCommand?.didStart, isFalse);
+      expect(stopped.failedCommand?.exitCode, isNull);
+      expect(await Directory(ready.normalizedOutputPath).exists(), isFalse);
+    });
+
+    test('preserves unknown staging content after validation failure',
+        () async {
+      final ready = await newReady();
+
+      final result = await executor(
+        runner: _FakeProcessRunner(failAnalyze: true),
+        hook: (stage, {required stagingPath, required finalTargetPath}) async {
+          if (stage == BootstrapExecutionStage.ownershipVerification) {
+            await File(
+              path.join(stagingPath, 'external-after-validation.txt'),
+            ).writeAsString('external');
+          }
+        },
+      ).execute(ready);
+
+      final partial = result as BootstrapExecutionPartialFailure;
+      expect(
+          partial.category, BootstrapExecutionStopCategory.ownershipMismatch);
+      expect(partial.stage, BootstrapExecutionStage.staticAnalysis);
+      expect(partial.stagingPath, isNotNull);
+      expect(await Directory(partial.stagingPath!).exists(), isTrue);
+      expect(
+        await File(
+          path.join(partial.stagingPath!, 'external-after-validation.txt'),
+        ).readAsString(),
+        'external',
+      );
+      final preservedReadme = await File(
+        path.join(partial.stagingPath!, 'README.md'),
+      ).readAsString();
+      expect(
+        preservedReadme,
+        isNot(contains('Automated technical validation has passed')),
+      );
+      expect(await Directory(ready.normalizedOutputPath).exists(), isFalse);
+    });
+
+    test('preserves staging and blocks Prepared when Factory changes',
+        () async {
+      final ready = await newReady();
+      var changed = false;
+
+      final result = await executor(
+        runner: _FakeProcessRunner(useSystemGit: true),
+        hook: (stage, {required stagingPath, required finalTargetPath}) async {
+          if (stage == BootstrapExecutionStage.factoryBaselineVerification &&
+              !changed) {
+            changed = true;
+            await File(
+              path.join(factoryRoot.path, 'unexpected-factory-change.txt'),
+            ).writeAsString('changed');
+          }
+        },
+      ).execute(ready);
+
+      final partial = result as BootstrapExecutionPartialFailure;
+      expect(
+        partial.category,
+        BootstrapExecutionStopCategory.factoryRepositoryChanged,
+      );
+      expect(
+        partial.stage,
+        BootstrapExecutionStage.factoryBaselineVerification,
+      );
+      expect(partial.stagingPath, isNotNull);
+      expect(await Directory(partial.stagingPath!).exists(), isTrue);
+      expect(await Directory(ready.normalizedOutputPath).exists(), isFalse);
+    });
+  });
+
   group('Product authority write safety', () {
     test('rejects README symlink and preserves its external target', () async {
       final ready = await newReady();
@@ -983,6 +1203,29 @@ void main() {
         (result as BootstrapExecutionStopped).category,
         BootstrapExecutionStopCategory.dependencyPreparationFailed,
       );
+      expect(_snapshot(target.path), before);
+      expect(_ownedStaging(fixtureRoot), isEmpty);
+    });
+
+    test('validation failure leaves Existing files and Git state unchanged',
+        () async {
+      final target = await _existingRepository(
+        fixtureRoot,
+        'existing_validation_failure',
+      );
+      final before = _snapshot(target.path);
+      final ready = await existingReady(target);
+
+      final result = await executor(
+        runner: _FakeProcessRunner(failAndroidBuild: true),
+      ).execute(ready);
+
+      final stopped = result as BootstrapExecutionStopped;
+      expect(
+        stopped.category,
+        BootstrapExecutionStopCategory.androidApkBuildFailed,
+      );
+      expect(stopped.targetUnchangedOrRestored, isTrue);
       expect(_snapshot(target.path), before);
       expect(_ownedStaging(fixtureRoot), isEmpty);
     });
@@ -1556,6 +1799,22 @@ void main() {
         () => result.baselineHandoffProposal.gitStatusEntries.clear(),
         throwsUnsupportedError,
       );
+      expect(result.automatedTechnicalValidationStatus, 'Passed');
+      expect(result.userReadyApprovalStatus, 'Pending');
+      expect(result.firstAgreementApprovalStatus, 'Pending');
+      expect(
+        result.technicalValidationEvidence.completedCommands,
+        hasLength(5),
+      );
+      expect(
+        () => result.technicalValidationEvidence.completedCommands.clear(),
+        throwsUnsupportedError,
+      );
+      expect(
+        () => result.technicalValidationEvidence.factoryStatusEntries
+            .add('approved'),
+        throwsUnsupportedError,
+      );
       expect(
         () => result.commandsCompleted.add(
           BootstrapProcessResult(
@@ -1778,6 +2037,11 @@ final class _FakeProcessRunner implements BootstrapProcessRunner {
     this.createHelp = '--empty --platforms --project-name --org --no-pub',
     this.failFlutterCreate = false,
     this.failPubGet = false,
+    this.failAnalyze = false,
+    this.failDefaultTests = false,
+    this.failAndroidBuild = false,
+    this.failIosBuild = false,
+    this.validationProcessStartFailure = false,
     this.failGitInit = false,
     this.precreateSmokeTest = false,
     this.blockTestDirectory = false,
@@ -1796,6 +2060,11 @@ final class _FakeProcessRunner implements BootstrapProcessRunner {
   final String createHelp;
   final bool failFlutterCreate;
   final bool failPubGet;
+  final bool failAnalyze;
+  final bool failDefaultTests;
+  final bool failAndroidBuild;
+  final bool failIosBuild;
+  final bool validationProcessStartFailure;
   final bool failGitInit;
   final bool precreateSmokeTest;
   final bool blockTestDirectory;
@@ -1934,6 +2203,47 @@ final class _FakeProcessRunner implements BootstrapProcessRunner {
           workingDirectory,
           exitCode: failPubGet ? 1 : 0,
           stderr: failPubGet ? 'pub get failed' : '',
+        );
+      }
+      if (arguments.length == 1 && arguments.single == 'analyze') {
+        return _result(
+          executable,
+          arguments,
+          workingDirectory,
+          didStart: !validationProcessStartFailure,
+          exitCode: validationProcessStartFailure
+              ? null
+              : failAnalyze
+                  ? 1
+                  : 0,
+          stderr: failAnalyze ? 'analysis failed' : '',
+        );
+      }
+      if (arguments.length == 1 && arguments.single == 'test') {
+        return _result(
+          executable,
+          arguments,
+          workingDirectory,
+          exitCode: failDefaultTests ? 1 : 0,
+          stderr: failDefaultTests ? 'tests failed' : '',
+        );
+      }
+      if (arguments case ['build', 'apk']) {
+        return _result(
+          executable,
+          arguments,
+          workingDirectory,
+          exitCode: failAndroidBuild ? 1 : 0,
+          stderr: failAndroidBuild ? 'Android build failed' : '',
+        );
+      }
+      if (arguments case ['build', 'ios', '--simulator']) {
+        return _result(
+          executable,
+          arguments,
+          workingDirectory,
+          exitCode: failIosBuild ? 1 : 0,
+          stderr: failIosBuild ? 'iOS Simulator build failed' : '',
         );
       }
     }

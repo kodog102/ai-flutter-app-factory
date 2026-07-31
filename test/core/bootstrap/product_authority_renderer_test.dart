@@ -22,8 +22,12 @@ void main() {
       contains('Clarify the first inventory workflow.'),
     );
     expect(documents.readme, contains('Repository-local 시작점'));
-    expect(documents.readme, contains('Automated technical validation'));
-    expect(documents.readme, contains('User Ready approval are pending'));
+    expect(
+      documents.readme,
+      contains('Automated technical validation has passed'),
+    );
+    expect(documents.readme, contains('User Ready approval is pending'));
+    expect(documents.readme, contains('First Agreement approval is pending'));
     expect(documents.readme, contains('`AGENTS.md`'));
     expect(documents.readme, isNot(contains('/Users/')));
 

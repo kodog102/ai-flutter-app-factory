@@ -27,7 +27,7 @@ void main() {
     );
   });
 
-  test('keeps fixed pending baseline status and evidence immutable', () {
+  test('keeps fixed validated baseline proposal status immutable', () {
     final proposal = BaselineHandoffProposal(
       repositoryIdentity: '/portable/product',
       branch: 'main',
@@ -40,7 +40,7 @@ void main() {
     );
 
     expect(proposal.proposalStatus, 'Proposed');
-    expect(proposal.technicalValidationStatus, 'Pending');
+    expect(proposal.technicalValidationStatus, 'Passed');
     expect(proposal.userApprovalStatus, 'Pending');
     expect(proposal.headAvailable, isFalse);
     expect(proposal.headIdentity, isNull);
