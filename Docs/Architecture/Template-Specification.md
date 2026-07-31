@@ -5,14 +5,18 @@
 
 ## Status
 
-Draft
+Inactive Legacy Draft
 
 ## Purpose
 
-- Factory에서 Template를 식별하고 위치를 결정하는 공식 계약을 정의한다
-- Define the official contract for identifying and locating Templates in the Factory
+- 비활성 legacy 경로에서 Template를 식별하고 위치를 결정하던 초안 계약을 기록한다
+- Record the draft contract that identified and located Templates in the inactive legacy path
 - Template Locator와 Project Generator가 공유할 최소 기준을 제공한다
 - Provide the minimum shared rules for Template Locator and Project Generator
+
+이 문서는 현재 Executable Flutter V1 계약이나 실행 경로가 아니다. 현재 Authority는 `Docs/ARCHITECTURE.md`다.
+
+This document is not the current Executable Flutter V1 contract or execution path. The current authority is `Docs/ARCHITECTURE.md`.
 
 ## Scope
 

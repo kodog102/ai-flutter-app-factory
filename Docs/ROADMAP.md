@@ -9,12 +9,12 @@
 - The Factory purpose, roles, Repository boundary, and Operational Bootstrap Contract are defined
 - Approved Operational Baseline Handoff lifecycle이 정의되어 있다
 - The Approved Operational Baseline Handoff lifecycle is defined
-- 현재 runtime은 Executable Flutter V1 계약을 아직 구현하지 않는다
-- The current runtime does not yet implement the Executable Flutter V1 contract
+- 현재 runtime은 검증된 Executable Flutter V1 계약을 구현하며 User의 V1 Ready 및 release 승인을 기다린다
+- The current runtime implements the verified Executable Flutter V1 contract and awaits User approval of V1 readiness and release
 
 ## 1. V1 SSOT Alignment
 
-Status: **In Review**
+Status: **Completed**
 
 ### Goal
 
@@ -28,48 +28,68 @@ Status: **In Review**
 
 ## 2. Intake and Safe Preflight
 
-Status: **Not Started**
+Status: **Completed**
 
 ### Goal
 
 - 승인된 V1 입력을 검증하고 미지원·불충분·충돌 요청을 안전하게 중단한다
 - Validate approved V1 inputs and safely stop unsupported, insufficient, or conflicting requests
 
+검증된 intake와 read-only preflight가 구현되어 있다.
+
+Verified intake and read-only preflight are implemented.
+
 ## 3. Flutter Scaffold and Repository Boundary
 
-Status: **Not Started**
+Status: **Completed**
 
 ### Goal
 
 - 독립 Repository 경계와 iOS/Android Flutter 기본 구조를 준비한다
 - Prepare the independent Repository boundary and iOS/Android Flutter base structure
 
+New Repository와 Existing Empty Repository mode가 검증되었다.
+
+New Repository and Existing Empty Repository modes are verified.
+
 ## 4. Product-local Authority and Proposals
 
-Status: **Not Started**
+Status: **Completed**
 
 ### Goal
 
 - Product-local Authority, First Agreement Proposal과 Baseline Handoff Proposal을 준비한다
 - Prepare Product-local authority, the First Agreement Proposal, and the Baseline Handoff Proposal
 
+Product-local README, AGENTS와 두 proposal이 검증되었다.
+
+Product-local README, AGENTS, and both proposals are verified.
+
 ## 5. Automated Validation
 
-Status: **Not Started**
+Status: **Completed**
 
 ### Goal
 
 - Factory와 생성 결과의 필수 분석, 테스트와 빌드 검증을 자동으로 판정한다
 - Automatically evaluate the required analysis, tests, and build verification for the Factory and generated result
 
+Dependency 준비, analyze, test, Android APK와 iOS Simulator build가 자동 검증된다.
+
+Dependency preparation, analysis, tests, the Android APK build, and the iOS Simulator build are validated automatically.
+
 ## 6. End-to-End Cross-Product Validation
 
-Status: **Not Started**
+Status: **Completed**
 
 ### Goal
 
 - 서로 다른 Product 분야에서 같은 V1 계약을 검증한다
 - Validate the same V1 contract across different Product domains
+
+서로 다른 Product 분야와 Repository mode에서 반복 가능성과 격리가 검증되었다.
+
+Repeatability and isolation are verified across Product domains and Repository modes.
 
 단일 Product 결과는 자동으로 Core Standard가 되지 않는다.
 
@@ -77,7 +97,7 @@ A result from one Product does not automatically become a Core Standard.
 
 ## 7. V1 Readiness and Release Decision
 
-Status: **Not Started**
+Status: **In Review**
 
 ### Goal
 

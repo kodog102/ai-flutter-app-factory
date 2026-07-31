@@ -1,11 +1,10 @@
 import 'dart:io';
 
-import 'package:ai_flutter_app_factory/core/bootstrap/bootstrap_execution_result.dart';
-import 'package:ai_flutter_app_factory/core/bootstrap/bootstrap_execution_stop_reason.dart';
-import 'package:ai_flutter_app_factory/core/bootstrap/bootstrap_executor.dart';
-import 'package:ai_flutter_app_factory/core/bootstrap/bootstrap_preflight.dart';
-import 'package:ai_flutter_app_factory/core/bootstrap/bootstrap_preflight_result.dart';
-import 'package:ai_flutter_app_factory/core/bootstrap/bootstrap_request.dart';
+import 'package:ai_flutter_app_factory/ai_flutter_app_factory.dart';
+import 'package:ai_flutter_app_factory/core/bootstrap/bootstrap_executor.dart'
+    show FileSystemBootstrapExecutor;
+import 'package:ai_flutter_app_factory/core/bootstrap/bootstrap_preflight.dart'
+    show FileSystemBootstrapPreflight;
 import 'package:path/path.dart' as path;
 import 'package:test/test.dart';
 
@@ -20,17 +19,14 @@ void main() {
       final fixture = await _fixture();
       try {
         final targetPath = path.join(fixture.root.path, 'new_product');
-        final preflight = FileSystemBootstrapPreflight(
+        final runtime = FlutterAppFactoryRuntime(
           factoryRoot: fixture.factory,
         );
-        final ready = await preflight.inspect(
+        final ready = await runtime.inspect(
           _request(outputPath: targetPath),
         ) as BootstrapPreflightReady;
 
-        final result = await FileSystemBootstrapExecutor(
-          factoryRoot: fixture.factory,
-          preflight: preflight,
-        ).execute(ready);
+        final result = await runtime.execute(ready);
 
         expect(result, isA<BootstrapExecutionPrepared>(),
             reason: _describe(result));
@@ -172,10 +168,10 @@ void main() {
           path.join(target.path, '.git', 'config'),
         ).readAsString();
 
-        final preflight = FileSystemBootstrapPreflight(
+        final runtime = FlutterAppFactoryRuntime(
           factoryRoot: fixture.factory,
         );
-        final ready = await preflight.inspect(
+        final ready = await runtime.inspect(
           _request(
             outputPath: target.path,
             repositoryMode: 'existingEmptyRepository',
@@ -184,10 +180,7 @@ void main() {
           ),
         ) as BootstrapPreflightReady;
 
-        final result = await FileSystemBootstrapExecutor(
-          factoryRoot: fixture.factory,
-          preflight: preflight,
-        ).execute(ready);
+        final result = await runtime.execute(ready);
 
         expect(result, isA<BootstrapExecutionPrepared>(),
             reason: _describe(result));
@@ -622,10 +615,10 @@ void main() {
         final rendered = <String>[];
         for (final product in cases) {
           final targetPath = path.join(fixture.root.path, product.directory);
-          final preflight = FileSystemBootstrapPreflight(
+          final runtime = FlutterAppFactoryRuntime(
             factoryRoot: fixture.factory,
           );
-          final ready = await preflight.inspect(
+          final ready = await runtime.inspect(
             _request(
               outputPath: targetPath,
               productDisplayName: product.name,
@@ -634,10 +627,8 @@ void main() {
               flutterProjectName: product.project,
             ),
           ) as BootstrapPreflightReady;
-          final result = await FileSystemBootstrapExecutor(
-            factoryRoot: fixture.factory,
-            preflight: preflight,
-          ).execute(ready) as BootstrapExecutionPrepared;
+          final result =
+              await runtime.execute(ready) as BootstrapExecutionPrepared;
           final authority =
               '${await File(path.join(targetPath, 'README.md')).readAsString()}\n'
               '${await File(path.join(targetPath, 'AGENTS.md')).readAsString()}';

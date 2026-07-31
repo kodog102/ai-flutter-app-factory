@@ -1,3 +1,9 @@
+# 비활성 legacy manifest이며 Executable Flutter V1 runtime에서 사용하지 않는다.
+# Inactive legacy manifest; it is not used by the Executable Flutter V1 runtime.
+# Active authority: Docs/ARCHITECTURE.md
+# 아래 Template path는 V1 requirement가 아니다.
+# The Template path below is not a V1 requirement.
+
 factory:
   name: AI Flutter App Factory
   version: 1.0.0

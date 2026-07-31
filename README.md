@@ -46,6 +46,60 @@ Ready Product는 새로운 작업 주체가 Factory를 다시 읽지 않고 Prod
 
 A Ready Product is a state in which a new work participant can propose the first Agreement from the Product Repository alone without rereading the Factory.
 
+### Active Runtime
+
+```text
+BootstrapRequest
+    ↓
+FlutterAppFactoryRuntime.inspect
+    ↓
+BootstrapPreflightReady
+    ↓
+FlutterAppFactoryRuntime.execute
+    ↓
+BootstrapExecutionPrepared | BootstrapExecutionStopped | BootstrapExecutionPartialFailure
+```
+
+외부 consumer는 package-root API 하나만 import한다.
+
+External consumers import only the package-root API.
+
+```dart
+import 'dart:io';
+
+import 'package:ai_flutter_app_factory/ai_flutter_app_factory.dart';
+
+Future<void> main() async {
+  final runtime = FlutterAppFactoryRuntime(
+    factoryRoot: Directory('/exact/factory/path'),
+  );
+  final request = BootstrapRequest(
+    productDisplayName: 'Example Product',
+    productPurpose: 'Validate the public Factory runtime.',
+    initialProductScopeOrFirstIntendedOutcome:
+        'Prepare the first Product Agreement.',
+    exactOutputPath: '/exact/product/path',
+    repositoryMode: RepositoryMode.newRepository.name,
+    initialBranchName: 'main',
+    repositoryPolicy: null,
+    flutterProjectName: 'example_product',
+    organizationIdentifier: 'com.example',
+    requestedTechnology: 'flutter',
+    targetPlatforms: const ['ios', 'android'],
+  );
+
+  final preflight = await runtime.inspect(request);
+  if (preflight case BootstrapPreflightReady ready) {
+    final result = await runtime.execute(ready);
+    print(result.runtimeType);
+  }
+}
+```
+
+Executable Flutter V1은 `lib/core/bootstrap/` runtime을 package-root façade로 조정한다. Template/Generator pipeline은 active V1 경로가 아니며, `factory.yaml`과 `factory_manifest.json`은 inactive legacy metadata다. CLI는 V1 기능이 아니다.
+
+Executable Flutter V1 coordinates the `lib/core/bootstrap/` runtime through the package-root façade. The Template/Generator pipeline is not the active V1 path, and `factory.yaml` and `factory_manifest.json` are inactive legacy metadata. A CLI is not a V1 capability.
+
 ## Role Model
 
 - Roles are stable.
@@ -59,8 +113,15 @@ A Ready Product is a state in which a new work participant can propose the first
 .
 ├── AGENTS.md
 ├── README.md
-├── factory.yaml
-├── factory_manifest.json
+├── factory.yaml                         # inactive legacy metadata
+├── factory_manifest.json                # inactive legacy metadata
+├── lib/
+│   ├── ai_flutter_app_factory.dart       # active public V1 API
+│   └── core/
+│       ├── bootstrap/                    # active V1 runtime
+│       ├── factory/                      # inactive legacy source
+│       ├── generator/                    # inactive legacy source
+│       └── template/                     # inactive legacy source
 └── Docs/
     ├── ARCHITECTURE.md
     ├── DESIGN.md
@@ -93,9 +154,9 @@ A Ready Product is a state in which a new work participant can propose the first
 
 ## Development Status
 
-현재 상태: **Executable V1 Contract Aligned — Runtime Implementation Pending**
+현재 상태: **Flutter V1 Closure Candidate — User Ready Approval Pending**
 
-Current status: **Executable V1 Contract Aligned — Runtime Implementation Pending**
+Current status: **Flutter V1 Closure Candidate — User Ready Approval Pending**
 
 ## License
 

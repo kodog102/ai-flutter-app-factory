@@ -30,8 +30,15 @@ This is the structure of the current repository.
 ├── AGENTS.md
 ├── LICENSE
 ├── README.md
-├── factory.yaml
-├── factory_manifest.json
+├── factory.yaml                         # inactive legacy metadata
+├── factory_manifest.json                # inactive legacy metadata
+├── lib/
+│   ├── ai_flutter_app_factory.dart       # active Executable V1 public API
+│   └── core/
+│       ├── bootstrap/                    # active Executable V1 runtime
+│       ├── factory/                      # inactive legacy source
+│       ├── generator/                    # inactive legacy source
+│       └── template/                     # inactive legacy source
 └── Docs/
     ├── ARCHITECTURE.md
     ├── DESIGN.md
@@ -166,6 +173,10 @@ Operational Bootstrap defines the Repository boundary, Product-local operating a
 Executable Flutter Bootstrap은 Factory V1의 Operational Bootstrap 적용 범위다. Operational Bootstrap을 유지하면서 Flutter/Dart 기반 iOS 및 Android 기본 구조와 필수 기술 검증을 추가한다.
 
 Executable Flutter Bootstrap is the Factory V1 application of Operational Bootstrap. It preserves Operational Bootstrap and adds a Flutter/Dart-based iOS and Android base structure and required technical verification.
+
+외부 consumer의 공식 Executable V1 실행 경계는 package-root `ai_flutter_app_factory.dart`와 `FlutterAppFactoryRuntime` façade다. Façade는 기존 preflight와 executor를 조정하며 별도의 Bootstrap Architecture나 동작을 정의하지 않는다.
+
+The official Executable V1 boundary for external consumers is the package-root `ai_flutter_app_factory.dart` library and its `FlutterAppFactoryRuntime` façade. The façade coordinates the existing preflight and executor and does not define a separate Bootstrap Architecture or behavior.
 
 Flutter scaffold와 기본 검증은 Factory Bootstrap 책임이다. Product 기능, 데이터 모델, UI, backend, 인증, 외부 서비스와 Product별 package는 Product-local Agreement가 소유한다.
 
@@ -608,6 +619,10 @@ Product Implementation
 기존 Template 및 Generator 설계는 현재 V1 실행 경로가 아니다. 후속 검증과 별도 승인 전까지 V1 계약에 포함하지 않는다.
 
 The existing Template and Generator designs are not the current V1 execution path. They remain outside the V1 contract until later validation and separate approval.
+
+`factory.yaml`, `factory_manifest.json`, `lib/core/factory/`, `lib/core/template/`, `lib/core/generator/`와 Template Specification은 inactive legacy 자산이며 package-root V1 API에서 사용하거나 export하지 않는다.
+
+`factory.yaml`, `factory_manifest.json`, `lib/core/factory/`, `lib/core/template/`, `lib/core/generator/`, and the Template Specification are inactive legacy assets and are not used or exported by the package-root V1 API.
 
 ### Ready Product Criteria
 

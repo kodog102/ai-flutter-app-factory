@@ -45,6 +45,103 @@ Confirm the following before running Executable V1.
 
 Do not continue Bootstrap when a required environment cannot be verified. `Docs/ARCHITECTURE.md` owns the detailed stop conditions.
 
+## Required Product Inputs
+
+Executable V1 요청은 다음 열 개의 개념 입력을 모두 제공한다.
+
+An Executable V1 request provides all ten conceptual inputs below.
+
+1. Product Display Name / Product 표시 이름
+2. Product Purpose / Product 목적
+3. Initial Product Scope or First Intended Outcome / 초기 Product 범위 또는 첫 번째 의도된 결과
+4. Exact Output Path / 정확한 출력 경로
+5. Repository Mode / Repository 모드
+6. Initial Branch Name or Repository Policy / 초기 branch 이름 또는 Repository 정책
+7. Flutter Project Name / Flutter project 식별자
+8. Organization Identifier / Organization 식별자
+9. Requested Technology / 요청 기술
+10. Target Platforms / 대상 플랫폼
+
+정확한 accepted token은 다음과 같다.
+
+The exact accepted tokens are:
+
+```text
+repositoryMode:
+- newRepository
+- existingEmptyRepository
+
+requestedTechnology:
+- flutter
+
+targetPlatforms:
+- ios
+- android
+```
+
+`newRepository`는 `initialBranchName`을 요구하고 `repositoryPolicy`는 `null`이어야 한다. `existingEmptyRepository`는 기존 독립 Repository 정책을 보존하기 위한 `repositoryPolicy`를 요구하고 `initialBranchName`은 `null`이어야 한다.
+
+`newRepository` requires `initialBranchName` and uses `null` for `repositoryPolicy`. `existingEmptyRepository` requires `repositoryPolicy` to preserve the existing independent Repository policy and uses `null` for `initialBranchName`.
+
+## Public API Execution
+
+외부 consumer는 package-root library만 사용한다.
+
+External consumers use only the package-root library.
+
+```dart
+import 'dart:io';
+
+import 'package:ai_flutter_app_factory/ai_flutter_app_factory.dart';
+
+Future<void> main() async {
+  final runtime = FlutterAppFactoryRuntime(
+    factoryRoot: Directory('/exact/factory/path'),
+  );
+  final request = BootstrapRequest(
+    productDisplayName: 'Example Product',
+    productPurpose: 'Validate the public Factory runtime.',
+    initialProductScopeOrFirstIntendedOutcome:
+        'Prepare the first Product Agreement.',
+    exactOutputPath: '/exact/product/path',
+    repositoryMode: RepositoryMode.newRepository.name,
+    initialBranchName: 'main',
+    repositoryPolicy: null,
+    flutterProjectName: 'example_product',
+    organizationIdentifier: 'com.example',
+    requestedTechnology: 'flutter',
+    targetPlatforms: const ['ios', 'android'],
+  );
+
+  final preflight = await runtime.inspect(request);
+  if (preflight case BootstrapPreflightReady ready) {
+    final result = await runtime.execute(ready);
+    print(result.runtimeType);
+  } else if (preflight case BootstrapPreflightStopped stopped) {
+    print(stopped.reasons.map((reason) => reason.description).join('\n'));
+  }
+}
+```
+
+실행 순서는 `BootstrapRequest` → `inspect` → `BootstrapPreflightReady` → `execute`다. `BootstrapPreflightStopped`는 Product mutation 전에 구조화된 중단 근거를 반환한다.
+
+The execution sequence is `BootstrapRequest` → `inspect` → `BootstrapPreflightReady` → `execute`. `BootstrapPreflightStopped` returns structured stop evidence before Product mutation.
+
+## Result Handling and Approval Boundary
+
+- `BootstrapPreflightStopped`: 입력 또는 Target 검증이 실패했으며 execution을 시작하지 않음
+- `BootstrapPreflightStopped`: input or Target validation failed and execution did not begin
+- `BootstrapExecutionPrepared`: Bootstrap 산출물과 기술 Evidence가 준비됐지만 Ready 또는 Approved가 아님
+- `BootstrapExecutionPrepared`: Bootstrap outputs and technical Evidence are prepared, but the Product is not Ready or Approved
+- `BootstrapExecutionStopped`: 안전한 중단 또는 복구가 확인됨
+- `BootstrapExecutionStopped`: a safe stop or restoration was confirmed
+- `BootstrapExecutionPartialFailure`: 자동 정리를 계속할 수 없어 User 검사가 필요한 경로와 Evidence를 반환함
+- `BootstrapExecutionPartialFailure`: automatic cleanup could not safely continue, so paths and Evidence requiring User inspection are returned
+
+Prepared 이후 순서는 Baseline Handoff Proposal 제시 → User의 Ready 상태와 baseline 승인 → 첫 Agreement 승인 → Product Implementation 시작이다.
+
+After Prepared, the order is presentation of the Baseline Handoff Proposal → User approval of the Ready state and baseline → approval of the first Agreement → start of Product Implementation.
+
 ## Generated Product Verification Environment
 
 생성된 Product는 Flutter 기본 dependency 준비, 정적 분석, 기본 테스트, Android APK build와 iOS Simulator build를 수행할 수 있는 환경에서 검증한다.
