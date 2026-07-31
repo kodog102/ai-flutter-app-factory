@@ -243,6 +243,71 @@ void main() {
       );
     });
 
+    test('rejects branch-only input in Existing Repository mode', () async {
+      final target = await _createExistingEmptyRepository(
+        fixtureRoot,
+        'existing_branch_only',
+      );
+      final statusBefore = await _gitStatus(target);
+      final filesystemBefore = _snapshot(target);
+
+      final stopped = _expectStopped(
+        await preflight.inspect(
+          _request(
+            outputPath: target.path,
+            repositoryMode: 'existingEmptyRepository',
+            initialBranchName: 'main',
+            repositoryPolicy: null,
+          ),
+        ),
+      );
+
+      expect(
+        stopped.reasons,
+        contains(
+          isA<BootstrapStopReason>()
+              .having(
+                (reason) => reason.category,
+                'category',
+                BootstrapStopCategory.invalidBranchOrRepositoryPolicy,
+              )
+              .having(
+                (reason) => reason.fieldOrFact,
+                'field',
+                'initialBranchNameOrRepositoryPolicy',
+              ),
+        ),
+      );
+      expect(await File(path.join(target.path, 'README.md')).exists(), isFalse);
+      expect(await _gitStatus(target), statusBefore);
+      expect(_snapshot(target), filesystemBefore);
+    });
+
+    test('rejects both fields in Existing Repository mode', () async {
+      final target = await _createExistingEmptyRepository(
+        fixtureRoot,
+        'existing_both_fields',
+      );
+      final statusBefore = await _gitStatus(target);
+      final filesystemBefore = _snapshot(target);
+
+      final result = await preflight.inspect(
+        _request(
+          outputPath: target.path,
+          repositoryMode: 'existingEmptyRepository',
+          initialBranchName: 'main',
+          repositoryPolicy: 'preserve existing Repository policy',
+        ),
+      );
+
+      expect(
+        _categories(result),
+        contains(BootstrapStopCategory.ambiguousInput),
+      );
+      expect(await _gitStatus(target), statusBefore);
+      expect(_snapshot(target), filesystemBefore);
+    });
+
     test('stops unsafe branch names without implementing Git refs', () async {
       for (final branch in ['feature branch', '../main', 'main/', '-main']) {
         final result = await preflight.inspect(

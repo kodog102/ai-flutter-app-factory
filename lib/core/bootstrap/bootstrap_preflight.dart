@@ -339,6 +339,18 @@ final class FileSystemBootstrapPreflight implements BootstrapPreflight {
       );
     }
 
+    if (repositoryMode == RepositoryMode.existingEmptyRepository &&
+        !hasPolicy) {
+      reasons.add(
+        const BootstrapStopReason(
+          category: BootstrapStopCategory.invalidBranchOrRepositoryPolicy,
+          fieldOrFact: 'initialBranchNameOrRepositoryPolicy',
+          description:
+              'Existing Empty Repository mode requires a Repository policy and does not accept an initial branch name.',
+        ),
+      );
+    }
+
     if (_hasText(request.requestedTechnology) &&
         request.requestedTechnology != 'flutter') {
       reasons.add(
