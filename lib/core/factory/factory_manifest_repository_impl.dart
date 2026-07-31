@@ -3,8 +3,7 @@ import 'factory_manifest.dart';
 import 'factory_manifest_data_source.dart';
 import 'factory_manifest_repository.dart';
 
-final class FactoryManifestRepositoryImpl
-    implements FactoryManifestRepository {
+final class FactoryManifestRepositoryImpl implements FactoryManifestRepository {
   FactoryManifestRepositoryImpl({
     required FactoryManifestDataSource dataSource,
     required Mapper<Map<String, dynamic>, FactoryManifest> mapper,

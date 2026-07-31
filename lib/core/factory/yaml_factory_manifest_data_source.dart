@@ -4,8 +4,7 @@ import 'package:yaml/yaml.dart';
 
 import 'factory_manifest_data_source.dart';
 
-final class YamlFactoryManifestDataSource
-    implements FactoryManifestDataSource {
+final class YamlFactoryManifestDataSource implements FactoryManifestDataSource {
   const YamlFactoryManifestDataSource({
     this.path = 'factory.yaml',
   });
