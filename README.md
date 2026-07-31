@@ -42,6 +42,10 @@ Operational Bootstrap과 Executable Flutter Bootstrap의 전체 입력, 출력, 
 
 [Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md) is the single authority for the inputs, outputs, sequence, stop conditions, and Ready Product criteria of Operational Bootstrap and Executable Flutter Bootstrap.
 
+비개발자가 샘플 앱을 순서대로 준비하려면 [Docs/USER_GUIDE.md](Docs/USER_GUIDE.md)를 먼저 따른다.
+
+Non-developers can follow [Docs/USER_GUIDE.md](Docs/USER_GUIDE.md) to prepare a sample app step by step.
+
 Ready Product는 새로운 작업 주체가 Factory를 다시 읽지 않고 Product Repository만으로 첫 Agreement를 제안할 수 있는 상태다.
 
 A Ready Product is a state in which a new work participant can propose the first Agreement from the Product Repository alone without rereading the Factory.
@@ -96,9 +100,9 @@ Future<void> main() async {
 }
 ```
 
-Executable Flutter V1은 `lib/core/bootstrap/` runtime을 package-root façade로 조정한다. Template/Generator pipeline은 active V1 경로가 아니며, `factory.yaml`과 `factory_manifest.json`은 inactive legacy metadata다. CLI는 V1 기능이 아니다.
+Executable Flutter V1은 `lib/core/bootstrap/` runtime을 package-root 공개 실행 창구로 조정한다. Template/Generator pipeline은 active V1 경로가 아니며, `factory.yaml`과 `factory_manifest.json`은 inactive legacy metadata다. CLI는 V1 기능이 아니다.
 
-Executable Flutter V1 coordinates the `lib/core/bootstrap/` runtime through the package-root façade. The Template/Generator pipeline is not the active V1 path, and `factory.yaml` and `factory_manifest.json` are inactive legacy metadata. A CLI is not a V1 capability.
+Executable Flutter V1 coordinates the `lib/core/bootstrap/` runtime through the package-root public execution entry point. The Template/Generator pipeline is not the active V1 path, and `factory.yaml` and `factory_manifest.json` are inactive legacy metadata. A CLI is not a V1 capability.
 
 ## Role Model
 
@@ -128,6 +132,7 @@ Executable Flutter V1 coordinates the `lib/core/bootstrap/` runtime through the 
     ├── PRODUCT.md
     ├── ROADMAP.md
     ├── SETUP.md
+    ├── USER_GUIDE.md
     ├── VISION.md
     ├── Architecture/
     │   └── Template-Specification.md
@@ -139,6 +144,17 @@ Executable Flutter V1 coordinates the `lib/core/bootstrap/` runtime through the 
 ```
 
 ## Getting Started
+
+비개발자 Product 시작:
+
+Non-developer Product start:
+
+1. `Docs/USER_GUIDE.md`
+2. Product 입력 작성과 Bootstrap 요청 / Complete the Product inputs and request Bootstrap
+
+Factory 검토와 개발:
+
+Factory review and development:
 
 1. `README.md`
 2. `AGENTS.md`
@@ -154,9 +170,9 @@ Executable Flutter V1 coordinates the `lib/core/bootstrap/` runtime through the 
 
 ## Development Status
 
-현재 상태: **Flutter V1 Closure Candidate — User Ready Approval Pending**
+현재 상태: **Flutter V1 Ready — Release Pending**
 
-Current status: **Flutter V1 Closure Candidate — User Ready Approval Pending**
+Current status: **Flutter V1 Ready — Release Pending**
 
 ## License
 

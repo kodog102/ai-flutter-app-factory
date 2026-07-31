@@ -9,8 +9,8 @@
 - The Factory purpose, roles, Repository boundary, and Operational Bootstrap Contract are defined
 - Approved Operational Baseline Handoff lifecycle이 정의되어 있다
 - The Approved Operational Baseline Handoff lifecycle is defined
-- 현재 runtime은 검증된 Executable Flutter V1 계약을 구현하며 User의 V1 Ready 및 release 승인을 기다린다
-- The current runtime implements the verified Executable Flutter V1 contract and awaits User approval of V1 readiness and release
+- 현재 runtime은 검증된 Executable Flutter V1 계약을 구현하며 User가 V1 Ready를 승인했다. Release는 별도 승인을 기다린다
+- The current runtime implements the verified Executable Flutter V1 contract, and the User has approved V1 readiness. Release awaits separate approval
 
 ## 1. V1 SSOT Alignment
 
@@ -99,10 +99,18 @@ A result from one Product does not automatically become a Core Standard.
 
 Status: **In Review**
 
+V1 Ready: **Approved**
+
+Release: **Pending User Decision**
+
 ### Goal
 
 - Evidence를 바탕으로 User가 V1 Ready 및 release 여부를 최종 승인한다
 - Enable the User to give final approval of V1 readiness and release based on Evidence
+
+Flutter V1 Ready는 전체 기술 검증과 독립 QA 이후 User가 승인했다. Version, release identifier, tag, push와 publication은 아직 승인되지 않았다.
+
+The User approved Flutter V1 Ready after full technical verification and independent QA. Version, release identifier, tag, push, and publication have not yet been approved.
 
 CLI, Template engine 또는 orchestration 기능은 검증된 필요가 생기기 전까지 V1 필수 조건이 아니다.
 
