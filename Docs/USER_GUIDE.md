@@ -21,9 +21,9 @@ The example is a **shopping list app** where a user can add items, mark them as 
 
 ## 먼저 알아둘 점 / Before You Start
 
-Factory V1은 버튼을 누르는 독립 앱이나 CLI가 아니다. 현재 공식 실행 방식은 Dart 공개 실행 창구이며, 사용자는 Factory Repository를 읽고 실행할 수 있는 **코드 작업 도구**에 요청을 전달한다.
+Factory V1.1은 `product_request.yaml` 하나와 한 명령을 제공한다. 이 명령은 기존 Dart 공개 Runtime을 호출하며 버튼형 독립 앱이나 AI Product Loop는 아니다. 사용자는 Factory Repository를 읽고 명령을 실행할 수 있는 **코드 작업 도구**에 파일과 실행 요청을 전달할 수 있다.
 
-Factory V1 is not a standalone button-based app or CLI. Its official execution boundary is a public Dart API, so the User gives the request to a **code-capable work tool** that can access and run the Factory Repository.
+Factory V1.1 provides one `product_request.yaml` and one command. The command invokes the existing public Dart Runtime and is not a standalone button-based app or an AI Product Loop. The User may give the file and execution request to a **code-capable work tool** that can access and run the Factory Repository.
 
 작업 도구의 제품명은 중요하지 않다. 다음 조건만 만족하면 된다.
 
@@ -206,49 +206,45 @@ Target Platforms: ios, android
 
 ## 4. Factory 실행 요청 / Request Factory Execution
 
-열 개 입력을 작성한 뒤 아래 요청을 작업 도구에 전달한다.
+열 개 입력을 다음 `product_request.yaml`에 작성한다. 이 파일은 Factory와 Product output 밖에 두며 symlink가 아닌 128 KiB 이하의 UTF-8 regular file이어야 한다.
 
-After completing the ten inputs, send the following request to the work tool.
+Write the ten inputs into the following `product_request.yaml`. Keep it outside the Factory and Product output as a regular, non-symlink UTF-8 file no larger than 128 KiB.
+
+```yaml
+schemaVersion: 1
+requestId: shopping-sample-001
+
+bootstrap:
+  productDisplayName: My Shopping List
+  productPurpose: 장보기 항목을 간단히 기록하고 구매 상태를 관리한다.
+  initialProductScopeOrFirstIntendedOutcome: 추가, 완료 전환, 삭제와 로컬 복원이 가능한 한 화면 앱을 준비한다.
+  exactOutputPath: /Users/사용자이름/Documents/My Apps/my-shopping-list
+  repositoryMode: newRepository
+  initialBranchName: main
+  repositoryPolicy: null
+  flutterProjectName: my_shopping_list
+  organizationIdentifier: com.example
+  requestedTechnology: flutter
+  targetPlatforms:
+    - ios
+    - android
+```
+
+`requestId`는 선택 사항이며 승인, credential 또는 Product authority가 아니다. 요청 파일에 비밀정보를 넣지 않는다.
+
+`requestId` is optional and is not an approval, credential, or Product authority. Do not place secrets in the request file.
+
+Factory Repository root에서 직접 실행하거나 작업 도구에 다음 한 명령을 그대로 실행하도록 요청한다.
+
+Run this one command from the Factory Repository root, or ask the work tool to run it exactly.
 
 ```text
-# Flutter Product Bootstrap 실행 요청
-
-Factory Root:
-/Users/사용자이름/Documents/경로/ai-flutter-app-factory
-
-Product Inputs:
-- Product Display Name: My Shopping List
-- Product Purpose: 장보기 항목을 간단히 기록하고 구매 상태를 관리한다.
-- Initial Product Scope or First Intended Outcome: 추가, 완료 전환, 삭제와 로컬 복원이 가능한 한 화면 앱을 준비한다.
-- Exact Output Path: /Users/사용자이름/Documents/My Apps/my-shopping-list
-- Repository Mode: newRepository
-- Initial Branch Name: main
-- Repository Policy: null
-- Flutter Project Name: my_shopping_list
-- Organization Identifier: com.example
-- Requested Technology: flutter
-- Target Platforms: ios, android
-
-실행 규칙:
-1. Factory의 AGENTS.md, README.md, Docs/ARCHITECTURE.md, Docs/SETUP.md를 먼저 읽으세요.
-2. package-root 공개 실행 창구만 사용하세요.
-3. 먼저 inspect를 실행하고 결과를 보고하세요.
-4. BootstrapPreflightStopped이면 Product를 변경하지 말고 중단 이유만 보고하세요.
-5. BootstrapPreflightReady일 때만 execute를 실행하세요.
-6. Prepared, Stopped 또는 PartialFailure 결과와 Evidence를 그대로 보고하세요.
-7. Prepared를 Ready 또는 Approved로 자동 해석하지 마세요.
-8. User 승인 전 Product 기능 구현, commit, push, tag를 하지 마세요.
-9. Factory Repository를 수정하지 마세요.
-10. Product 결과, 기술 검증, First Agreement Proposal, Baseline Handoff Proposal을 사용자에게 제시하세요.
+dart run ai_flutter_app_factory:factory_bootstrap --request /absolute/intake/product_request.yaml
 ```
 
-작업 도구는 내부 파일을 직접 조합하는 대신 다음 공개 import를 사용해야 한다.
+명령은 `stdout`에 JSON 한 문서, `stderr`에 한국어 우선 요약을 출력한다. JSON과 요약을 모두 보존해 사용자에게 제시하되, 명령 완료 후 Product 기능 구현을 시작하지 않는다.
 
-The work tool must use the public package import rather than assembling internal files directly.
-
-```dart
-import 'package:ai_flutter_app_factory/ai_flutter_app_factory.dart';
-```
+The command writes one JSON document to `stdout` and a Korean-first summary to `stderr`. Preserve and present both results to the User, and do not begin Product feature implementation after the command completes.
 
 ## 5. 실행 결과 이해 / Understand the Result
 
@@ -258,6 +254,21 @@ import 'package:ai_flutter_app_factory/ai_flutter_app_factory.dart';
 | `BootstrapExecutionPrepared` | Flutter 시작 구조와 기술 검증이 준비됨 | Evidence와 제안을 검토하고 승인 여부 결정 |
 | `BootstrapExecutionStopped` | 실행 중 안전하게 중단되거나 복구됨 | 확인된 사실과 미수행 항목 검토 |
 | `BootstrapExecutionPartialFailure` | 자동 정리의 안전성을 보장할 수 없음 | 표시된 경로를 이동·삭제하지 말고 별도 검사 요청 |
+
+V1.1 command exit code는 다음처럼 해석한다.
+
+Interpret V1.1 command exit codes as follows.
+
+| Exit | 뜻 | 사용자가 할 일 |
+|---|---|---|
+| `0` | `Prepared` | Evidence와 proposal을 검토하고 Ready 승인 여부 결정 |
+| `2` | request/schema/preflight 중단 | 구조화된 오류만 확인하고 입력 수정 여부 결정 |
+| `3` | 안전한 execution stop 또는 복구 | 중단·복구 Evidence 검토 |
+| `4` | `PartialFailure` | 보고된 경로를 변경하지 말고 별도 안전 검사 요청 |
+
+`64`는 help/usage 결과이며 `70`은 예상하지 못한 command-layer failure다.
+
+`64` is a help/usage result, and `70` is an unexpected command-layer failure.
 
 ```text
 Prepared ≠ Ready ≠ Approved ≠ Released
@@ -522,6 +533,8 @@ Factory V1 provides:
 - Default dependency, analysis, tests, and both platform build validation
 - 안전한 중단과 구조화된 Evidence
 - Safe stops and structured evidence
+- `product_request.yaml`과 한 명령을 사용하는 V1.1 Bootstrap
+- V1.1 Bootstrap using one `product_request.yaml` and one command
 
 Factory V1이 자동으로 제공하지 않는 것:
 
@@ -535,8 +548,8 @@ Factory V1 does not automatically provide:
 - Ready, Agreement, or Release approval on behalf of the User
 - 자동 commit, push 또는 tag
 - Automatic commit, push, or tag
-- 버튼형 독립 실행 앱이나 CLI
-- A standalone button-based app or CLI
+- 버튼형 독립 실행 앱, V1.2 AI Product Loop 또는 Provider Adapter
+- A standalone button-based app, V1.2 AI Product Loop, or Provider Adapter
 
 ## 용어 / Glossary
 

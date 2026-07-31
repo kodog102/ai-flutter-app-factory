@@ -115,3 +115,16 @@ The User approved Flutter V1 Ready after full technical verification and indepen
 CLI, Template engine 또는 orchestration 기능은 검증된 필요가 생기기 전까지 V1 필수 조건이 아니다.
 
 A CLI, Template engine, or orchestration capability is not a V1 requirement until a validated need exists.
+
+## 8. V1.1 One-run Product Bootstrap
+
+Status: **In Progress**
+
+### Goal
+
+- 엄격한 `product_request.yaml` 하나와 한 명령으로 기존 Runtime의 검증된 Flutter Product 시작점을 준비한다
+- Prepare a verified Flutter Product starting point through the existing Runtime using one strict `product_request.yaml` and one command
+
+V1 Ready 승인과 Release Pending 상태는 유지한다. V1.1은 Product 기능 또는 V1.2 AI Product Loop를 구현하지 않는다.
+
+Preserve V1 Ready approval and Release Pending status. V1.1 does not implement Product features or the V1.2 AI Product Loop.

@@ -46,6 +46,20 @@ Operational Bootstrap과 Executable Flutter Bootstrap의 전체 입력, 출력, 
 
 Non-developers can follow [Docs/USER_GUIDE.md](Docs/USER_GUIDE.md) to prepare a sample app step by step.
 
+### V1.1 One-run Bootstrap
+
+V1.1은 Factory 밖의 `product_request.yaml` 하나를 기존 Runtime 입력으로 안전하게 변환하고 한 명령으로 검증된 Flutter Product 시작점을 준비한다.
+
+V1.1 safely adapts one `product_request.yaml` outside the Factory into the existing Runtime inputs and prepares a verified Flutter Product starting point with one command.
+
+```text
+dart run ai_flutter_app_factory:factory_bootstrap --request /absolute/intake/product_request.yaml
+```
+
+요청 파일 위치와 schema는 [Docs/SETUP.md](Docs/SETUP.md), 비개발자 실행·승인 순서는 [Docs/USER_GUIDE.md](Docs/USER_GUIDE.md)를 따른다. V1.1은 Product 기능을 구현하지 않으며 V1.2 AI Product Loop를 포함하지 않는다.
+
+Follow [Docs/SETUP.md](Docs/SETUP.md) for the request-file location and schema, and [Docs/USER_GUIDE.md](Docs/USER_GUIDE.md) for the non-developer execution and approval flow. V1.1 does not implement Product features and does not include the V1.2 AI Product Loop.
+
 Ready Product는 새로운 작업 주체가 Factory를 다시 읽지 않고 Product Repository만으로 첫 Agreement를 제안할 수 있는 상태다.
 
 A Ready Product is a state in which a new work participant can propose the first Agreement from the Product Repository alone without rereading the Factory.

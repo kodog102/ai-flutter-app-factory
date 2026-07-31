@@ -83,6 +83,63 @@ targetPlatforms:
 
 `newRepository` requires `initialBranchName` and uses `null` for `repositoryPolicy`. `existingEmptyRepository` requires `repositoryPolicy` to preserve the existing independent Repository policy and uses `null` for `initialBranchName`.
 
+## V1.1 Product Request File
+
+V1.1 요청 파일 이름은 `product_request.yaml`이며 `--request`에 명시적 절대 경로를 전달한다. 파일은 Factory root와 Product output root 밖의 regular UTF-8 파일이어야 하고 symlink일 수 없으며 최대 크기는 128 KiB다.
+
+The V1.1 request filename is `product_request.yaml`, supplied to `--request` through an explicit absolute path. It must be a regular UTF-8 file outside both the Factory root and Product output root, must not be a symlink, and is limited to 128 KiB.
+
+```yaml
+schemaVersion: 1
+requestId: sample-001
+
+bootstrap:
+  productDisplayName: Example Product
+  productPurpose: Validate a Product workflow.
+  initialProductScopeOrFirstIntendedOutcome: Prepare the first approved workflow.
+  exactOutputPath: /absolute/products/example_product
+  repositoryMode: newRepository
+  initialBranchName: main
+  repositoryPolicy: null
+  flutterProjectName: example_product
+  organizationIdentifier: com.example
+  requestedTechnology: flutter
+  targetPlatforms:
+    - ios
+    - android
+```
+
+`requestId`만 선택 사항이다. 알 수 없는 key, 중복 key, 누락·blank·잘못된 type, 여러 YAML document, anchor, alias, tag, merge key와 지원하지 않는 중첩은 Runtime 실행 전에 거절한다. `~`, 환경 변수, shell expression 또는 상대 경로를 확장하지 않는다. 요청 파일에 credential이나 secret을 기록하지 않는다.
+
+Only `requestId` is optional. Unknown or duplicate keys, missing, blank, or wrongly typed values, multiple YAML documents, anchors, aliases, tags, merge keys, and unsupported nesting are rejected before Runtime execution. The command does not expand `~`, environment variables, shell expressions, or relative paths. Do not record credentials or secrets in the request file.
+
+## V1.1 One-run Command
+
+Factory Repository root에서 다음 한 명령을 실행한다.
+
+Run this one command from the Factory Repository root.
+
+```text
+dart run ai_flutter_app_factory:factory_bootstrap --request /absolute/intake/product_request.yaml
+```
+
+`stdout`은 정확히 하나의 versioned JSON 문서만 출력하고 `stderr`는 한국어 우선 요약과 다음 User 결정을 출력한다.
+
+`stdout` contains exactly one versioned JSON document. `stderr` contains a Korean-first summary and the next User decision.
+
+| Exit | 의미 / Meaning |
+|---|---|
+| `0` | `BootstrapExecutionPrepared`; Ready 또는 Approved가 아님 / not Ready or Approved |
+| `2` | request parse/schema 또는 preflight 중단 / request parse/schema or preflight stop |
+| `3` | 안전한 execution stop 또는 복구 / safe execution stop or restoration |
+| `4` | `BootstrapExecutionPartialFailure`; User 검사 필요 / User inspection required |
+| `64` | `--help` 또는 command usage 결과 / `--help` or command usage result |
+| `70` | 예상하지 못한 command-layer failure / unexpected command-layer failure |
+
+parse, schema 또는 preflight가 중단되면 Product execution을 시작하지 않는다. 명령은 commit, remote, push, tag, publication 또는 release를 수행하지 않는다.
+
+The command does not begin Product execution after a parse, schema, or preflight stop. It does not commit, add a remote, push, tag, publish, or release.
+
 ## Public API Execution
 
 외부 consumer는 package-root library만 사용한다.

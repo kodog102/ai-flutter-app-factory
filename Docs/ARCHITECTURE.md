@@ -30,6 +30,8 @@ This is the structure of the current repository.
 ├── AGENTS.md
 ├── LICENSE
 ├── README.md
+├── bin/
+│   └── factory_bootstrap.dart            # active V1.1 command entrypoint
 ├── factory.yaml                         # inactive legacy metadata
 ├── factory_manifest.json                # inactive legacy metadata
 ├── lib/
@@ -45,6 +47,7 @@ This is the structure of the current repository.
     ├── PRODUCT.md
     ├── ROADMAP.md
     ├── SETUP.md
+    ├── USER_GUIDE.md
     ├── VISION.md
     ├── Architecture/
     │   └── Template-Specification.md
@@ -177,6 +180,26 @@ Executable Flutter Bootstrap is the Factory V1 application of Operational Bootst
 외부 consumer의 공식 Executable V1 실행 경계는 package-root `ai_flutter_app_factory.dart`와 `FlutterAppFactoryRuntime` façade다. Façade는 기존 preflight와 executor를 조정하며 별도의 Bootstrap Architecture나 동작을 정의하지 않는다.
 
 The official Executable V1 boundary for external consumers is the package-root `ai_flutter_app_factory.dart` library and its `FlutterAppFactoryRuntime` façade. The façade coordinates the existing preflight and executor and does not define a separate Bootstrap Architecture or behavior.
+
+### V1.1 One-run Command Boundary
+
+V1.1 명령은 Factory 밖의 명시적 절대 경로에 있는 `product_request.yaml` 하나를 엄격하게 검사하고 기존 열 개 입력의 `BootstrapRequest`로 변환한다. parse 또는 schema 실패 시 Runtime을 호출하지 않는다.
+
+The V1.1 command strictly inspects one `product_request.yaml` at an explicit absolute path outside the Factory and converts it into the existing ten-input `BootstrapRequest`. It does not call the Runtime after a parse or schema failure.
+
+```text
+product_request.yaml
+→ strict request adapter
+→ BootstrapRequest
+→ FlutterAppFactoryRuntime.inspect
+→ BootstrapPreflightReady only
+→ FlutterAppFactoryRuntime.execute
+→ versioned JSON result and Korean-first summary
+```
+
+V1.1 command layer는 기존 Runtime의 preflight, 실행, ownership, rollback 또는 승인 의미를 대체하지 않는다. Product 기능을 구현하거나 Provider를 호출하지 않으며 V1.2 Agent Adapter와 Product Loop는 구현되어 있지 않다.
+
+The V1.1 command layer does not replace existing Runtime preflight, execution, ownership, rollback, or approval semantics. It does not implement Product features or invoke a Provider, and the V1.2 Agent Adapter and Product Loop are not implemented.
 
 Flutter scaffold와 기본 검증은 Factory Bootstrap 책임이다. Product 기능, 데이터 모델, UI, backend, 인증, 외부 서비스와 Product별 package는 Product-local Agreement가 소유한다.
 
