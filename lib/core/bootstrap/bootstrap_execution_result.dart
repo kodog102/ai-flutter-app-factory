@@ -1,5 +1,6 @@
 import 'bootstrap_execution_stop_reason.dart';
 import 'bootstrap_process_runner.dart';
+import 'bootstrap_runtime_proposal.dart';
 import 'repository_mode.dart';
 import 'validated_bootstrap_request.dart';
 
@@ -7,8 +8,8 @@ sealed class BootstrapExecutionResult {
   const BootstrapExecutionResult();
 }
 
-final class BootstrapExecutionReady extends BootstrapExecutionResult {
-  BootstrapExecutionReady({
+final class BootstrapExecutionPrepared extends BootstrapExecutionResult {
+  BootstrapExecutionPrepared({
     required this.validatedRequest,
     required this.finalProductPath,
     required this.repositoryMode,
@@ -22,6 +23,9 @@ final class BootstrapExecutionReady extends BootstrapExecutionResult {
     required List<BootstrapProcessResult> commandsCompleted,
     required this.rollbackRequired,
     required this.environmentNote,
+    required this.productAuthorityEvidence,
+    required this.firstAgreementProposal,
+    required this.baselineHandoffProposal,
   })  : generatedPlatforms = Set<String>.unmodifiable(generatedPlatforms),
         createdRootEntries = List<String>.unmodifiable(createdRootEntries),
         commandsCompleted =
@@ -40,6 +44,12 @@ final class BootstrapExecutionReady extends BootstrapExecutionResult {
   final List<BootstrapProcessResult> commandsCompleted;
   final bool rollbackRequired;
   final String environmentNote;
+  final ProductAuthorityEvidence productAuthorityEvidence;
+  final FirstAgreementProposal firstAgreementProposal;
+  final BaselineHandoffProposal baselineHandoffProposal;
+  String get automatedTechnicalValidationStatus => 'Pending';
+  String get userReadyApprovalStatus => 'Pending';
+  String get firstAgreementApprovalStatus => 'Pending';
 }
 
 final class BootstrapExecutionStopped extends BootstrapExecutionResult {

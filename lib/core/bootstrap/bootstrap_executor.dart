@@ -10,6 +10,8 @@ import 'bootstrap_preflight.dart';
 import 'bootstrap_preflight_result.dart';
 import 'bootstrap_process_runner.dart';
 import 'bootstrap_request.dart';
+import 'bootstrap_runtime_proposal.dart';
+import 'product_authority_renderer.dart';
 import 'repository_mode.dart';
 import 'validated_bootstrap_request.dart';
 
@@ -37,11 +39,14 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
     this.flutterExecutable = 'flutter',
     BootstrapExecutionHook? executionHook,
     BootstrapInspectionHook? inspectionHook,
+    ProductAuthorityRenderer authorityRenderer =
+        const ProductAuthorityRenderer(),
   })  : _factoryRoot = factoryRoot.absolute,
         _preflight = preflight,
         _processRunner = processRunner,
         _executionHook = executionHook,
-        _inspectionHook = inspectionHook;
+        _inspectionHook = inspectionHook,
+        _authorityRenderer = authorityRenderer;
 
   static const _environmentNote =
       'Toolchain-owned cache metadata may have been accessed or refreshed; '
@@ -53,6 +58,7 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
   final BootstrapProcessRunner _processRunner;
   final BootstrapExecutionHook? _executionHook;
   final BootstrapInspectionHook? _inspectionHook;
+  final ProductAuthorityRenderer _authorityRenderer;
   final String gitExecutable;
   final String flutterExecutable;
 
@@ -251,6 +257,35 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
         staging: staging,
         targetPath: targetPath,
         validationFailure: smokeFailure.message,
+      );
+    }
+
+    final authorityDocuments = _authorityRenderer.render(
+      ready.validatedRequest,
+    );
+    final authorityWrite = await _writeProductAuthority(
+      staging,
+      authorityDocuments,
+    );
+    if (authorityWrite.inspectionFailure != null) {
+      return _inspectionPartial(
+        stage: BootstrapExecutionStage.scaffoldVerification,
+        targetPath: targetPath,
+        stagingPath: staging.path,
+        commands: commands,
+        failure: authorityWrite.inspectionFailure!,
+        productMutationStarted: false,
+        gitMetadataAffected: false,
+      );
+    }
+    if (authorityWrite.failure != null) {
+      return _stopAfterCleanup(
+        category: BootstrapExecutionStopCategory.filesystemMutationFailed,
+        stage: BootstrapExecutionStage.scaffoldVerification,
+        commands: commands,
+        staging: staging,
+        targetPath: targetPath,
+        validationFailure: authorityWrite.failure,
       );
     }
 
@@ -788,20 +823,11 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
       );
     }
     final entries = entriesCapture.entries;
-    return BootstrapExecutionReady(
-      validatedRequest: ready.validatedRequest,
-      finalProductPath: targetPath,
-      repositoryMode: ready.confirmedRepositoryMode,
-      gitTopLevel: finalGit.topLevel,
-      branch: finalGit.branch,
-      headExists: finalGit.headExists,
-      hasRemotes: finalGit.remotes.isNotEmpty,
-      generatedPlatforms: const {'ios', 'android'},
-      dependencyPreparationSucceeded: true,
+    return _preparedResult(
+      ready: ready,
+      git: finalGit,
       createdRootEntries: entries,
-      commandsCompleted: commands,
-      rollbackRequired: false,
-      environmentNote: _environmentNote,
+      commands: commands,
     );
   }
 
@@ -1166,20 +1192,52 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
       );
     }
 
-    return BootstrapExecutionReady(
+    return _preparedResult(
+      ready: ready,
+      git: verifiedGit,
+      createdRootEntries: moved,
+      commands: commands,
+    );
+  }
+
+  BootstrapExecutionPrepared _preparedResult({
+    required BootstrapPreflightReady ready,
+    required _GitState git,
+    required List<String> createdRootEntries,
+    required List<BootstrapProcessResult> commands,
+  }) {
+    const authorityPaths = ['README.md', 'AGENTS.md'];
+    return BootstrapExecutionPrepared(
       validatedRequest: ready.validatedRequest,
-      finalProductPath: targetPath,
+      finalProductPath: ready.normalizedOutputPath,
       repositoryMode: ready.confirmedRepositoryMode,
-      gitTopLevel: verifiedGit.topLevel,
-      branch: verifiedGit.branch,
-      headExists: verifiedGit.headExists,
-      hasRemotes: verifiedGit.remotes.isNotEmpty,
+      gitTopLevel: git.topLevel,
+      branch: git.branch,
+      headExists: git.headExists,
+      hasRemotes: git.remotes.isNotEmpty,
       generatedPlatforms: const {'ios', 'android'},
       dependencyPreparationSucceeded: true,
-      createdRootEntries: moved,
+      createdRootEntries: createdRootEntries,
       commandsCompleted: commands,
       rollbackRequired: false,
       environmentNote: _environmentNote,
+      productAuthorityEvidence: ProductAuthorityEvidence(
+        generatedPaths: authorityPaths,
+        productLocalStartingPoint: 'AGENTS.md',
+        factoryReferenceRequired: false,
+      ),
+      firstAgreementProposal:
+          FirstAgreementProposal.fromValidatedRequest(ready.validatedRequest),
+      baselineHandoffProposal: BaselineHandoffProposal(
+        repositoryIdentity: ready.normalizedOutputPath,
+        branch: git.branch,
+        headAvailable: git.headExists,
+        headIdentity: git.headIdentity,
+        remotePresent: git.remotes.isNotEmpty,
+        gitStatusEntries: git.status,
+        generatedProductAuthorityPaths: authorityPaths,
+        generatedRootEntries: createdRootEntries,
+      ),
     );
   }
 
@@ -1602,7 +1660,6 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
     }
 
     for (final forbidden in [
-      'AGENTS.md',
       'factory.yaml',
       'factory_manifest.json',
       'Docs',
@@ -1615,6 +1672,126 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
       }
     }
     return null;
+  }
+
+  Future<_AuthorityWriteCapture> _writeProductAuthority(
+    Directory staging,
+    ProductAuthorityDocuments documents,
+  ) async {
+    final root = path.normalize(staging.path);
+    final readmePath = path.join(root, 'README.md');
+    final agentsPath = path.join(root, 'AGENTS.md');
+    final readmeTemporary = path.join(root, '.README.md.factory-authority.tmp');
+    final agentsTemporary = path.join(root, '.AGENTS.md.factory-authority.tmp');
+    final readmeBackup = path.join(root, '.README.md.factory-authority.backup');
+    final authorityPaths = [
+      readmePath,
+      agentsPath,
+      readmeTemporary,
+      agentsTemporary,
+      readmeBackup,
+    ];
+    if (authorityPaths.any(
+      (candidate) =>
+          !path.equals(path.dirname(candidate), root) ||
+          !_equalsOrIsWithin(root, candidate),
+    )) {
+      return const _AuthorityWriteCapture.failure(
+        'Product authority paths did not remain inside the staging root.',
+      );
+    }
+
+    try {
+      final readmeType = await _inspectType(readmePath);
+      if (readmeType != FileSystemEntityType.file) {
+        return _AuthorityWriteCapture.failure(
+          'Generated README.md must be a regular file, not $readmeType.',
+        );
+      }
+      final agentsType = await _inspectType(agentsPath);
+      if (agentsType != FileSystemEntityType.notFound) {
+        return _AuthorityWriteCapture.failure(
+          'AGENTS.md must not exist before Product authority creation; found $agentsType.',
+        );
+      }
+      for (final temporaryPath in [
+        readmeTemporary,
+        agentsTemporary,
+        readmeBackup,
+      ]) {
+        final temporaryType = await _inspectType(temporaryPath);
+        if (temporaryType != FileSystemEntityType.notFound) {
+          return _AuthorityWriteCapture.failure(
+            'Authority transaction path already exists: ${path.basename(temporaryPath)}.',
+          );
+        }
+      }
+    } on _InspectionFault catch (fault) {
+      return _AuthorityWriteCapture.inspection(fault.failure);
+    }
+
+    var readmeBackedUp = false;
+    var readmeInstalled = false;
+    var agentsInstalled = false;
+    try {
+      final readmeTempFile = await File(readmeTemporary).create(
+        exclusive: true,
+      );
+      await readmeTempFile.writeAsString(documents.readme, flush: true);
+      final agentsTempFile = await File(agentsTemporary).create(
+        exclusive: true,
+      );
+      await agentsTempFile.writeAsString(documents.agents, flush: true);
+
+      await File(readmePath).rename(readmeBackup);
+      readmeBackedUp = true;
+      await File(readmeTemporary).rename(readmePath);
+      readmeInstalled = true;
+      await File(agentsTemporary).rename(agentsPath);
+      agentsInstalled = true;
+      await File(readmeBackup).delete();
+      readmeBackedUp = false;
+      return const _AuthorityWriteCapture.success();
+    } on FileSystemException catch (error) {
+      final rollbackErrors = <String>[];
+      Future<void> deleteIfFile(String filePath) async {
+        try {
+          if (await FileSystemEntity.type(
+                filePath,
+                followLinks: false,
+              ) ==
+              FileSystemEntityType.file) {
+            await File(filePath).delete();
+          }
+        } on FileSystemException catch (rollbackError) {
+          rollbackErrors.add(rollbackError.message);
+        }
+      }
+
+      if (agentsInstalled) {
+        await deleteIfFile(agentsPath);
+      }
+      if (readmeInstalled) {
+        await deleteIfFile(readmePath);
+      }
+      if (readmeBackedUp) {
+        try {
+          await File(readmeBackup).rename(readmePath);
+          readmeBackedUp = false;
+        } on FileSystemException catch (rollbackError) {
+          rollbackErrors.add(rollbackError.message);
+        }
+      }
+      await deleteIfFile(readmeTemporary);
+      await deleteIfFile(agentsTemporary);
+      if (readmeBackedUp) {
+        rollbackErrors.add('README.md backup could not be restored.');
+      }
+      return _AuthorityWriteCapture.failure(
+        'Product authority write failed: ${error.message}'
+        '${rollbackErrors.isEmpty ? '' : '; rollback incomplete: ${rollbackErrors.join('; ')}'}',
+      );
+    }
   }
 
   Future<_SmokeFailure?> _generateSmokeTest(
@@ -2629,6 +2806,24 @@ final class _SmokeFailure {
 
   final BootstrapExecutionStopCategory category;
   final String message;
+}
+
+final class _AuthorityWriteCapture {
+  const _AuthorityWriteCapture._({
+    this.failure,
+    this.inspectionFailure,
+  });
+
+  const _AuthorityWriteCapture.success() : this._();
+
+  const _AuthorityWriteCapture.failure(String failure)
+      : this._(failure: failure);
+
+  const _AuthorityWriteCapture.inspection(_InspectionFailure failure)
+      : this._(inspectionFailure: failure);
+
+  final String? failure;
+  final _InspectionFailure? inspectionFailure;
 }
 
 final class _GitCapture {

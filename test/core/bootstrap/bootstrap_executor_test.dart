@@ -177,12 +177,64 @@ void main() {
 
       final result = await executor(runner: runner).execute(ready);
 
-      final completed = result as BootstrapExecutionReady;
+      final completed = result as BootstrapExecutionPrepared;
       expect(completed.branch, 'main');
       expect(completed.headExists, isFalse);
       expect(completed.hasRemotes, isFalse);
       expect(completed.generatedPlatforms, {'ios', 'android'});
       expect(completed.rollbackRequired, isFalse);
+      expect(completed.automatedTechnicalValidationStatus, 'Pending');
+      expect(completed.userReadyApprovalStatus, 'Pending');
+      expect(completed.firstAgreementApprovalStatus, 'Pending');
+      expect(
+        completed.productAuthorityEvidence.generatedPaths,
+        ['README.md', 'AGENTS.md'],
+      );
+      expect(
+          completed.productAuthorityEvidence.factoryReferenceRequired, isFalse);
+      expect(completed.firstAgreementProposal.approvalStatus,
+          'Proposed — User approval required');
+      expect(completed.baselineHandoffProposal.proposalStatus, 'Proposed');
+      expect(completed.baselineHandoffProposal.technicalValidationStatus,
+          'Pending');
+      expect(completed.baselineHandoffProposal.userApprovalStatus, 'Pending');
+      expect(
+        completed.baselineHandoffProposal.generatedProductAuthorityPaths,
+        ['README.md', 'AGENTS.md'],
+      );
+      expect(
+        await File(
+          path.join(ready.normalizedOutputPath, 'README.md'),
+        ).readAsString(),
+        allOf(
+          contains('Factory Validation App'),
+          contains('Validate executable Bootstrap.'),
+          contains('Prepare a neutral Flutter scaffold.'),
+          contains('Product feature implementation has not started'),
+        ),
+      );
+      expect(
+        await File(
+          path.join(ready.normalizedOutputPath, 'AGENTS.md'),
+        ).readAsString(),
+        allOf(
+          contains('Repository Identity and Boundary'),
+          contains('Agreement Rule'),
+          contains('Approved Operational Baseline Handoff'),
+        ),
+      );
+      expect(
+        await File(
+          path.join(ready.normalizedOutputPath, 'Agreement.md'),
+        ).exists(),
+        isFalse,
+      );
+      expect(
+        await File(
+          path.join(ready.normalizedOutputPath, 'Handoff.md'),
+        ).exists(),
+        isFalse,
+      );
       expect(
         await File(
           path.join(
@@ -366,6 +418,8 @@ void main() {
       );
       expect(await Directory(ready.normalizedOutputPath).exists(), isFalse);
       expect(partial.expectedManifest, isNot(contains('external.txt')));
+      expect(partial.expectedManifest, contains('README.md'));
+      expect(partial.expectedManifest, contains('AGENTS.md'));
       expect(partial.actualManifest, contains('external.txt'));
       expect(partial.ownershipDifferences, contains('added:external.txt'));
       expect(
@@ -701,6 +755,117 @@ void main() {
     });
   });
 
+  group('Product authority write safety', () {
+    test('rejects README symlink and preserves its external target', () async {
+      final ready = await newReady();
+      final external = File(path.join(fixtureRoot.path, 'external_readme.txt'));
+      await external.writeAsString('external');
+
+      final result = await executor(
+        runner: _FakeProcessRunner(),
+        hook: (stage, {required stagingPath, required finalTargetPath}) async {
+          if (stage == BootstrapExecutionStage.smokeTestGeneration) {
+            final readme = File(path.join(stagingPath, 'README.md'));
+            await readme.delete();
+            await Link(readme.path).create(external.path);
+          }
+        },
+      ).execute(ready);
+
+      expect(result, isA<BootstrapExecutionStopped>());
+      expect(await external.readAsString(), 'external');
+      expect(await Directory(ready.normalizedOutputPath).exists(), isFalse);
+      expect(_ownedStaging(fixtureRoot), isEmpty);
+    });
+
+    test('rejects README with a non-file type', () async {
+      final ready = await newReady();
+
+      final result = await executor(
+        runner: _FakeProcessRunner(),
+        hook: (stage, {required stagingPath, required finalTargetPath}) async {
+          if (stage == BootstrapExecutionStage.smokeTestGeneration) {
+            final readme = File(path.join(stagingPath, 'README.md'));
+            await readme.delete();
+            await Directory(readme.path).create();
+          }
+        },
+      ).execute(ready);
+
+      expect(result, isA<BootstrapExecutionStopped>());
+      expect(await Directory(ready.normalizedOutputPath).exists(), isFalse);
+      expect(_ownedStaging(fixtureRoot), isEmpty);
+    });
+
+    test('rejects pre-existing AGENTS file directory and symlink', () async {
+      for (final type in ['file', 'directory', 'symlink']) {
+        final ready = await newReady(
+          path.join(fixtureRoot.path, 'agents_$type'),
+        );
+        final external = File(
+          path.join(fixtureRoot.path, 'agents_external_$type.txt'),
+        );
+        await external.writeAsString('external');
+
+        final result = await executor(
+          runner: _FakeProcessRunner(),
+          hook: (stage,
+              {required stagingPath, required finalTargetPath}) async {
+            if (stage != BootstrapExecutionStage.smokeTestGeneration) {
+              return;
+            }
+            final agentsPath = path.join(stagingPath, 'AGENTS.md');
+            if (type == 'file') {
+              await File(agentsPath).writeAsString('unexpected');
+            } else if (type == 'directory') {
+              await Directory(agentsPath).create();
+            } else {
+              await Link(agentsPath).create(external.path);
+            }
+          },
+        ).execute(ready);
+
+        expect(result, isA<BootstrapExecutionStopped>(), reason: type);
+        expect(await external.readAsString(), 'external', reason: type);
+        expect(
+          await Directory(ready.normalizedOutputPath).exists(),
+          isFalse,
+          reason: type,
+        );
+        expect(_ownedStaging(fixtureRoot), isEmpty, reason: type);
+      }
+    });
+
+    test('leaves Product target unchanged when authority write fails',
+        () async {
+      final ready = await newReady();
+
+      final result = await executor(
+        runner: _FakeProcessRunner(),
+        inspectionHook: (operation, inspectionPath) async {
+          if (operation == 'entityType' &&
+              path.basename(inspectionPath) ==
+                  '.README.md.factory-authority.backup') {
+            await Directory(
+              path.join(
+                path.dirname(inspectionPath),
+                '.README.md.factory-authority.tmp',
+              ),
+            ).create();
+          }
+        },
+      ).execute(ready);
+
+      final stopped = result as BootstrapExecutionStopped;
+      expect(
+        stopped.category,
+        BootstrapExecutionStopCategory.filesystemMutationFailed,
+      );
+      expect(await Directory(ready.normalizedOutputPath).exists(), isFalse);
+      expect(_ownedStaging(fixtureRoot), isEmpty);
+    });
+  });
+
   group('smoke test generation', () {
     test('does not overwrite a generated smoke test path', () async {
       final ready = await newReady();
@@ -757,7 +922,7 @@ void main() {
 
       final result = await executor(runner: runner).execute(ready);
 
-      final completed = result as BootstrapExecutionReady;
+      final completed = result as BootstrapExecutionPrepared;
       expect(completed.branch, 'stable');
       expect(completed.headExists, isFalse);
       expect(completed.hasRemotes, isFalse);
@@ -774,6 +939,14 @@ void main() {
         ).exists(),
         isTrue,
       );
+      expect(await File(path.join(target.path, 'README.md')).exists(), isTrue);
+      expect(await File(path.join(target.path, 'AGENTS.md')).exists(), isTrue);
+      expect(
+        completed.baselineHandoffProposal.generatedProductAuthorityPaths,
+        ['README.md', 'AGENTS.md'],
+      );
+      expect(completed.baselineHandoffProposal.branch, 'stable');
+      expect(completed.baselineHandoffProposal.proposalStatus, 'Proposed');
       expect(_ownedStaging(fixtureRoot), isEmpty);
     });
 
@@ -858,7 +1031,7 @@ void main() {
 
       final result = await executor(runner: runner).execute(ready);
 
-      final completed = result as BootstrapExecutionReady;
+      final completed = result as BootstrapExecutionPrepared;
       expect(completed.branch, branchBefore.trim());
       expect(completed.headExists, isTrue);
       expect(completed.hasRemotes, isTrue);
@@ -1081,7 +1254,11 @@ void main() {
 
     test('stops before mutation for tracked root and nested path collisions',
         () async {
-      for (final trackedPath in ['README.md', 'lib/legacy.dart']) {
+      for (final trackedPath in [
+        'README.md',
+        'AGENTS.md',
+        'lib/legacy.dart',
+      ]) {
         final target = await _realRepositoryWithTrackedDeletion(
           fixtureRoot,
           'tracked_${trackedPath.replaceAll('/', '_')}',
@@ -1352,12 +1529,12 @@ void main() {
   });
 
   group('structured result evidence', () {
-    test('exposes immutable Ready collections and stable command evidence',
+    test('exposes immutable Prepared collections and stable command evidence',
         () async {
       final ready = await newReady();
       final result = await executor(
         runner: _FakeProcessRunner(),
-      ).execute(ready) as BootstrapExecutionReady;
+      ).execute(ready) as BootstrapExecutionPrepared;
 
       expect(
         () => result.createdRootEntries.add('unexpected'),
@@ -1365,6 +1542,18 @@ void main() {
       );
       expect(
         () => result.generatedPlatforms.add('web'),
+        throwsUnsupportedError,
+      );
+      expect(
+        () => result.productAuthorityEvidence.generatedPaths.clear(),
+        throwsUnsupportedError,
+      );
+      expect(
+        () => result.firstAgreementProposal.openQuestions.clear(),
+        throwsUnsupportedError,
+      );
+      expect(
+        () => result.baselineHandoffProposal.gitStatusEntries.clear(),
         throwsUnsupportedError,
       );
       expect(

@@ -32,9 +32,9 @@ void main() {
           preflight: preflight,
         ).execute(ready);
 
-        expect(result, isA<BootstrapExecutionReady>(),
+        expect(result, isA<BootstrapExecutionPrepared>(),
             reason: _describe(result));
-        final completed = result as BootstrapExecutionReady;
+        final completed = result as BootstrapExecutionPrepared;
         expect(completed.branch, 'bootstrap-main');
         expect(completed.headExists, isFalse);
         expect(completed.hasRemotes, isFalse);
@@ -52,6 +52,28 @@ void main() {
         expect(
           await File(path.join(targetPath, 'lib', 'main.dart')).readAsString(),
           isNot(contains('incrementCounter')),
+        );
+        expect(await File(path.join(targetPath, 'README.md')).exists(), isTrue);
+        expect(await File(path.join(targetPath, 'AGENTS.md')).exists(), isTrue);
+        expect(
+            await Directory(path.join(targetPath, 'Docs')).exists(), isFalse);
+        expect(
+          await File(path.join(targetPath, 'Agreement.md')).exists(),
+          isFalse,
+        );
+        expect(
+          await File(path.join(targetPath, 'Handoff.md')).exists(),
+          isFalse,
+        );
+        expect(completed.automatedTechnicalValidationStatus, 'Pending');
+        expect(completed.userReadyApprovalStatus, 'Pending');
+        expect(completed.firstAgreementApprovalStatus, 'Pending');
+        expect(completed.firstAgreementProposal.approvalStatus,
+            'Proposed — User approval required');
+        expect(completed.baselineHandoffProposal.proposalStatus, 'Proposed');
+        expect(
+          completed.baselineHandoffProposal.gitStatusEntries,
+          await _gitStatusEntries(Directory(targetPath)),
         );
         await _expectSmokeTestPasses(targetPath);
         expect(_ownedStaging(fixture.root), isEmpty);
@@ -106,9 +128,9 @@ void main() {
           preflight: preflight,
         ).execute(ready);
 
-        expect(result, isA<BootstrapExecutionReady>(),
+        expect(result, isA<BootstrapExecutionPrepared>(),
             reason: _describe(result));
-        final completed = result as BootstrapExecutionReady;
+        final completed = result as BootstrapExecutionPrepared;
         expect(completed.branch, 'preserved');
         expect(completed.headExists, isFalse);
         expect(completed.hasRemotes, isFalse);
@@ -128,6 +150,17 @@ void main() {
           ),
           isFalse,
         );
+        expect(
+            await File(path.join(target.path, 'README.md')).exists(), isTrue);
+        expect(
+            await File(path.join(target.path, 'AGENTS.md')).exists(), isTrue);
+        expect(
+          completed.baselineHandoffProposal.gitStatusEntries,
+          await _gitStatusEntries(target),
+        );
+        expect(completed.baselineHandoffProposal.branch, 'preserved');
+        expect(completed.baselineHandoffProposal.headAvailable, isFalse);
+        expect(completed.baselineHandoffProposal.remotePresent, isFalse);
         await _expectSmokeTestPasses(target.path);
         expect(_ownedStaging(fixture.root), isEmpty);
         expect(await _factoryStatus(), factoryStatusBefore);
@@ -235,13 +268,26 @@ void main() {
           preflight: preflight,
         ).execute(ready);
 
-        expect(result, isA<BootstrapExecutionReady>(),
+        expect(result, isA<BootstrapExecutionPrepared>(),
             reason: _describe(result));
+        final completed = result as BootstrapExecutionPrepared;
         final statusAfter = await _gitOutput(target, ['status', '--short']);
         expect(statusAfter, contains(statusBefore.trim()));
         expect(await _gitOutput(target, ['rev-parse', 'HEAD']), headBefore);
         expect(await File(path.join(target.path, 'pubspec.yaml')).exists(),
             isTrue);
+        expect(
+            await File(path.join(target.path, 'AGENTS.md')).exists(), isTrue);
+        expect(completed.headExists, isTrue);
+        expect(completed.hasRemotes, isTrue);
+        expect(
+          completed.baselineHandoffProposal.gitStatusEntries,
+          await _gitStatusEntries(target),
+        );
+        expect(
+          completed.baselineHandoffProposal.headIdentity,
+          (await _gitOutput(target, ['rev-parse', 'HEAD'])).trim(),
+        );
         await _expectSmokeTestPasses(target.path);
         expect(_ownedStaging(fixture.root), isEmpty);
         expect(await _factoryStatus(), factoryStatusBefore);
@@ -455,6 +501,69 @@ void main() {
         : 'Run with RUN_FACTORY_BOOTSTRAP_INTEGRATION=true.',
     timeout: const Timeout(Duration(minutes: 5)),
   );
+
+  test(
+    'cross-domain Products receive isolated authority and proposals',
+    () async {
+      final factoryStatusBefore = await _factoryStatus();
+      final fixture = await _fixture();
+      try {
+        final cases = [
+          (
+            directory: 'garden_product',
+            name: 'Garden Planner',
+            purpose: 'Plan seasonal garden work.',
+            scope: 'Clarify the first planting outcome.',
+            project: 'garden_planner',
+          ),
+          (
+            directory: 'reading_product',
+            name: 'Reading Log',
+            purpose: 'Record personal reading progress.',
+            scope: 'Clarify the first reading-log outcome.',
+            project: 'reading_log',
+          ),
+        ];
+        final rendered = <String>[];
+        for (final product in cases) {
+          final targetPath = path.join(fixture.root.path, product.directory);
+          final preflight = FileSystemBootstrapPreflight(
+            factoryRoot: fixture.factory,
+          );
+          final ready = await preflight.inspect(
+            _request(
+              outputPath: targetPath,
+              productDisplayName: product.name,
+              productPurpose: product.purpose,
+              initialScope: product.scope,
+              flutterProjectName: product.project,
+            ),
+          ) as BootstrapPreflightReady;
+          final result = await FileSystemBootstrapExecutor(
+            factoryRoot: fixture.factory,
+            preflight: preflight,
+          ).execute(ready) as BootstrapExecutionPrepared;
+          final authority =
+              '${await File(path.join(targetPath, 'README.md')).readAsString()}\n'
+              '${await File(path.join(targetPath, 'AGENTS.md')).readAsString()}';
+          rendered.add(authority);
+          expect(authority, contains(product.name));
+          expect(authority, contains(product.purpose));
+          expect(authority, contains(product.scope));
+          expect(result.firstAgreementProposal.goal, product.scope);
+        }
+        expect(rendered[0], isNot(contains(cases[1].name)));
+        expect(rendered[1], isNot(contains(cases[0].name)));
+        expect(await _factoryStatus(), factoryStatusBefore);
+      } finally {
+        await fixture.root.delete(recursive: true);
+      }
+    },
+    skip: _runIntegration
+        ? false
+        : 'Run with RUN_FACTORY_BOOTSTRAP_INTEGRATION=true.',
+    timeout: const Timeout(Duration(minutes: 5)),
+  );
 }
 
 Future<_IntegrationFixture> _fixture() async {
@@ -471,17 +580,20 @@ BootstrapRequest _request({
   String repositoryMode = 'newRepository',
   String? initialBranchName = 'bootstrap-main',
   String? repositoryPolicy,
+  String productDisplayName = 'Disposable Bootstrap Validation',
+  String productPurpose = 'Validate the executable Bootstrap contract.',
+  String initialScope = 'Prepare and inspect a disposable neutral scaffold.',
+  String flutterProjectName = 'factory_bootstrap_validation',
 }) {
   return BootstrapRequest(
-    productDisplayName: 'Disposable Bootstrap Validation',
-    productPurpose: 'Validate the executable Bootstrap contract.',
-    initialProductScopeOrFirstIntendedOutcome:
-        'Prepare and inspect a disposable neutral scaffold.',
+    productDisplayName: productDisplayName,
+    productPurpose: productPurpose,
+    initialProductScopeOrFirstIntendedOutcome: initialScope,
     exactOutputPath: outputPath,
     repositoryMode: repositoryMode,
     initialBranchName: initialBranchName,
     repositoryPolicy: repositoryPolicy,
-    flutterProjectName: 'factory_bootstrap_validation',
+    flutterProjectName: flutterProjectName,
     organizationIdentifier: 'com.example',
     requestedTechnology: 'flutter',
     targetPlatforms: const ['ios', 'android'],
@@ -515,6 +627,10 @@ Future<Directory> _repositoryWithStagedDeletion(
   await tracked.writeAsString('baseline\n');
   await _runGit(target, ['add', relativePath]);
   await _runGit(target, ['commit', '-m', 'integration baseline']);
+  await _runGit(
+    target,
+    ['remote', 'add', 'origin', 'https://example.invalid/product.git'],
+  );
   await tracked.delete();
   await _runGit(target, ['add', '-u']);
   return target;
@@ -544,6 +660,13 @@ Future<String> _gitOutput(
   return result.stdout.toString();
 }
 
+Future<List<String>> _gitStatusEntries(Directory repository) async {
+  return (await _gitOutput(repository, ['status', '--short']))
+      .split('\n')
+      .where((line) => line.isNotEmpty)
+      .toList(growable: false);
+}
+
 Future<String> _factoryStatus() async {
   final result = await Process.run(
     'git',
@@ -570,7 +693,7 @@ String _describe(BootstrapExecutionResult result) {
           '${stopped.validationFailure ?? stopped.failedCommand?.stderr}',
     BootstrapExecutionPartialFailure partial =>
       '${partial.category.name}/${partial.stage.name}: ${partial.failure}',
-    BootstrapExecutionReady _ => 'Ready',
+    BootstrapExecutionPrepared _ => 'Prepared',
   };
 }
 
