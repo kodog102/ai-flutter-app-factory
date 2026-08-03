@@ -128,3 +128,29 @@ Status: **In Progress**
 V1 Ready 승인과 Release Pending 상태는 유지한다. V1.1은 Product 기능 또는 V1.2 AI Product Loop를 구현하지 않는다.
 
 Preserve V1 Ready approval and Release Pending status. V1.1 does not implement Product features or the V1.2 AI Product Loop.
+
+## 9. V1.2 Product Loop Guard
+
+Status: **Contract Scope Approved — Runtime Not Implemented**
+
+### Goal
+
+- Bootstrap 이후 Product Agreement의 기준선, Flutter Health Gate, QA candidate와 Product Context drift 검사를 안전하게 통제한다
+- Safely govern the baseline, Flutter Health Gate, QA candidate, and Product Context drift check for Product Agreements after Bootstrap
+
+### Validated Contract Scope
+
+- Product 작업 시작 기준선과 QA candidate 기준선을 분리한다
+- Separate the Product work-start baseline from the QA candidate baseline
+- QA candidate 이후 상태가 바뀌면 중단하고 새 candidate로 다시 검증한다
+- Stop and verify a new candidate when state changes after QA candidate capture
+- 기본 format, analyze와 전체 test를 실행하고 영향 범위에 따라 Android 및 iOS build를 추가한다
+- Run default format, analyze, and full tests, and add Android and iOS builds according to impact
+- milestone 종료 전 기존 Product SSOT와 실제 상태의 drift를 확인한다
+- Check drift between existing Product SSOT and actual state before milestone closure
+- QA PASS와 User 승인 및 Git 작업을 분리한다
+- Keep QA PASS separate from User approval and Git actions
+
+이 단계는 승인된 운영 계약만 정의한다. V1.2 실행 Runtime, Agent Adapter, Provider 연동, orchestration과 Product 기능 구현은 포함하지 않는다.
+
+This stage defines only the approved operational contract. It does not include a V1.2 execution Runtime, Agent Adapter, Provider integration, orchestration, or Product feature implementation.

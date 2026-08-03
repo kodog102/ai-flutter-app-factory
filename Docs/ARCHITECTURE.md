@@ -201,6 +201,94 @@ V1.1 command layer는 기존 Runtime의 preflight, 실행, ownership, rollback �
 
 The V1.1 command layer does not replace existing Runtime preflight, execution, ownership, rollback, or approval semantics. It does not implement Product features or invoke a Provider, and the V1.2 Agent Adapter and Product Loop are not implemented.
 
+### V1.2 Product Loop Guard Contract
+
+V1.2 Product Loop Guard는 Bootstrap 이후 Product Repository 안에서 수행되는 작은 Agreement의 기준선, 검증과 승인 경계를 정의한다. 이 계약은 특정 Provider, 모델 또는 IDE를 전제하지 않는다.
+
+The V1.2 Product Loop Guard defines baseline, verification, and approval boundaries for small Agreements performed inside a Product Repository after Bootstrap. This contract does not assume a specific Provider, model, or IDE.
+
+현재 V1.2 범위는 운영 계약이며 실행 Runtime, Agent Adapter 또는 orchestration은 구현되어 있지 않다.
+
+The current V1.2 scope is an operational contract. Its execution Runtime, Agent Adapter, and orchestration are not implemented.
+
+#### Product Work Baseline
+
+- Agreement 구현 전에 Product root, branch, HEAD와 staged, modified, untracked 및 deleted 상태를 capture한다
+- Before Agreement implementation, capture the Product root, branch, HEAD, and staged, modified, untracked, and deleted state
+- clean committed 상태는 HEAD를 내용 식별자로 사용하고, non-clean 상태는 staged·unstaged diff와 untracked 파일 내용을 식별할 수 있는 hash, manifest 또는 동등한 immutable snapshot Evidence를 함께 capture한다
+- For a clean committed state, use HEAD as the content identifier. For a non-clean state, also capture hashes, a manifest, or equivalent immutable snapshot Evidence that identifies staged and unstaged diffs and untracked file content
+- User가 승인한 기준선 또는 Approved Operational Baseline Handoff와 실제 상태를 비교한다
+- Compare the actual state with the User-approved baseline or Approved Operational Baseline Handoff
+- 승인된 non-clean 상태는 허용하지만 알려지지 않은 차이가 있으면 수정 전에 중단한다
+- Allow an approved non-clean state, but stop before modification when an unknown difference exists
+- Product 작업 기준선은 Bootstrap Ready 상태를 다시 승인하거나 Factory를 다시 읽도록 요구하지 않는다
+- The Product work baseline does not require reapproval of Bootstrap Ready state or rereading the Factory
+
+#### QA Candidate Baseline
+
+- 구현과 자체 검증이 끝나면 QA가 검토할 Product 상태를 별도 candidate baseline으로 capture한다
+- After implementation and self-verification, capture the Product state for QA as a separate candidate baseline
+- candidate에는 최소한 Product root, branch, HEAD, 전체 Git status와 Product 내용 변경을 식별하는 Evidence가 포함된다
+- The candidate includes at least the Product root, branch, HEAD, complete Git status, and Evidence that identifies Product content changes
+- clean committed candidate는 HEAD로 내용을 고정하고, non-clean candidate는 staged·unstaged diff와 untracked 파일 내용을 식별할 수 있는 hash, manifest 또는 동등한 immutable snapshot identifier를 사용한다
+- A clean committed candidate fixes its content by HEAD. A non-clean candidate uses hashes, a manifest, or an equivalent immutable snapshot identifier for staged and unstaged diffs and untracked file content
+- QA는 명시된 candidate와 Agreement, diff 및 검증 Evidence만 판정한다
+- QA evaluates only the explicit candidate, Agreement, diff, and verification Evidence
+- candidate capture 이후 Product 상태가 바뀌면 기존 QA 판정을 사용하지 않고 중단한 뒤 새 candidate로 다시 검증한다
+- When Product state changes after candidate capture, do not use the previous QA verdict; stop and verify a new candidate
+
+#### Flutter Health Gate
+
+Flutter Product의 기본 Health Gate는 다음 검증을 포함한다.
+
+The default Health Gate for a Flutter Product includes:
+
+```text
+dart format --output=none --set-exit-if-changed lib test
+flutter analyze
+flutter test
+```
+
+- Agreement, dependency, platform 또는 release 영향 범위에 따라 Android APK와 iOS Simulator build를 추가한다
+- Add Android APK and iOS Simulator builds when required by the Agreement or by dependency, platform, or release impact
+- Agreement는 수행할 build와 생략할 검증 및 이유를 명시한다
+- The Agreement states the builds to run and any omitted verification with its reason
+- 필수 검증이 실패하거나 실행되지 못하면 QA PASS 또는 완료 상태를 제안하지 않는다
+- Do not propose QA PASS or completion when required verification fails or cannot run
+
+#### Product Context Drift Gate
+
+- milestone 종료 전에 Product-local `README.md`, `AGENTS.md`, 승인된 기준선과 실제 Product 상태를 비교한다
+- Before milestone closure, compare the Product-local `README.md`, `AGENTS.md`, approved baseline, and actual Product state
+- 승인된 장기 기능, 범위 또는 운영 규칙이 달라졌을 때만 기존 Product SSOT를 최소 수정한다
+- Minimally update an existing Product SSOT only when an approved long-term capability, scope, or operating rule changed
+- 임시 Agreement, 구현 세부 정보 또는 자동 추론을 영구 Product 지식으로 만들지 않는다
+- Do not turn a temporary Agreement, implementation detail, or automated inference into permanent Product knowledge
+- Product Context의 의미적 정확성을 자동 판정하는 기능은 현재 V1.2 계약에 포함하지 않는다
+- Automated judgment of Product Context semantic accuracy is not included in the current V1.2 contract
+
+#### Product Loop Approval Boundary
+
+- QA PASS는 User 승인, commit, push, Ready 또는 release를 의미하지 않는다
+- QA PASS does not mean User approval, commit, push, Ready, or release
+- User가 candidate 결과와 Product Context를 승인한 뒤에만 다음 작업 또는 별도 승인된 Git 작업으로 진행한다
+- Proceed to the next work or separately approved Git action only after the User approves the candidate result and Product Context
+- commit, push, tag와 release는 각각 명시적인 User 요청이 필요하다
+- Commit, push, tag, and release each require an explicit User request
+
+#### Product Loop Stop Conditions
+
+다음 중 하나라도 발생하면 기존 candidate 또는 QA 판정을 사용하지 않고 중단한다.
+
+Stop without using the existing candidate or QA verdict when any of the following occurs.
+
+- 승인된 Product 작업 기준선이 없거나 실제 상태와 다름 / The approved Product work baseline is absent or differs from the actual state
+- 구현 또는 QA 중 예상하지 못한 파일이나 Git 상태가 나타남 / An unexpected file or Git state appears during implementation or QA
+- QA candidate capture 이후 Product 상태가 변경됨 / Product state changes after QA candidate capture
+- 필수 Flutter Health Gate가 실패하거나 실행되지 못함 / A required Flutter Health Gate fails or cannot run
+- Product Context drift가 해결되지 않았거나 명시적으로 제외되지 않음 / Product Context drift is unresolved or not explicitly excluded
+- 민감정보, 범위 밖 변경 또는 Repository 경계 충돌이 발견됨 / Sensitive information, an out-of-scope change, or a Repository boundary conflict is found
+
 Flutter scaffold와 기본 검증은 Factory Bootstrap 책임이다. Product 기능, 데이터 모델, UI, backend, 인증, 외부 서비스와 Product별 package는 Product-local Agreement가 소유한다.
 
 The Flutter scaffold and base verification are Factory Bootstrap responsibilities. Product features, data models, UI, backend, authentication, external services, and Product-specific packages are owned by Product-local Agreements.
