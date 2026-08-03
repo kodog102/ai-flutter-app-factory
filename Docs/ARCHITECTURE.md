@@ -197,9 +197,9 @@ product_request.yaml
 → versioned JSON result and Korean-first summary
 ```
 
-V1.1 command layer는 기존 Runtime의 preflight, 실행, ownership, rollback 또는 승인 의미를 대체하지 않는다. Product 기능을 구현하거나 Provider를 호출하지 않으며 V1.2 Agent Adapter와 Product Loop는 구현되어 있지 않다.
+V1.1 command layer는 기존 Runtime의 preflight, 실행, ownership, rollback 또는 승인 의미를 대체하지 않는다. Product 기능을 구현하거나 Provider를 호출하지 않는다. V1.2 Product Loop Guard Runtime foundation은 아래 별도 계약을 따르며, Agent Adapter는 구현되어 있지 않다.
 
-The V1.1 command layer does not replace existing Runtime preflight, execution, ownership, rollback, or approval semantics. It does not implement Product features or invoke a Provider, and the V1.2 Agent Adapter and Product Loop are not implemented.
+The V1.1 command layer does not replace existing Runtime preflight, execution, ownership, rollback, or approval semantics. It does not implement Product features or invoke a Provider. The V1.2 Product Loop Guard Runtime foundation follows the separate contract below, while an Agent Adapter is not implemented.
 
 ### V1.2 Product Loop Guard Contract
 
@@ -207,9 +207,23 @@ V1.2 Product Loop Guard는 Bootstrap 이후 Product Repository 안에서 수행�
 
 The V1.2 Product Loop Guard defines baseline, verification, and approval boundaries for small Agreements performed inside a Product Repository after Bootstrap. This contract does not assume a specific Provider, model, or IDE.
 
-현재 V1.2 범위는 운영 계약이며 실행 Runtime, Agent Adapter 또는 orchestration은 구현되어 있지 않다.
+현재 V1.2 범위는 운영 계약과 이를 실행하는 공개 Dart Runtime foundation이다. Agent Adapter, Provider 연동과 orchestration은 구현되어 있지 않다.
 
-The current V1.2 scope is an operational contract. Its execution Runtime, Agent Adapter, and orchestration are not implemented.
+The current V1.2 scope includes the operational contract and its public Dart Runtime foundation. An Agent Adapter, Provider integration, and orchestration are not implemented.
+
+```text
+captureBaseline
+→ ProductLoopBaselineProposal
+→ inspect expected baseline
+→ ProductLoopGuardReady
+→ external approved Product implementation
+→ validate QA candidate and Flutter Health Gate
+→ ProductLoopCandidateValidated | ProductLoopValidationStopped
+```
+
+Runtime은 Product 기능을 구현하거나 Product Context 의미를 승인하지 않는다. 승인된 외부 구현 전후의 Repository 상태와 기술 검증 Evidence만 제공한다.
+
+The Runtime does not implement Product features or approve Product Context meaning. It provides only Repository-state and technical-verification Evidence around externally approved implementation.
 
 #### Product Work Baseline
 

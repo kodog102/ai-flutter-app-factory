@@ -1,0 +1,135 @@
+import 'dart:io';
+
+import 'package:ai_flutter_app_factory/ai_flutter_app_factory.dart';
+import 'package:path/path.dart' as path;
+import 'package:test/test.dart';
+
+final _runIntegration =
+    Platform.environment['AI_FLUTTER_FACTORY_RUN_INTEGRATION'] == '1';
+
+void main() {
+  test(
+    'validates a disposable committed Flutter Product without source mutation',
+    () async {
+      final factoryRoot = Directory.current.absolute;
+      final factoryStatusBefore = await _gitOutput(factoryRoot, [
+        'status',
+        '--short',
+        '--untracked-files=all',
+      ]);
+      final fixture = await Directory.systemTemp.createTemp(
+        'product_loop_guard_integration_',
+      );
+      final productRoot = Directory(path.join(fixture.path, 'product'));
+      try {
+        final create = await Process.run(
+          'flutter',
+          [
+            'create',
+            '--platforms=ios,android',
+            '--project-name=product_loop_guard_sample',
+            '--org=com.example',
+            productRoot.path,
+          ],
+          workingDirectory: fixture.path,
+          runInShell: false,
+        );
+        expect(create.exitCode, 0, reason: create.stderr.toString());
+        await File(
+          path.join(productRoot.path, 'AGENTS.md'),
+        ).writeAsString('Product-local operating authority.\n');
+        await _ensureCommittedRepository(productRoot);
+
+        final runtime = ProductLoopGuardRuntime(factoryRoot: factoryRoot);
+        final proposal = await runtime.captureBaseline(productRoot)
+            as ProductLoopBaselineProposal;
+        final ready = await runtime.inspect(
+          ProductLoopGuardRequest(
+            expectedBaseline: proposal.snapshot,
+            buildPolicy: ProductLoopBuildPolicy.both,
+          ),
+        ) as ProductLoopGuardReady;
+
+        final result = await runtime.validate(ready);
+
+        expect(result, isA<ProductLoopCandidateValidated>());
+        final validated = result as ProductLoopCandidateValidated;
+        expect(validated.technicalValidationStatus, 'Passed');
+        expect(validated.productContextReviewStatus, 'ReviewRequired');
+        expect(validated.userApprovalStatus, 'Pending');
+        expect(validated.commitStatus, 'NotPerformed');
+        expect(
+          validated.commandsCompleted.map(
+            (command) => '${command.executable} ${command.arguments.join(' ')}',
+          ),
+          [
+            'dart format --output=none --set-exit-if-changed lib test',
+            'flutter analyze',
+            'flutter test',
+            'flutter build apk --debug',
+            'flutter build ios --simulator --no-codesign',
+          ],
+        );
+        expect(
+          await _gitOutput(productRoot, [
+            'status',
+            '--short',
+            '--untracked-files=all',
+          ]),
+          isEmpty,
+        );
+        expect(
+          await _gitOutput(factoryRoot, [
+            'status',
+            '--short',
+            '--untracked-files=all',
+          ]),
+          factoryStatusBefore,
+        );
+      } finally {
+        await fixture.delete(recursive: true);
+      }
+    },
+    skip: _runIntegration
+        ? false
+        : 'Run with AI_FLUTTER_FACTORY_RUN_INTEGRATION=1.',
+    timeout: const Timeout(Duration(minutes: 8)),
+  );
+}
+
+Future<void> _ensureCommittedRepository(Directory root) async {
+  final inside = await Process.run(
+    'git',
+    ['rev-parse', '--is-inside-work-tree'],
+    workingDirectory: root.path,
+    runInShell: false,
+  );
+  if (inside.exitCode != 0) {
+    await _git(root, ['init', '-b', 'main']);
+  }
+  await _git(root, ['config', 'user.email', 'factory@example.invalid']);
+  await _git(root, ['config', 'user.name', 'Factory Integration']);
+  await _git(root, ['add', '.']);
+  await _git(root, ['commit', '-m', 'Product baseline']);
+}
+
+Future<void> _git(Directory root, List<String> arguments) async {
+  final result = await Process.run(
+    'git',
+    arguments,
+    workingDirectory: root.path,
+    runInShell: false,
+  );
+  expect(result.exitCode, 0, reason: result.stderr.toString());
+}
+
+Future<String> _gitOutput(Directory root, List<String> arguments) async {
+  final result = await Process.run(
+    'git',
+    arguments,
+    workingDirectory: root.path,
+    runInShell: false,
+  );
+  expect(result.exitCode, 0, reason: result.stderr.toString());
+  return result.stdout.toString().trim();
+}

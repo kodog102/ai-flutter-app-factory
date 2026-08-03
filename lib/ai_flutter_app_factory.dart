@@ -17,6 +17,12 @@ export 'core/bootstrap/bootstrap_stop_reason.dart';
 export 'core/bootstrap/bootstrap_technical_validation.dart';
 export 'core/bootstrap/repository_mode.dart';
 export 'core/bootstrap/validated_bootstrap_request.dart';
+export 'core/product_loop/product_loop_guard_request.dart';
+export 'core/product_loop/product_loop_guard_result.dart';
+export 'core/product_loop/product_loop_guard_runtime.dart';
+export 'core/product_loop/product_loop_process_runner.dart'
+    show ProductLoopProcessResult, ProductLoopProcessRunner;
+export 'core/product_loop/product_loop_repository_snapshot.dart';
 
 /// Official Flutter V1 execution boundary for Factory consumers.
 final class FlutterAppFactoryRuntime {

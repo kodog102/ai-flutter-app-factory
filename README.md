@@ -60,6 +60,16 @@ dart run ai_flutter_app_factory:factory_bootstrap --request /absolute/intake/pro
 
 Follow [Docs/SETUP.md](Docs/SETUP.md) for the request-file location and schema, and [Docs/USER_GUIDE.md](Docs/USER_GUIDE.md) for the non-developer execution and approval flow. V1.1 does not implement Product features and does not include the V1.2 AI Product Loop.
 
+### V1.2 Product Loop Guard Runtime
+
+V1.2 Runtime foundation은 승인된 Product 기준선을 검사하고, QA candidate를 고정한 뒤 Flutter format, analyze, test와 선택된 Android/iOS build를 실행한다.
+
+The V1.2 Runtime foundation verifies an expected Product baseline, freezes the QA candidate, and then runs Flutter format, analyze, tests, and selected Android/iOS builds.
+
+Product Context 의미 검토, QA 판정과 User 승인은 자동화하지 않는다. Provider, Agent Adapter, orchestration과 V1.2 CLI는 현재 범위가 아니다.
+
+It does not automate semantic Product Context review, the QA verdict, or User approval. Provider integration, an Agent Adapter, orchestration, and a V1.2 CLI are outside the current scope.
+
 Ready Product는 새로운 작업 주체가 Factory를 다시 읽지 않고 Product Repository만으로 첫 Agreement를 제안할 수 있는 상태다.
 
 A Ready Product is a state in which a new work participant can propose the first Agreement from the Product Repository alone without rereading the Factory.
@@ -76,6 +86,20 @@ BootstrapPreflightReady
 FlutterAppFactoryRuntime.execute
     ↓
 BootstrapExecutionPrepared | BootstrapExecutionStopped | BootstrapExecutionPartialFailure
+```
+
+```text
+ProductLoopGuardRuntime.captureBaseline
+    ↓
+ProductLoopBaselineProposal
+    ↓
+ProductLoopGuardRuntime.inspect
+    ↓
+ProductLoopGuardReady
+    ↓
+ProductLoopGuardRuntime.validate
+    ↓
+ProductLoopCandidateValidated | ProductLoopValidationStopped
 ```
 
 외부 consumer는 package-root API 하나만 import한다.
@@ -137,6 +161,7 @@ Executable Flutter V1 coordinates the `lib/core/bootstrap/` runtime through the 
 │   ├── ai_flutter_app_factory.dart       # active public V1 API
 │   └── core/
 │       ├── bootstrap/                    # active V1 runtime
+│       ├── product_loop/                 # V1.2 Product Loop Guard runtime
 │       ├── factory/                      # inactive legacy source
 │       ├── generator/                    # inactive legacy source
 │       └── template/                     # inactive legacy source
@@ -187,6 +212,8 @@ Factory review and development:
 현재 상태: **Flutter V1 Ready — Release Pending**
 
 Current status: **Flutter V1 Ready — Release Pending**
+
+V1.2 Product Loop Guard Runtime foundation: **Validated — User Approval Pending**
 
 ## License
 

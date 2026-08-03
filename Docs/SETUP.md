@@ -184,6 +184,39 @@ Future<void> main() async {
 
 The execution sequence is `BootstrapRequest` → `inspect` → `BootstrapPreflightReady` → `execute`. `BootstrapPreflightStopped` returns structured stop evidence before Product mutation.
 
+## V1.2 Product Loop Guard Public Runtime
+
+Product Loop Guard는 Bootstrap 이후 별도 Product Repository에서 사용한다. 먼저 기준선 Proposal을 capture하고 User가 승인한 동일 기준선을 `inspect`한 뒤, 승인된 Product 구현이 끝났을 때 `validate`를 실행한다.
+
+Use the Product Loop Guard in a separate Product Repository after Bootstrap. Capture a baseline proposal first, inspect the same User-approved baseline, and run `validate` after the approved Product implementation finishes.
+
+```dart
+final loop = ProductLoopGuardRuntime(
+  factoryRoot: Directory('/exact/factory/path'),
+);
+final proposal = await loop.captureBaseline(
+  Directory('/exact/product/path'),
+);
+if (proposal case ProductLoopBaselineProposal baseline) {
+  final inspected = await loop.inspect(
+    ProductLoopGuardRequest(
+      expectedBaseline: baseline.snapshot,
+      buildPolicy: ProductLoopBuildPolicy.both,
+    ),
+  );
+  if (inspected case ProductLoopGuardReady ready) {
+    // User가 승인한 Product 구현은 Factory 밖에서 수행한다.
+    // Perform User-approved Product implementation outside the Factory.
+    final validation = await loop.validate(ready);
+    print(validation.runtimeType);
+  }
+}
+```
+
+`ProductLoopCandidateValidated`는 기술 검증 통과를 의미하지만 QA PASS, Product Context 승인, User 승인 또는 commit을 의미하지 않는다. `ProductLoopValidationStopped`가 반환되면 Evidence를 확인하고 기존 QA candidate를 사용하지 않는다.
+
+`ProductLoopCandidateValidated` means technical verification passed, but it does not mean QA PASS, Product Context approval, User approval, or commit. When `ProductLoopValidationStopped` is returned, inspect its Evidence and do not use the previous QA candidate.
+
 ## Result Handling and Approval Boundary
 
 - `BootstrapPreflightStopped`: 입력 또는 Target 검증이 실패했으며 execution을 시작하지 않음

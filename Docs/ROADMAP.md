@@ -131,7 +131,7 @@ Preserve V1 Ready approval and Release Pending status. V1.1 does not implement P
 
 ## 9. V1.2 Product Loop Guard
 
-Status: **Contract Scope Approved — Runtime Not Implemented**
+Status: **Runtime Foundation Validated — User Approval Pending**
 
 ### Goal
 
@@ -151,6 +151,6 @@ Status: **Contract Scope Approved — Runtime Not Implemented**
 - QA PASS와 User 승인 및 Git 작업을 분리한다
 - Keep QA PASS separate from User approval and Git actions
 
-이 단계는 승인된 운영 계약만 정의한다. V1.2 실행 Runtime, Agent Adapter, Provider 연동, orchestration과 Product 기능 구현은 포함하지 않는다.
+이 단계는 승인된 운영 계약과 공개 Dart Runtime foundation을 구현한다. Agent Adapter, Provider 연동, orchestration과 Product 기능 구현은 포함하지 않는다.
 
-This stage defines only the approved operational contract. It does not include a V1.2 execution Runtime, Agent Adapter, Provider integration, orchestration, or Product feature implementation.
+This stage implements the approved operational contract and a public Dart Runtime foundation. It does not include an Agent Adapter, Provider integration, orchestration, or Product feature implementation.
