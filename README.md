@@ -56,11 +56,37 @@ V1.1 safely adapts one `product_request.yaml` outside the Factory into the exist
 dart run ai_flutter_app_factory:factory_bootstrap --request /absolute/intake/product_request.yaml
 ```
 
-요청 파일 위치와 schema는 [Docs/SETUP.md](Docs/SETUP.md), 비개발자 실행·승인 순서는 [Docs/USER_GUIDE.md](Docs/USER_GUIDE.md)를 따른다. V1.1은 Product 기능을 구현하지 않으며 V1.2 AI Product Loop를 포함하지 않는다.
+요청 파일 위치와 schema는 [Docs/SETUP.md](Docs/SETUP.md), 비개발자 실행·승인 순서는 [Docs/USER_GUIDE.md](Docs/USER_GUIDE.md)를 따른다. V1.1은 Product 기능을 구현하지 않으며 V1.2 Product Loop Guard를 포함하지 않는다.
 
-Follow [Docs/SETUP.md](Docs/SETUP.md) for the request-file location and schema, and [Docs/USER_GUIDE.md](Docs/USER_GUIDE.md) for the non-developer execution and approval flow. V1.1 does not implement Product features and does not include the V1.2 AI Product Loop.
+Follow [Docs/SETUP.md](Docs/SETUP.md) for the request-file location and schema, and [Docs/USER_GUIDE.md](Docs/USER_GUIDE.md) for the non-developer execution and approval flow. V1.1 does not implement Product features and does not include the V1.2 Product Loop Guard.
 
 ### V1.2 Product Loop Guard Runtime
+
+Product Loop는 Product Repository에서 작은 Agreement 하나를 안전하게 완료하는 반복 작업 단위다. 자율적으로 Product를 개발하는 AI 기능이 아니라, 승인된 시작 상태와 구현 후 검증 대상을 고정해 예상 밖 변경이 다음 단계로 넘어가지 못하게 하는 운영 흐름이다.
+
+A Product Loop is a repeatable unit of work for safely completing one small Agreement inside a Product Repository. It is not an autonomous AI Product-development feature. It is an operating flow that fixes the approved starting state and the post-implementation validation candidate so unexpected changes cannot proceed to the next stage.
+
+```text
+Product 기준선 제안
+→ User 기준선 승인
+→ 작은 Agreement 구현
+→ QA candidate 캡처
+→ Flutter Health Gate
+→ 독립 QA
+→ User 결과 승인
+→ 선택적 commit
+```
+
+```text
+Product baseline proposal
+→ User baseline approval
+→ Small Agreement implementation
+→ QA candidate capture
+→ Flutter Health Gate
+→ Independent QA
+→ User result approval
+→ Optional commit
+```
 
 V1.2 Runtime foundation은 승인된 Product 기준선을 검사하고, QA candidate를 고정한 뒤 Flutter format, analyze, test와 선택된 Android/iOS build를 실행한다.
 
@@ -213,7 +239,11 @@ Factory review and development:
 
 Current status: **Flutter V1 Ready — Release Pending**
 
-V1.2 Product Loop Guard Runtime foundation: **Validated — User Approval Pending**
+V1.2 Product Loop Guard Runtime foundation: **Completed — User Approved**
+
+실제 Flutter Product에서 자동 Health Gate와 독립 QA가 통과했으며, 실기기 사용은 User가 제공한 수동 검증 Evidence로 승인됐다. Release는 계속 별도 User 결정을 기다린다.
+
+The automated Health Gate and independent QA passed on an actual Flutter Product, and physical-device use was approved from User-provided manual verification Evidence. Release continues to await a separate User decision.
 
 ## License
 

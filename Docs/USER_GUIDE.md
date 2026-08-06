@@ -25,6 +25,10 @@ Factory V1.1은 `product_request.yaml` 하나와 한 명령을 제공한다. 이
 
 Factory V1.1 provides one `product_request.yaml` and one command. The command invokes the existing public Dart Runtime and is not a standalone button-based app or an AI Product Loop. The User may give the file and execution request to a **code-capable work tool** that can access and run the Factory Repository.
 
+V1.2 Product Loop Guard 공개 Runtime은 구현·검증됐지만, 아직 비개발자용 한 명령 Product Loop는 제공하지 않는다. 현재 V1.2를 실행하려면 공개 Dart API를 사용할 수 있는 코드 작업 도구가 필요하다.
+
+The V1.2 Product Loop Guard public Runtime is implemented and validated, but a one-command Product Loop for non-developers is not yet provided. Running V1.2 currently requires a code-capable work tool that can use the public Dart API.
+
 작업 도구의 제품명은 중요하지 않다. 다음 조건만 만족하면 된다.
 
 The work tool does not need to be a specific product. It only needs to:
@@ -548,8 +552,8 @@ Factory V1 does not automatically provide:
 - Ready, Agreement, or Release approval on behalf of the User
 - 자동 commit, push 또는 tag
 - Automatic commit, push, or tag
-- 버튼형 독립 실행 앱, V1.2 AI Product Loop 또는 Provider Adapter
-- A standalone button-based app, V1.2 AI Product Loop, or Provider Adapter
+- 버튼형 독립 실행 앱, V1.2 한 명령 Product Loop 또는 Provider Adapter
+- A standalone button-based app, a V1.2 one-command Product Loop, or a Provider Adapter
 
 ## 용어 / Glossary
 

@@ -118,20 +118,20 @@ A CLI, Template engine, or orchestration capability is not a V1 requirement unti
 
 ## 8. V1.1 One-run Product Bootstrap
 
-Status: **In Progress**
+Status: **Completed**
 
 ### Goal
 
 - 엄격한 `product_request.yaml` 하나와 한 명령으로 기존 Runtime의 검증된 Flutter Product 시작점을 준비한다
 - Prepare a verified Flutter Product starting point through the existing Runtime using one strict `product_request.yaml` and one command
 
-V1 Ready 승인과 Release Pending 상태는 유지한다. V1.1은 Product 기능 또는 V1.2 AI Product Loop를 구현하지 않는다.
+엄격한 `product_request.yaml`과 한 명령을 사용하는 Bootstrap이 구현됐으며 실제 Flutter Product 생성으로 검증됐다. V1 Ready 승인과 Release Pending 상태는 유지한다. V1.1은 Product 기능 또는 V1.2 Product Loop를 구현하지 않는다.
 
-Preserve V1 Ready approval and Release Pending status. V1.1 does not implement Product features or the V1.2 AI Product Loop.
+Bootstrap using one strict `product_request.yaml` and one command is implemented and verified through actual Flutter Product creation. Preserve V1 Ready approval and Release Pending status. V1.1 does not implement Product features or the V1.2 Product Loop.
 
 ## 9. V1.2 Product Loop Guard
 
-Status: **Runtime Foundation Validated — User Approval Pending**
+Status: **Completed — User Approved**
 
 ### Goal
 
@@ -154,3 +154,7 @@ Status: **Runtime Foundation Validated — User Approval Pending**
 이 단계는 승인된 운영 계약과 공개 Dart Runtime foundation을 구현한다. Agent Adapter, Provider 연동, orchestration과 Product 기능 구현은 포함하지 않는다.
 
 This stage implements the approved operational contract and a public Dart Runtime foundation. It does not include an Agent Adapter, Provider integration, orchestration, or Product feature implementation.
+
+오늘리듬 Flutter Product에서 승인 기준선 검사, 기본 Health Gate, Android·iOS build, candidate와 Factory 불변성 및 독립 QA가 통과했다. 실기기 사용은 User가 제공한 수동 검증 Evidence로 승인됐다.
+
+The approved baseline inspection, default Health Gate, Android and iOS builds, candidate and Factory immutability, and independent QA passed on the OneulRhythm Flutter Product. Physical-device use was approved from User-provided manual verification Evidence.
