@@ -283,7 +283,7 @@ Current status: **Flutter V1 Ready — Release Pending**
 
 V1.2 Product Loop Guard Runtime foundation: **Completed — User Approved**
 
-V1.2.1 Product Loop Operator Command: **Implemented — User Approval Pending**
+V1.2.1 Product Loop Operator Command: **Completed — User Approved**
 
 실제 Flutter Product에서 자동 Health Gate와 독립 QA가 통과했으며, 실기기 사용은 User가 제공한 수동 검증 Evidence로 승인됐다. Release는 계속 별도 User 결정을 기다린다.
 
