@@ -175,3 +175,20 @@ Status: **Completed — User Approved**
 이 단계는 Product 기능 구현, QA 자동 승인, Provider 연동, commit 또는 push를 포함하지 않는다.
 
 This stage does not include Product feature implementation, automated QA approval, Provider integration, commit, or push.
+
+## 11. V1.2 Consumer Readiness Validation
+
+Status: **Completed — User Approved**
+
+### Goal
+
+- Factory 개발 대화가 없는 새 작업 주체가 공개 문서만으로 V1.2 운영 경계를 이해하고 실행할 수 있는지 검증한다
+- Verify that fresh work participants without Factory development context can understand and operate the V1.2 boundaries using only public documentation
+- 새 Repository, 기존 빈 Repository와 잘못된 Evidence 경계 복구를 독립 시나리오로 확인한다
+- Validate New Repository, Existing Empty Repository, and invalid Evidence-boundary recovery as independent scenarios
+- Product 구현, User 승인, QA와 Git 작업의 분리를 유지한다
+- Preserve separation among Product implementation, User approval, QA, and Git actions
+
+초기 검증에서 기존 빈 Repository의 필수 정책 입력이 공개 사용설명서에 부족함을 확인했다. 기존 SSOT 한 파일을 최소 수정한 뒤 fresh-context 재실행과 독립 QA가 통과했다. Runtime 변경 없이 Consumer Guide blocker가 해소됐으며 V1.2 Consumer Ready 상태를 User가 승인했다.
+
+Initial validation found that the public user guide did not provide the required policy input for an Existing Empty Repository. After a minimal update to one existing SSOT file, a fresh-context rerun and independent QA passed. The Consumer Guide blocker was resolved without Runtime changes, and the User approved V1.2 Consumer Ready status.

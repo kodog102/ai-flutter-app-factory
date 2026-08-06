@@ -234,6 +234,45 @@ bootstrap:
     - android
 ```
 
+### 기존 빈 Repository 입력 / Existing Empty Repository Input
+
+기존의 빈 Git Repository를 보존해야 할 때는 아래 조건을 모두 만족해야 한다.
+
+When an existing empty Git Repository must be preserved, all conditions below must be satisfied.
+
+- Product 경로가 이미 존재하며 일반 디렉터리다.
+- The Product path already exists and is a regular directory.
+- Product 경로가 직접 소유한 실제 `.git` 디렉터리가 있다.
+- The Product path has its own real `.git` directory.
+- 아직 commit이 없고 Product root에는 `.git` 외 항목이 없다.
+- There are no commits yet and the Product root contains nothing except `.git`.
+- `initialBranchName`은 `null`이고 `repositoryPolicy`는 비어 있지 않은 설명문이다.
+- `initialBranchName` is `null`, and `repositoryPolicy` is a non-blank descriptive statement.
+
+다음 블록을 복사한 뒤 Product 정보와 경로만 바꾼다. `preserve existing Repository policy`는 설명서가 권장하는 표준 입력값이며 Runtime은 다른 비어 있지 않은 정책 설명도 허용한다.
+
+Copy the block below and change only the Product information and path. `preserve existing Repository policy` is the guide's canonical input; the Runtime also accepts another non-blank policy description.
+
+```yaml
+schemaVersion: 1
+requestId: existing-shopping-sample-001
+
+bootstrap:
+  productDisplayName: My Shopping List
+  productPurpose: 장보기 항목을 간단히 기록하고 구매 상태를 관리한다.
+  initialProductScopeOrFirstIntendedOutcome: 기존 빈 Repository에 Flutter 기반과 Product 운영 문서를 준비한다.
+  exactOutputPath: /Users/사용자이름/Documents/My Apps/my-shopping-list
+  repositoryMode: existingEmptyRepository
+  initialBranchName: null
+  repositoryPolicy: preserve existing Repository policy
+  flutterProjectName: my_shopping_list
+  organizationIdentifier: com.example
+  requestedTechnology: flutter
+  targetPlatforms:
+    - ios
+    - android
+```
+
 `requestId`는 선택 사항이며 승인, credential 또는 Product authority가 아니다. 요청 파일에 비밀정보를 넣지 않는다.
 
 `requestId` is optional and is not an approval, credential, or Product authority. Do not place secrets in the request file.
@@ -386,6 +425,19 @@ Agreement 구현 전에 작업 도구에 V1.2.1 기준선 Capture를 요청한�
 
 Before Agreement implementation, ask the work tool to run V1.2.1 baseline Capture. Keep the request file and empty Evidence directory outside the Factory and Product.
 
+Capture 전에 다음 네 가지를 반드시 확인한다.
+
+Confirm all four requirements before Capture.
+
+1. 요청 파일 이름은 정확히 `product_loop_request.yaml`이다.
+   The request filename is exactly `product_loop_request.yaml`.
+2. Evidence 디렉터리는 명령 실행 전에 이미 존재한다.
+   The Evidence directory already exists before the command runs.
+3. Evidence 디렉터리는 비어 있으며 symlink가 아니다.
+   The Evidence directory is empty and is not a symlink.
+4. 요청 파일과 Evidence 디렉터리는 Factory와 Product Repository 밖에 있다.
+   The request file and Evidence directory are outside both the Factory and Product Repositories.
+
 ```yaml
 schemaVersion: 1
 productRoot: /Users/사용자이름/Documents/제품경로/example_product
@@ -518,9 +570,9 @@ Change only the field identified by `reasons`. Use a different absolute path whe
 
 ### Existing Empty Repository가 거절됨
 
-처음 사용하는 사용자는 `newRepository`를 선택하는 것이 안전하다. Existing mode는 직접 `.git`을 가진 독립 Repository이며 `.git` 외 항목이 없는 경우에만 사용한다.
+처음 사용하는 사용자는 `newRepository`를 선택하는 것이 안전하다. Existing mode는 직접 `.git`을 가진 독립 Repository이며 `.git` 외 항목이 없는 경우에만 사용한다. 요청에는 `initialBranchName: null`과 비어 있지 않은 `repositoryPolicy`가 필요하다. 위의 **기존 빈 Repository 입력** 예제를 그대로 복사해 다시 시도한다.
 
-First-time Users should prefer `newRepository`. Existing mode requires an independent Repository with its own `.git` and no other root entries.
+First-time Users should prefer `newRepository`. Existing mode requires an independent Repository with its own `.git` and no other root entries. The request needs `initialBranchName: null` and a non-blank `repositoryPolicy`. Retry by copying the **Existing Empty Repository Input** example above.
 
 ### PartialFailure가 반환됨
 
