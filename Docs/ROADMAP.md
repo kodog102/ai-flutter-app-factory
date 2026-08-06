@@ -158,3 +158,20 @@ This stage implements the approved operational contract and a public Dart Runtim
 오늘리듬 Flutter Product에서 승인 기준선 검사, 기본 Health Gate, Android·iOS build, candidate와 Factory 불변성 및 독립 QA가 통과했다. 실기기 사용은 User가 제공한 수동 검증 Evidence로 승인됐다.
 
 The approved baseline inspection, default Health Gate, Android and iOS builds, candidate and Factory immutability, and independent QA passed on the OneulRhythm Flutter Product. Physical-device use was approved from User-provided manual verification Evidence.
+
+## 10. V1.2.1 Product Loop Operator Command
+
+Status: **Implemented — User Approval Pending**
+
+### Goal
+
+- 기존 V1.2 공개 Runtime을 비개발자와 AI 작업 주체가 사용할 수 있는 단일 command surface로 제공한다
+- Expose the existing V1.2 public Runtime through one command surface usable by non-developers and AI work participants
+- User 승인과 외부 Product 구현 경계를 보존하는 `capture`와 `validate` 단계를 제공한다
+- Provide `capture` and `validate` phases that preserve User approval and external Product implementation boundaries
+- 승인된 기준선을 영속 JSON과 SHA-256 Evidence로 전달한다
+- Carry the approved baseline through persistent JSON and SHA-256 Evidence
+
+이 단계는 Product 기능 구현, QA 자동 승인, Provider 연동, commit 또는 push를 포함하지 않는다.
+
+This stage does not include Product feature implementation, automated QA approval, Provider integration, commit, or push.

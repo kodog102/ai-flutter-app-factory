@@ -31,13 +31,15 @@ This is the structure of the current repository.
 ├── LICENSE
 ├── README.md
 ├── bin/
-│   └── factory_bootstrap.dart            # active V1.1 command entrypoint
+│   ├── factory_bootstrap.dart            # active V1.1 command entrypoint
+│   └── factory_product_loop.dart         # active V1.2.1 command entrypoint
 ├── factory.yaml                         # inactive legacy metadata
 ├── factory_manifest.json                # inactive legacy metadata
 ├── lib/
 │   ├── ai_flutter_app_factory.dart       # active Executable V1 public API
 │   └── core/
 │       ├── bootstrap/                    # active Executable V1 runtime
+│       ├── product_loop/                 # active V1.2 runtime and V1.2.1 command layer
 │       ├── factory/                      # inactive legacy source
 │       ├── generator/                    # inactive legacy source
 │       └── template/                     # inactive legacy source
@@ -224,6 +226,37 @@ captureBaseline
 Runtime은 Product 기능을 구현하거나 Product Context 의미를 승인하지 않는다. 승인된 외부 구현 전후의 Repository 상태와 기술 검증 Evidence만 제공한다.
 
 The Runtime does not implement Product features or approve Product Context meaning. It provides only Repository-state and technical-verification Evidence around externally approved implementation.
+
+#### V1.2.1 Command Boundary
+
+V1.2.1 command layer는 기존 Product Loop Guard Runtime의 승인 의미를 바꾸지 않고 단일 실행 창구를 제공한다.
+
+The V1.2.1 command layer provides one execution entry point without changing the approval semantics of the existing Product Loop Guard Runtime.
+
+```text
+strict product_loop_request.yaml
+→ capture
+→ persistent baseline proposal JSON + SHA-256
+→ User baseline approval
+→ external approved Product implementation
+→ validate with the approved SHA-256
+→ persistent candidate validation Evidence
+→ independent QA
+→ User result approval
+```
+
+- 요청 파일과 Evidence 디렉터리는 Factory 및 Product Repository 밖에 존재한다
+- The request file and Evidence directory exist outside the Factory and Product Repositories
+- Capture artifact는 요청 파일 hash, build policy와 immutable Product snapshot을 포함한다
+- The Capture artifact includes the request-file hash, build policy, and immutable Product snapshot
+- Validate는 현재 요청과 artifact 및 User가 전달한 승인 SHA-256이 모두 일치할 때만 Health Gate를 실행한다
+- Validate runs the Health Gate only when the current request, artifact, and User-supplied approved SHA-256 all match
+- command는 결과 artifact를 쓰기 직전에 요청 파일, 승인 baseline과 Evidence 디렉터리 ownership을 다시 검사한다
+- Immediately before writing a result artifact, the command rechecks the request file, approved baseline, and Evidence-directory ownership
+- command layer는 외부 Product 구현, QA 판정, User 승인 또는 Git 작업을 수행하지 않는다
+- The command layer does not perform external Product implementation, the QA verdict, User approval, or Git actions
+- 성공 결과도 QA와 User 승인은 `Pending`, commit은 `NotPerformed`로 유지한다
+- A successful result keeps QA and User approval at `Pending` and commit at `NotPerformed`
 
 #### Product Work Baseline
 

@@ -140,6 +140,67 @@ parse, schema 또는 preflight가 중단되면 Product execution을 시작하지
 
 The command does not begin Product execution after a parse, schema, or preflight stop. It does not commit, add a remote, push, tag, publish, or release.
 
+## V1.2.1 Product Loop Request File
+
+Product Loop 요청 파일 이름은 `product_loop_request.yaml`이며 Factory와 Product Repository 밖의 regular UTF-8 파일이어야 한다. Evidence 디렉터리도 두 Repository 밖에 미리 존재해야 하며 symlink일 수 없다. Capture 시작 시 Evidence 디렉터리는 비어 있어야 한다.
+
+The Product Loop request filename is `product_loop_request.yaml` and must be a regular UTF-8 file outside the Factory and Product Repositories. The Evidence directory must also already exist outside both Repositories, must not be a symlink, and must be empty when Capture starts.
+
+```yaml
+schemaVersion: 1
+productRoot: /absolute/products/example_product
+buildPolicy: both
+evidenceDirectory: /absolute/evidence/agreement-001
+```
+
+`buildPolicy`는 `none`, `android`, `ios`, `both` 중 하나다. 알 수 없는 key, 누락·blank·잘못된 type, 지원하지 않는 YAML 기능, 상대 경로와 secret-like 내용은 거절한다. 명령은 기존 Evidence 파일을 덮어쓰지 않는다.
+
+`buildPolicy` is one of `none`, `android`, `ios`, or `both`. Unknown keys, missing, blank, or wrongly typed values, unsupported YAML features, relative paths, and secret-like content are rejected. The command does not overwrite existing Evidence files.
+
+## V1.2.1 Product Loop Command
+
+Factory Repository root에서 먼저 기준선을 캡처한다.
+
+Capture the baseline first from the Factory Repository root.
+
+```text
+dart run ai_flutter_app_factory:factory_product_loop --request /absolute/intake/product_loop_request.yaml --phase capture
+```
+
+성공 시 Evidence 디렉터리에 다음 파일을 생성한다.
+
+On success, the command creates the following files in the Evidence directory.
+
+```text
+product_loop_baseline.json
+product_loop_capture_report.json
+```
+
+User가 출력된 baseline SHA-256을 승인하고 외부 Agreement 구현이 끝난 뒤 같은 요청 파일과 승인 hash로 검증한다.
+
+After the User approves the emitted baseline SHA-256 and the external Agreement implementation is complete, validate using the same request file and approved hash.
+
+```text
+dart run ai_flutter_app_factory:factory_product_loop --request /absolute/intake/product_loop_request.yaml --phase validate --approved-baseline-sha256 <USER_APPROVED_HASH>
+```
+
+Validate는 Evidence 디렉터리에 Capture가 생성한 두 파일만 있을 때 `product_loop_validation_report.json`을 생성한다. Capture 이후 또는 검증 실행 중 요청 파일, build policy, Product root 또는 baseline 파일이 바뀌거나 알 수 없는 Evidence 항목이 나타나면 결과를 쓰기 전에 중단한다.
+
+Validate creates `product_loop_validation_report.json` only when the Evidence directory contains exactly the two files created by Capture. Before writing the result, it stops when the request file, build policy, Product root, or baseline file changed after Capture or during validation, or when an unknown Evidence entry appears.
+
+| Exit | 의미 / Meaning |
+|---|---|
+| `0` | baseline proposal 또는 기술 검증 candidate 준비 / baseline proposal or technically validated candidate prepared |
+| `2` | 요청, 승인 hash 또는 artifact 검증 중단 / request, approved hash, or artifact validation stop |
+| `3` | Runtime baseline 또는 candidate 검증 중단 / Runtime baseline or candidate validation stop |
+| `4` | Evidence 저장 부분 실패로 User 검사 필요 / Evidence write partial failure requiring User inspection |
+| `64` | `--help` 또는 command usage 결과 / `--help` or command usage result |
+| `70` | 예상하지 못한 command-layer failure / unexpected command-layer failure |
+
+Exit `0`은 QA PASS, User 승인, commit, push 또는 release를 의미하지 않는다.
+
+Exit `0` does not mean QA PASS, User approval, commit, push, or release.
+
 ## Public API Execution
 
 외부 consumer는 package-root library만 사용한다.

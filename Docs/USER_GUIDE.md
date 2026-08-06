@@ -25,9 +25,9 @@ Factory V1.1은 `product_request.yaml` 하나와 한 명령을 제공한다. 이
 
 Factory V1.1 provides one `product_request.yaml` and one command. The command invokes the existing public Dart Runtime and is not a standalone button-based app or an AI Product Loop. The User may give the file and execution request to a **code-capable work tool** that can access and run the Factory Repository.
 
-V1.2 Product Loop Guard 공개 Runtime은 구현·검증됐지만, 아직 비개발자용 한 명령 Product Loop는 제공하지 않는다. 현재 V1.2를 실행하려면 공개 Dart API를 사용할 수 있는 코드 작업 도구가 필요하다.
+V1.2.1은 Product Loop Guard를 직접 Dart 코드로 연결하지 않아도 되는 한 명령 진입점을 제공한다. 다만 User 승인과 실제 Product 구현을 건너뛸 수 없으므로 같은 명령을 기준선 `capture`와 구현 후 `validate` 두 단계로 사용한다.
 
-The V1.2 Product Loop Guard public Runtime is implemented and validated, but a one-command Product Loop for non-developers is not yet provided. Running V1.2 currently requires a code-capable work tool that can use the public Dart API.
+V1.2.1 provides one command entry point without requiring direct Dart integration with the Product Loop Guard. The same command is used in separate baseline `capture` and post-implementation `validate` phases because User approval and actual Product implementation cannot be skipped.
 
 작업 도구의 제품명은 중요하지 않다. 다음 조건만 만족하면 된다.
 
@@ -382,6 +382,37 @@ QA가 PASS이면 결과와 화면을 보고하고 commit은 하지 마라.
 
 ## 8. Product 개발 루프 실행 / Run the Product Development Loop
 
+Agreement 구현 전에 작업 도구에 V1.2.1 기준선 Capture를 요청한다. 요청 파일과 빈 Evidence 디렉터리는 Factory와 Product 밖에 둔다.
+
+Before Agreement implementation, ask the work tool to run V1.2.1 baseline Capture. Keep the request file and empty Evidence directory outside the Factory and Product.
+
+```yaml
+schemaVersion: 1
+productRoot: /Users/사용자이름/Documents/제품경로/example_product
+buildPolicy: both
+evidenceDirectory: /Users/사용자이름/Documents/factory-evidence/agreement-001
+```
+
+작업 도구에 전달할 요청:
+
+Copyable request for the work tool:
+
+```text
+Factory Root에서 아래 Product Loop 기준선 Capture를 실행해 주세요.
+
+dart run ai_flutter_app_factory:factory_product_loop \
+  --request /절대경로/product_loop_request.yaml \
+  --phase capture
+
+Product와 Factory를 수정하지 마세요.
+결과의 baseline 경로, SHA-256, Git 상태와 승인 대기 상태를 보고하세요.
+commit과 push는 하지 마세요.
+```
+
+User는 기준선 파일과 SHA-256을 검토해 승인한다. 그 뒤 아래 역할 흐름으로 Agreement를 구현한다.
+
+The User reviews and approves the baseline file and SHA-256. The Agreement is then implemented through the role flow below.
+
 UI가 포함된 장보기 샘플은 다음 순서를 따른다.
 
 The UI-based shopping list sample follows this sequence.
@@ -405,6 +436,23 @@ User 최종 승인
 Design Role과 Implementation Role은 특정 서비스 이름이 아니라 책임을 뜻한다. 작업 도구가 바뀌어도 순서는 유지한다.
 
 Design and Implementation Roles describe responsibilities, not specific service names. The sequence remains the same when the work tool changes.
+
+구현과 자체 검증이 끝나면 승인했던 SHA-256으로 Validate를 요청한다.
+
+After implementation and self-verification, request Validate using the approved SHA-256.
+
+```text
+Factory Root에서 아래 Product Loop 후보 검증을 실행해 주세요.
+
+dart run ai_flutter_app_factory:factory_product_loop \
+  --request /절대경로/product_loop_request.yaml \
+  --phase validate \
+  --approved-baseline-sha256 <내가 승인한 SHA-256>
+
+구조화된 Evidence와 Flutter Health Gate 결과를 보고하세요.
+기술 검증 성공을 QA PASS 또는 User 승인으로 해석하지 마세요.
+독립 QA를 수행하고 commit과 push는 하지 마세요.
+```
 
 ## 9. 샘플 앱 실행 확인 / Verify the Sample App
 
@@ -539,6 +587,8 @@ Factory V1 provides:
 - Safe stops and structured evidence
 - `product_request.yaml`과 한 명령을 사용하는 V1.1 Bootstrap
 - V1.1 Bootstrap using one `product_request.yaml` and one command
+- 승인 SHA-256을 사용하는 V1.2.1 Product Loop Capture·Validate 명령
+- V1.2.1 Product Loop Capture and Validate commands using an approved SHA-256
 
 Factory V1이 자동으로 제공하지 않는 것:
 
@@ -552,8 +602,8 @@ Factory V1 does not automatically provide:
 - Ready, Agreement, or Release approval on behalf of the User
 - 자동 commit, push 또는 tag
 - Automatic commit, push, or tag
-- 버튼형 독립 실행 앱, V1.2 한 명령 Product Loop 또는 Provider Adapter
-- A standalone button-based app, a V1.2 one-command Product Loop, or a Provider Adapter
+- 버튼형 독립 실행 앱, Product 구현·승인 자동화 또는 Provider Adapter
+- A standalone button-based app, automated Product implementation or approval, or a Provider Adapter
 
 ## 용어 / Glossary
 

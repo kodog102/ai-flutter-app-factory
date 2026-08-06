@@ -92,9 +92,36 @@ V1.2 Runtime foundation은 승인된 Product 기준선을 검사하고, QA candi
 
 The V1.2 Runtime foundation verifies an expected Product baseline, freezes the QA candidate, and then runs Flutter format, analyze, tests, and selected Android/iOS builds.
 
-Product Context 의미 검토, QA 판정과 User 승인은 자동화하지 않는다. Provider, Agent Adapter, orchestration과 V1.2 CLI는 현재 범위가 아니다.
+Product Context 의미 검토, QA 판정과 User 승인은 자동화하지 않는다. Provider, Agent Adapter와 orchestration은 현재 범위가 아니다.
 
-It does not automate semantic Product Context review, the QA verdict, or User approval. Provider integration, an Agent Adapter, orchestration, and a V1.2 CLI are outside the current scope.
+It does not automate semantic Product Context review, the QA verdict, or User approval. Provider integration, an Agent Adapter, and orchestration are outside the current scope.
+
+### V1.2.1 Product Loop Command
+
+V1.2.1은 기존 Runtime을 하나의 명령 진입점으로 제공한다. User 승인과 외부 구현 경계를 보존하기 위해 같은 명령을 `capture`와 `validate` 두 단계로 실행한다.
+
+V1.2.1 exposes the existing Runtime through one command entry point. The same command runs in separate `capture` and `validate` phases to preserve User approval and external implementation boundaries.
+
+```text
+dart run ai_flutter_app_factory:factory_product_loop \
+  --request /absolute/intake/product_loop_request.yaml \
+  --phase capture
+```
+
+Capture가 출력한 SHA-256을 User가 승인하고 Product Agreement 구현이 끝난 뒤 다음 검증을 실행한다.
+
+After the User approves the SHA-256 emitted by Capture and the Product Agreement implementation is complete, run validation.
+
+```text
+dart run ai_flutter_app_factory:factory_product_loop \
+  --request /absolute/intake/product_loop_request.yaml \
+  --phase validate \
+  --approved-baseline-sha256 <USER_APPROVED_HASH>
+```
+
+이 명령은 QA PASS, User 승인 또는 Git 작업을 자동 수행하지 않는다. 요청 schema와 Evidence 경계는 [Docs/SETUP.md](Docs/SETUP.md)를 따른다.
+
+The command does not automate QA PASS, User approval, or Git actions. Follow [Docs/SETUP.md](Docs/SETUP.md) for the request schema and Evidence boundary.
 
 Ready Product는 새로운 작업 주체가 Factory를 다시 읽지 않고 Product Repository만으로 첫 Agreement를 제안할 수 있는 상태다.
 
@@ -126,6 +153,18 @@ ProductLoopGuardReady
 ProductLoopGuardRuntime.validate
     ↓
 ProductLoopCandidateValidated | ProductLoopValidationStopped
+```
+
+```text
+factory_product_loop --phase capture
+    ↓
+Product Loop baseline JSON + SHA-256
+    ↓
+User baseline approval + external implementation
+    ↓
+factory_product_loop --phase validate --approved-baseline-sha256 <HASH>
+    ↓
+QA candidate Evidence | structured Stop
 ```
 
 외부 consumer는 package-root API 하나만 import한다.
@@ -164,9 +203,9 @@ Future<void> main() async {
 }
 ```
 
-Executable Flutter V1은 `lib/core/bootstrap/` runtime을 package-root 공개 실행 창구로 조정한다. Template/Generator pipeline은 active V1 경로가 아니며, `factory.yaml`과 `factory_manifest.json`은 inactive legacy metadata다. CLI는 V1 기능이 아니다.
+Executable Flutter V1은 `lib/core/bootstrap/`과 `lib/core/product_loop/` runtime을 package-root 공개 API와 좁은 command entrypoint로 조정한다. Template/Generator pipeline은 active V1 경로가 아니며, `factory.yaml`과 `factory_manifest.json`은 inactive legacy metadata다. 범용 CLI 또는 orchestration은 V1 기능이 아니다.
 
-Executable Flutter V1 coordinates the `lib/core/bootstrap/` runtime through the package-root public execution entry point. The Template/Generator pipeline is not the active V1 path, and `factory.yaml` and `factory_manifest.json` are inactive legacy metadata. A CLI is not a V1 capability.
+Executable Flutter V1 coordinates the `lib/core/bootstrap/` and `lib/core/product_loop/` runtimes through the package-root public API and narrow command entry points. The Template/Generator pipeline is not the active V1 path, and `factory.yaml` and `factory_manifest.json` are inactive legacy metadata. A general-purpose CLI or orchestration capability is not a V1 feature.
 
 ## Role Model
 
@@ -181,6 +220,9 @@ Executable Flutter V1 coordinates the `lib/core/bootstrap/` runtime through the 
 .
 ├── AGENTS.md
 ├── README.md
+├── bin/
+│   ├── factory_bootstrap.dart            # active V1.1 command entrypoint
+│   └── factory_product_loop.dart         # active V1.2.1 command entrypoint
 ├── factory.yaml                         # inactive legacy metadata
 ├── factory_manifest.json                # inactive legacy metadata
 ├── lib/
@@ -240,6 +282,8 @@ Factory review and development:
 Current status: **Flutter V1 Ready — Release Pending**
 
 V1.2 Product Loop Guard Runtime foundation: **Completed — User Approved**
+
+V1.2.1 Product Loop Operator Command: **Implemented — User Approval Pending**
 
 실제 Flutter Product에서 자동 Health Gate와 독립 QA가 통과했으며, 실기기 사용은 User가 제공한 수동 검증 Evidence로 승인됐다. Release는 계속 별도 User 결정을 기다린다.
 
