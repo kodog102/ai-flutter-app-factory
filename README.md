@@ -221,7 +221,7 @@ Factory 검토와 개발:
 
 ## 개발 상태
 
-현재 상태: **Flutter Factory V1.2 Consumer Ready — Release Pending**
+현재 상태: **Flutter Factory V1.2.1 Consumer Ready — Released**
 
 V1.2 Product Loop Guard Runtime foundation: **완료 — User 승인**
 
@@ -229,7 +229,7 @@ V1.2.1 Product Loop Operator Command: **완료 — User 승인**
 
 V1.2 Consumer Readiness Validation: **완료 — User 승인**
 
-새 Repository, 기존 빈 Repository와 잘못된 Evidence 경계 복구를 새 작업 주체가 공개 사용설명서만으로 검증했고 독립 QA를 통과했다. 실제 Flutter Product의 자동 Health Gate와 User가 제공한 실기기 검증 Evidence도 유지된다. Release는 계속 별도 User 결정을 기다린다.
+새 Repository, 기존 빈 Repository와 잘못된 Evidence 경계 복구를 새 작업 주체가 공개 사용설명서만으로 검증했고 독립 QA를 통과했다. 실제 Flutter Product의 자동 Health Gate와 User가 제공한 실기기 검증 Evidence도 유지된다. V1.2.1 공개 Release가 완료됐다.
 
 ## 라이선스
 

@@ -97,20 +97,20 @@ A result from one Product does not automatically become a Core Standard.
 
 ## 7. V1 Readiness and Release Decision
 
-Status: **In Review**
+Status: **Completed**
 
 V1 Ready: **Approved**
 
-Release: **Pending User Decision**
+Release: **V1.2.1 Released**
 
 ### Goal
 
 - Evidence를 바탕으로 User가 V1 Ready 및 release 여부를 최종 승인한다
 - Enable the User to give final approval of V1 readiness and release based on Evidence
 
-Flutter V1 Ready는 전체 기술 검증과 독립 QA 이후 User가 승인했다. Version, release identifier, tag, push와 publication은 아직 승인되지 않았다.
+Flutter V1 Ready는 전체 기술 검증과 독립 QA 이후 User가 승인했다. V1.2.1 version, tag와 공개 Release가 완료됐다.
 
-The User approved Flutter V1 Ready after full technical verification and independent QA. Version, release identifier, tag, push, and publication have not yet been approved.
+The User approved Flutter V1 Ready after full technical verification and independent QA. The V1.2.1 version, tag, and public Release are complete.
 
 CLI, Template engine 또는 orchestration 기능은 검증된 필요가 생기기 전까지 V1 필수 조건이 아니다.
 
@@ -125,9 +125,9 @@ Status: **Completed**
 - 엄격한 `product_request.yaml` 하나와 한 명령으로 기존 Runtime의 검증된 Flutter Product 시작점을 준비한다
 - Prepare a verified Flutter Product starting point through the existing Runtime using one strict `product_request.yaml` and one command
 
-엄격한 `product_request.yaml`과 한 명령을 사용하는 Bootstrap이 구현됐으며 실제 Flutter Product 생성으로 검증됐다. V1 Ready 승인과 Release Pending 상태는 유지한다. V1.1은 Product 기능 또는 V1.2 Product Loop를 구현하지 않는다.
+엄격한 `product_request.yaml`과 한 명령을 사용하는 Bootstrap이 구현됐으며 실제 Flutter Product 생성으로 검증됐다. V1.1은 V1 Ready 승인을 보존했으며 V1.2.1 Release는 이후 완료됐다. V1.1은 Product 기능 또는 V1.2 Product Loop를 구현하지 않는다.
 
-Bootstrap using one strict `product_request.yaml` and one command is implemented and verified through actual Flutter Product creation. Preserve V1 Ready approval and Release Pending status. V1.1 does not implement Product features or the V1.2 Product Loop.
+Bootstrap using one strict `product_request.yaml` and one command is implemented and verified through actual Flutter Product creation. V1.1 preserved V1 Ready approval, and the V1.2.1 Release was completed later. V1.1 does not implement Product features or the V1.2 Product Loop.
 
 ## 9. V1.2 Product Loop Guard
 
