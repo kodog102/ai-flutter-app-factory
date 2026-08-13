@@ -48,7 +48,7 @@ Product 기준선 제안
 → 작은 Agreement 구현
 → QA candidate 캡처
 → Flutter Health Gate
-→ 독립 QA
+→ 위험도에 따른 독립 QA
 → User 결과 승인
 → 선택적 commit
 ```
@@ -56,6 +56,12 @@ Product 기준선 제안
 V1.2 Runtime foundation은 승인된 Product 기준선을 검사하고, QA candidate를 고정한 뒤 Flutter format, analyze, test와 선택된 Android/iOS build를 실행한다.
 
 Product Context 의미 검토, QA 판정과 User 승인은 자동화하지 않는다. Provider, Agent Adapter와 orchestration은 현재 범위가 아니다.
+
+### Adaptive Execution Policy
+
+Product 작업은 Low·Medium·High 위험도로 분류하고 필요한 역할과 검증만 활성화한다. 작은 문구·문서·산출물 생성은 Main 단독 처리를 기본으로 하고, 일반 기능은 독립 QA 1회, 네이티브 경계·보안·실제 배포 같은 High 작업은 독립 QA를 필수로 한다.
+
+빌드 파일 생성은 실제 배포와 구분하며, 환경 장애가 발생해도 위험도를 올리거나 무기한 재시도하지 않는다. Agent Instances 상한, Context Pack, Verification Ladder와 Evidence 재사용의 단일 권한은 [Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md)의 `Adaptive Execution Policy`다. 비개발자 실행 방법은 [Docs/USER_GUIDE.md](Docs/USER_GUIDE.md)를 따른다.
 
 ### V1.2.1 Product Loop 명령
 

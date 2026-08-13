@@ -192,3 +192,29 @@ Status: **Completed — User Approved**
 초기 검증에서 기존 빈 Repository의 필수 정책 입력이 공개 사용설명서에 부족함을 확인했다. 기존 SSOT 한 파일을 최소 수정한 뒤 fresh-context 재실행과 독립 QA가 통과했다. Runtime 변경 없이 Consumer Guide blocker가 해소됐으며 V1.2 Consumer Ready 상태를 User가 승인했다.
 
 Initial validation found that the public user guide did not provide the required policy input for an Existing Empty Repository. After a minimal update to one existing SSOT file, a fresh-context rerun and independent QA passed. The Consumer Guide blocker was resolved without Runtime changes, and the User approved V1.2 Consumer Ready status.
+
+## 12. Adaptive Execution Policy Promotion
+
+Status: **Implemented — User Result Approval Pending**
+
+### Goal
+
+- Product 작업의 위험도에 따라 역할, Agent Instances, QA와 검증 범위를 조절한다
+- Adjust Roles, Agent Instances, QA, and verification scope according to Product task risk
+- 기술 품질을 유지하면서 작은 작업의 과잉 QA, 전체 검증 반복과 환경 재시도를 줄인다
+- Preserve technical quality while reducing excessive QA, repeated full verification, and environment retries for small work
+
+### Validated Evidence
+
+- 여러 Product의 Low 산출물 생성 작업에서 High 분류와 독립 QA가 반복적으로 과도했음
+- High classification and independent QA were repeatedly excessive for Low-risk artifact-generation work across Products
+- Medium 기능 작업은 제한된 Context Pack과 독립 QA 1회로 안정적으로 완료됨
+- Medium feature work completed reliably with a bounded Context Pack and one independent QA pass
+- 네이티브 알림과 플랫폼 경계 작업에서는 High 분류와 독립 QA가 실제 중요 결함을 발견함
+- High classification and independent QA found material defects in native notification and platform-boundary work
+- Simulator 재시도 한도는 환경 장애에 대한 무기한 우회를 방지함
+- Simulator retry limits prevented indefinite workarounds for environment failures
+
+검증된 결과를 Low·Medium·High 분류, Agent Instances 상한, Context Pack, Verification Ladder, Evidence 재사용, 환경 재시도 예산과 분리된 품질·효율 판정으로 기존 SSOT에 반영했다. 특정 Provider, 모델 또는 IDE는 Core 정책에 포함하지 않는다. Product Loop Runtime 동작은 이 문서 정책 승격에서 변경하지 않는다.
+
+The verified results are reflected in existing authorities as Low, Medium, and High classification, Agent Instance limits, Context Pack, Verification Ladder, Evidence reuse, environment retry budgets, and separate quality and efficiency verdicts. The Core policy does not include a specific Provider, model, or IDE. This documentation promotion does not change Product Loop Runtime behavior.

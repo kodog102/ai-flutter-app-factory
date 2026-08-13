@@ -241,7 +241,7 @@ strict product_loop_request.yaml
 → external approved Product implementation
 → validate with the approved SHA-256
 → persistent candidate validation Evidence
-→ independent QA
+→ risk-based independent QA when required
 → User result approval
 ```
 
@@ -302,6 +302,119 @@ flutter test
 - The Agreement states the builds to run and any omitted verification with its reason
 - 필수 검증이 실패하거나 실행되지 못하면 QA PASS 또는 완료 상태를 제안하지 않는다
 - Do not propose QA PASS or completion when required verification fails or cannot run
+
+#### Adaptive Execution Policy
+
+Adaptive Execution Policy는 외부 Product 구현에서 작업 위험도에 맞는 역할, Agent Instances, QA와 검증 범위를 선택하는 운영 계약이다. 특정 Provider, 모델 또는 IDE를 전제하지 않는다.
+
+The Adaptive Execution Policy is the operating contract that selects Roles, Agent Instances, QA, and verification scope for external Product implementation according to task risk. It does not assume a specific Provider, model, or IDE.
+
+이 정책은 V1.2.1 Product Loop Runtime의 고정된 기준선, Health Gate, QA candidate와 승인 의미를 변경하지 않는다. 현재 Runtime을 실행하면 그 Runtime에 정의된 기술 검증은 그대로 수행된다. Adaptive Execution Policy는 외부 구현 역할과 추가 검증을 불필요하게 확대하지 않기 위한 Core 운영 기준이다.
+
+This policy does not change the fixed baseline, Health Gate, QA candidate, or approval semantics of the V1.2.1 Product Loop Runtime. When the current Runtime is invoked, its defined technical verification still runs. The Adaptive Execution Policy is the Core operating rule that prevents unnecessary expansion of external implementation Roles and additional verification.
+
+##### Risk Classification
+
+**Low**
+
+- 문구, 색상, spacing, 작은 문서 또는 명백하고 제한된 단일 파일 변경
+- 소스, dependency, 서명 또는 원격 상태를 바꾸지 않는 기존 검증 코드의 빌드 산출물 생성
+- Text, color, spacing, small-document, or clear and bounded single-file changes
+- Build-artifact generation from already verified code without changing source, dependencies, signing, or remote state
+- 기본 실행은 Main 실행 주체 1개, 독립 QA 생략, 관련 검증만 수행한다
+- Default execution uses one Main worker, omits independent QA, and runs only relevant verification
+
+**Medium**
+
+- 일반 기능, 여러 파일의 사용자 흐름 또는 비파괴적 상태·저장 동작 변경
+- General features, multi-file user flows, or non-destructive state and persistence changes
+- Implementation과 독립 QA 1회를 기본으로 하며 Architecture와 Design은 해당 책임이 실제로 필요할 때만 활성화한다
+- Default to Implementation and one independent QA pass; activate Architecture and Design only when those responsibilities are actually needed
+
+**High**
+
+- 데이터 모델·migration·저장 호환성, 네이티브 플랫폼 경계, 알림, Live Activity, Widget, 인증, 결제, 보안, 실제 원격 배포, 파괴적 작업 또는 대규모 구조 변경
+- Data-model, migration, persistence-compatibility, native-platform-boundary, notification, Live Activity, Widget, authentication, payment, security, actual remote-deployment, destructive, or large structural changes
+- Architecture, Implementation과 독립 QA를 기본으로 하며 UI/UX 범위가 있을 때만 Design을 활성화한다
+- Default to Architecture, Implementation, and independent QA; activate Design only for UI/UX scope
+
+빌드 산출물 생성은 실제 배포가 아니다. 환경 오류나 Simulator 장애도 Risk Level을 높이는 근거가 아니다. User가 명시적으로 더 강한 검증을 요청하면 그 요청을 따른다.
+
+Generating a build artifact is not actual deployment. An environment error or Simulator failure is not a reason to raise the Risk Level. Follow an explicit User request for stronger verification.
+
+##### Role and Agent Budget
+
+기본 Agent Instances 상한은 Low 1, Medium 3, High 4다. 역할 수와 Agent Instances를 같은 값으로 취급하지 않으며 하나의 실행 주체가 여러 역할을 수행할 수 있다. 상한을 초과하면 이유와 추가 인스턴스가 줄이는 구체적인 위험을 Agreement에 기록한다.
+
+The default Agent Instance limits are 1 for Low, 3 for Medium, and 4 for High. Do not treat Role count and Agent Instances as the same value; one runtime worker may perform multiple Roles. When exceeding a limit, record the reason and the concrete risk reduced by each additional instance in the Agreement.
+
+Repair는 QA가 필수 결함을 발견했을 때만 수행한다. 가능한 경우 기존 역할 실행 주체를 재사용하고, Repair QA는 필수 결함과 영향을 받은 회귀 범위에 집중한다.
+
+Perform Repair only when QA finds a required defect. Reuse existing Role workers when practical, and focus Repair QA on the required defect and affected regression scope.
+
+##### Context Pack
+
+Main은 하위 작업 주체에게 다음 최소 Context Pack을 전달한다.
+
+Main passes the following minimum Context Pack to downstream workers.
+
+- 승인된 Agreement / Approved Agreement
+- 변경 허용 파일과 보호 대상 / Allowed files and protected scope
+- 필요한 Authority 발췌 / Required Authority excerpts
+- 관련 테스트 / Relevant tests
+- 알려진 기준선과 검증 명령 / Known baseline and verification commands
+
+하위 작업 주체는 전체 Repository 문서를 반복해서 읽지 않는다. 범위 밖 조회가 필요하면 이유와 조회 대상을 보고한다.
+
+Downstream workers do not repeatedly read the entire Repository documentation. When out-of-scope inspection is required, report the reason and inspected target.
+
+##### Verification Ladder
+
+```text
+V0  scope, diff, format, and static document checks
+V1  focused tests
+V2  analyze and full tests
+V3  affected platform builds
+V4  Simulator or Emulator
+V5  physical device, live service, or actual deployment environment
+```
+
+Agreement의 위험과 Acceptance Criteria를 증명하는 최소 단계까지만 수행한다. 모든 작업이 V5까지 갈 필요는 없으며 상위 단계는 하위 단계로 증명할 수 없는 위험이 있을 때만 활성화한다.
+
+Run only through the minimum level required to prove the Agreement risk and Acceptance Criteria. Not every task proceeds to V5; activate a higher level only for risk that lower levels cannot prove.
+
+##### Evidence Reuse
+
+소스와 dependency 기준선, 영향을 받는 플랫폼 설정, 검증 대상과 검증 환경에 영향을 주는 설정이 모두 같으면 기존 Evidence를 재사용할 수 있다. 기준 commit, hash 또는 동일성을 확인한 방법과 검증 생략 이유를 보고한다.
+
+Existing Evidence may be reused when the source and dependency baseline, affected platform settings, verification target, and settings affecting the verification environment are all unchanged. Report the baseline commit, hash, or other identity check and the reason verification was omitted.
+
+##### Retry and Time Budget
+
+환경 검증은 최초 시도 1회와 실패 원인이 명확할 때의 재시도 1회를 기본 한도로 한다. Simulator 또는 Emulator 문제 해결은 기본 10–15분 안에서 중단한다. 한도를 소진하면 Risk Level을 높이거나 무기한 우회하지 않고 환경 차단과 남은 수동 확인을 보고한다.
+
+Environment verification defaults to one initial attempt and one retry only when the failure cause is clear. Stop Simulator or Emulator troubleshooting within 10–15 minutes by default. After the budget is exhausted, do not raise the Risk Level or pursue indefinite workarounds; report the environment block and remaining manual verification.
+
+##### QA and Result Boundary
+
+- Low는 독립 QA를 기본 생략한다 / Low omits independent QA by default
+- Medium은 독립 QA 1회를 기본으로 한다 / Medium defaults to one independent QA pass
+- High는 독립 QA를 필수로 한다 / High requires independent QA
+- QA PASS 후 Main은 같은 범위를 처음부터 중복 검토하지 않는다 / After QA passes, Main does not repeat the same review from the beginning
+
+최종 판정은 Technical Quality, Product Ready, Adaptive Policy Safety와 Adaptive Policy Efficiency를 분리한다. 기술 결과가 PASS여도 불필요한 역할, 전체 테스트 반복 또는 환경 재시도가 있었다면 Efficiency는 개선 필요 또는 FAIL일 수 있다.
+
+The final verdict separates Technical Quality, Product Ready, Adaptive Policy Safety, and Adaptive Policy Efficiency. Even when the technical result passes, Efficiency may need improvement or fail when unnecessary Roles, repeated full tests, or environment retries occurred.
+
+##### Reporting Boundary
+
+기본 User 보고는 결과, 변경 또는 산출물, 수행한 검증, 남은 수동 확인과 Git·배포 여부만 포함한다. 상세 Agent·명령·토큰 Evidence는 High 작업, 실패·Repair, 정책 실험 또는 User 요청이 있을 때 확장한다. 측정할 수 없는 값은 추정하지 않는다.
+
+The default User report includes only the result, changes or artifacts, performed verification, remaining manual checks, and Git or deployment status. Expand detailed Agent, command, and token Evidence for High-risk work, failures or Repairs, policy experiments, or a User request. Do not estimate unavailable measurements.
+
+User 요청 없이 README, release 상태 또는 다른 Product 문서를 동기화하지 않는다.
+
+Do not synchronize a README, release state, or other Product document without a User request.
 
 #### Product Context Drift Gate
 

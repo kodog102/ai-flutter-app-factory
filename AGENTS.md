@@ -64,6 +64,8 @@
 - Roles and responsibilities, including the User's final approval authority
 - 구현 전에 반드시 존재하며 Goal, Included Scope, Excluded Scope, Acceptance Criteria, Verification으로 구성된 Agreement 규칙
 - An Agreement rule that must exist before implementation and consists of Goal, Included Scope, Excluded Scope, Acceptance Criteria, and Verification
+- 작업 위험도에 따른 역할, QA와 검증 범위를 정하는 Adaptive Execution Policy 진입 규칙
+- An entry rule for the Adaptive Execution Policy that selects Roles, QA, and verification scope according to task risk
 
 ## Architecture Role
 
@@ -288,6 +290,45 @@ Status allows only the following values.
 - Do not take over the implementation role
 - 최종 제품 결정을 대신하지 않는다
 - Do not make final product decisions
+
+## Adaptive Role Activation
+
+### Purpose
+
+- 작업 위험도와 영향 범위에 맞는 역할만 활성화한다
+- Activate only the Roles required by task risk and impact
+- 기술 품질을 유지하면서 불필요한 Agent, QA와 검증 반복을 줄인다
+- Preserve technical quality while reducing unnecessary Agents, QA, and repeated verification
+
+### Default Activation
+
+- Low 작업은 Main 실행 주체 하나를 기본으로 하고 독립 QA를 생략한다
+- Low-risk work defaults to one Main runtime worker and omits independent QA
+- Medium 작업은 Implementation과 독립 QA 1회를 기본으로 하며 Architecture와 Design은 실제 책임이 있을 때만 활성화한다
+- Medium-risk work defaults to Implementation and one independent QA pass; activate Architecture and Design only when their responsibilities are actually needed
+- High 작업은 Architecture, Implementation과 독립 QA를 기본으로 하며 Design은 UI/UX 범위가 있을 때만 활성화한다
+- High-risk work defaults to Architecture, Implementation, and independent QA; activate Design only for UI/UX scope
+- Repair는 QA가 필수 결함을 발견했을 때만 수행하고 가능한 경우 기존 역할 실행 주체를 재사용한다
+- Perform Repair only when QA finds a required defect, and reuse existing Role workers when practical
+
+### Default Agent Instance Budget
+
+- Low: 1
+- Medium: 최대 3 / maximum 3
+- High: 최대 4 / maximum 4
+- 역할 수와 Agent Instances는 동일하지 않으며 같은 실행 주체가 여러 역할을 수행할 수 있다
+- Role count and Agent Instances are not the same; one runtime worker may perform multiple Roles
+- 상한을 초과해야 하면 이유와 추가 인스턴스가 줄이는 구체적인 위험을 Agreement에 기록한다
+- When exceeding a default limit, record the reason and the concrete risk reduced by each additional instance in the Agreement
+
+### Context and Verification
+
+- Main은 승인된 Agreement, 변경 허용 파일, 보호 대상, 필요한 Authority 발췌, 관련 테스트, 알려진 기준선과 검증 명령만 Context Pack으로 전달한다
+- Main passes only the approved Agreement, allowed files, protected scope, required Authority excerpts, relevant tests, known baseline, and verification commands as the Context Pack
+- QA는 Agreement, 명시된 candidate, diff와 검증 Evidence를 중심으로 판단하며 PASS 범위를 Main이 처음부터 중복 검토하지 않는다
+- QA evaluates the Agreement, explicit candidate, diff, and verification Evidence; Main does not repeat the passed review from the beginning
+- 위험도, Verification Ladder, Evidence 재사용과 환경 재시도 규칙의 단일 권한은 `Docs/ARCHITECTURE.md`다
+- `Docs/ARCHITECTURE.md` is the single authority for risk levels, the Verification Ladder, Evidence reuse, and environment retry rules
 
 ## Provider Policy
 

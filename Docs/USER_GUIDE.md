@@ -36,9 +36,9 @@ Factory가 처음 준비하는 것은 완성 앱이 아니라 **검증된 Flutte
 4. Factory 사전 검사와 실행 요청
 5. Prepared 결과 검토
 6. Ready 상태와 기준선 승인
-7. 첫 Agreement 승인
-8. Design → Implementation → QA
-9. Simulator에서 샘플 앱 확인
+7. 첫 Agreement와 위험도·역할·검증 범위 승인
+8. 필요한 역할 활성화 → 필요한 검증
+9. 필요할 때 Simulator에서 샘플 앱 확인
 10. User 승인 후 commit
 ```
 
@@ -251,6 +251,34 @@ Agreement는 법률 계약이 아니라 **이번에 할 작은 작업의 범위 
 4. `Acceptance Criteria` — 완료로 인정할 구체 조건
 5. `Verification` — 테스트와 사용자 확인 방법
 
+Agreement를 승인하기 전에 작업 도구가 위험도를 함께 제안하게 한다.
+
+| 위험도 | 대표 작업 | 기본 역할과 검증 |
+|---|---|---|
+| Low | 문구·색상·작은 문서, 소스 변경 없는 빌드 파일 생성 | Main 1개, 독립 QA 생략, 관련 검증만 |
+| Medium | 일반 기능, 여러 파일의 사용자 흐름·상태 변경 | Implementation, 독립 QA 1회, UI 결정이 있을 때만 Design |
+| High | migration, 네이티브 경계, 알림, 보안, 실제 배포 | Architecture, Implementation, 독립 QA, 필요한 경우 Design |
+
+빌드 파일을 만드는 것과 실제 업로드·배포·출시는 다르다. 소스와 dependency를 바꾸지 않고 기존 검증 코드로 산출물만 만들면 기본적으로 Low다. Simulator나 환경 오류가 발생해도 위험도를 올리지 않고 최초 시도 1회와 원인이 명확할 때 재시도 1회까지만 수행한다.
+
+복사해서 사용할 위험도 제안 요청:
+
+```text
+이번 Agreement를 구현하기 전에 작업 위험도를 Low, Medium, High 중 하나로 분류해 주세요.
+
+함께 제시할 것:
+- Risk Level과 구체적인 이유
+- 필요한 역할과 실제 Agent Instances 수
+- 변경에 필요한 파일만 담은 Context Pack
+- V0부터 V5 중 필요한 최소 검증 단계
+- 생략할 QA, 전체 테스트, 플랫폼 빌드와 그 이유
+- 환경 검증의 최초 시도·재시도·시간 한도
+
+빌드 산출물 생성과 실제 배포를 구분하세요.
+환경 실패를 이유로 Risk Level을 높이지 마세요.
+User가 요청하지 않은 README나 다른 문서를 수정하지 마세요.
+```
+
 장보기 샘플의 승인 예시:
 
 ```text
@@ -289,6 +317,7 @@ Verification:
 - iOS Simulator 또는 Android Emulator 화면 확인
 
 승인된 범위만 구현하라.
+이 작업은 여러 파일의 UI 흐름을 변경하므로 Medium으로 분류하라.
 UI 작업이 있으므로 Design Role을 먼저 활성화하라.
 Implementation과 독립 QA를 분리하라.
 QA가 PASS이면 결과와 화면을 보고하고 commit은 하지 마라.
@@ -360,12 +389,14 @@ dart run ai_flutter_app_factory:factory_product_loop \
 
 구조화된 Evidence와 Flutter Health Gate 결과를 보고하세요.
 기술 검증 성공을 QA PASS 또는 User 승인으로 해석하지 마세요.
-독립 QA를 수행하고 commit과 push는 하지 마세요.
+승인된 Risk Level에 따라 필요한 경우에만 독립 QA를 수행하세요.
+Low 작업에는 독립 QA를 자동으로 추가하지 마세요.
+commit과 push는 하지 마세요.
 ```
 
 ## 9. 샘플 앱 실행 확인
 
-QA가 PASS이면 작업 도구에 Simulator 실행과 화면 확인을 요청한다.
+Agreement의 Acceptance Criteria를 자동 테스트나 build만으로 증명할 수 없을 때 Simulator 실행과 화면 확인을 요청한다. Low 작업이나 이미 같은 기준선에서 검증한 산출물 생성에는 Simulator를 자동으로 추가하지 않는다.
 
 ```text
 승인된 Product를 iOS Simulator에서 실행해 주세요.
@@ -384,22 +415,22 @@ QA가 PASS이면 작업 도구에 Simulator 실행과 화면 확인을 요청한
 commit과 push는 하지 마세요.
 ```
 
-Android Emulator도 확인하려면 별도 요청으로 같은 시나리오를 반복한다.
+Android Emulator도 실제 플랫폼 차이를 확인해야 할 때만 별도 요청으로 같은 시나리오를 반복한다. Simulator나 Emulator가 실패하면 최초 시도 1회와 원인이 명확할 때의 재시도 1회까지만 허용하고, 기본 10–15분 안에 환경 차단으로 보고한다.
 
 ## 10. 최종 승인과 Commit
 
 다음을 모두 확인한 뒤에만 commit을 요청한다.
 
 - Agreement 범위만 변경됨
-- Design 결과와 실제 화면이 일치함
-- QA가 PASS임
+- Design이 활성화됐다면 결과와 실제 화면이 일치함
+- Medium 또는 High라면 QA가 PASS임
 - 분석, 테스트와 필요한 build가 통과함
 - 예상하지 못한 파일이 없음
 - 민감정보가 없음
 
 ```text
-최종 구현과 독립 QA 결과를 승인한다.
-승인된 변경 파일만 stage하고 전체 검증을 다시 실행하라.
+최종 구현과 승인된 Risk Level에 따른 검증 결과를 승인한다.
+승인된 변경 파일만 stage하고 Risk Level에 승인된 필수 검증만 다시 실행하라.
 검증이 모두 통과하면 작업 내용을 정확히 설명하는 한 개의 commit을 생성하라.
 push, amend, rebase, tag는 수행하지 마라.
 commit hash, 메시지, 파일 목록과 최종 Git 상태를 보고하라.
@@ -438,8 +469,9 @@ Product 코드를 먼저 수정하지 않는다. 실패가 환경 문제인지 P
 - [ ] Product-local README와 AGENTS가 있다.
 - [ ] User가 Ready 상태와 기준선을 승인했다.
 - [ ] User가 첫 Agreement를 승인했다.
-- [ ] Design, Implementation과 독립 QA가 완료됐다.
-- [ ] Simulator에서 샘플 흐름을 확인했다.
+- [ ] Risk Level과 필요한 역할·검증 범위를 승인했다.
+- [ ] 활성화된 역할과 필요한 QA가 완료됐다.
+- [ ] 필요한 경우에만 Simulator에서 샘플 흐름을 확인했다.
 - [ ] User 승인 후 commit했다.
 - [ ] Push와 Release는 별도 승인으로 남아 있다.
 
