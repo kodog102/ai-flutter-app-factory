@@ -131,6 +131,31 @@ Before implementation, the User must approve a small Agreement containing:
 - Acceptance Criteria
 - Verification
 
+## 실행 프로필 고정 및 편차 중단 / Execution Profile Lock and Deviation Gate
+
+- Agreement 또는 Execution Profile에 수정 요청이 있으면 구현 전에 최신 통합본을 다시 제시하고 User 승인을 기다린다.
+- When an Agreement or Execution Profile is revised, re-present the latest consolidated version before implementation and wait for User approval.
+- User 승인은 마지막으로 제시된 통합 Agreement와 Execution Profile에만 적용한다.
+- User approval applies only to the last presented consolidated Agreement and Execution Profile.
+- 통합본에는 Risk Level, Risk Reasons, Activated Roles, Agent Instances, Role / Instance Mapping, Capability Tier, Context Pack, Verification Ladder, QA Count, Repair Limit, Environment Attempts / Retries / Time Budget와 Stop Conditions를 포함한다.
+- The consolidated version includes Risk Level, Risk Reasons, Activated Roles, Agent Instances, Role / Instance Mapping, Capability Tier, Context Pack, Verification Ladder, QA Count, Repair Limit, Environment Attempts / Retries / Time Budget, and Stop Conditions.
+- 구현 전에 Approved Execution Profile과 Planned Actual Execution을 비교한다.
+- Before implementation, compare the Approved Execution Profile with Planned Actual Execution.
+- 필수 Role, 독립 QA, Agent Instances, Context Pack, Verification, QA·Repair 예산, 환경 예산 또는 Stop Conditions가 다르면 실행하지 않고 Profile Delta와 이유를 User에게 제시한다.
+- When required Roles, independent QA, Agent Instances, Context Pack, Verification, QA or Repair budget, environment budget, or Stop Conditions differ, do not execute; present the Profile Delta and reason to the User.
+- Medium·High의 Independent QA는 Implementation과 다른 Agent Instance 또는 분리된 새 문맥에서 수행하며 Main 자기 검토로 대체하지 않는다.
+- Independent QA for Medium and High runs in a different Agent Instance or separate fresh context from Implementation and is not replaced by Main self-review.
+- 필요한 독립 실행 주체를 만들 수 없으면 Main 단독으로 계속하지 않는다.
+- Do not continue with Main alone when the required independent runtime worker cannot be created.
+- 실행 중 승인되지 않은 Role, QA, 검증, Repair, 환경 복구 또는 우회를 추가·제거·대체하지 않는다.
+- Do not add, remove, or substitute unapproved Roles, QA, verification, Repair, environment recovery, or workarounds during execution.
+- 환경 시도는 최초 1회와 원인이 명확한 재시도 1회, Simulator 또는 Emulator 문제 해결은 기본 10–15분으로 제한한다. 예산 소진 후에는 `Environment Blocked`와 남은 수동 확인만 보고한다.
+- Limit environment work to one initial attempt and one retry with a clear cause, and Simulator or Emulator troubleshooting to 10–15 minutes by default. After exhaustion, report only `Environment Blocked` and remaining manual verification.
+- 예산 소진 후 서비스 재시작, Simulator 초기화, 다른 기기 또는 다른 도구 우회로 계속하지 않는다.
+- After the budget is exhausted, do not continue through service restart, Simulator reset, another device, or another tool workaround.
+- Repair는 기존 Execution Profile을 초기화하지 않으며 Required Defect, Allowed Files, Focused Verification, QA Recheck Scope와 Additional Attempt Budget만 Delta로 제시한다.
+- Repair does not reset the existing Execution Profile; present only Required Defect, Allowed Files, Focused Verification, QA Recheck Scope, and Additional Attempt Budget as its Delta.
+
 ## 표준 작업 순환 / Standard Work Loop
 
 1. Product context와 실제 Git 상태를 pre-flight에서 확인한다.
@@ -175,6 +200,10 @@ Before implementation, the User must approve a small Agreement containing:
 
 - 결과, 변경 파일, 검증, 미수행 작업과 남은 질문을 보고한다.
 - Report the outcome, changed files, verification, unperformed work, and remaining questions.
+- 최종 보고에는 Risk Level, Roles, Agent Instances, Role / Instance Mapping, Context Pack, QA Count, Repair Count, Verification Level, Environment Attempts, Environment Retries, Environment Time와 Deviations를 포함한 `Approved vs Actual` 비교를 포함한다.
+- The final report includes an `Approved vs Actual` comparison with Risk Level, Roles, Agent Instances, Role / Instance Mapping, Context Pack, QA Count, Repair Count, Verification Level, Environment Attempts, Environment Retries, Environment Time, and Deviations.
+- 승인되지 않은 편차가 있으면 기술 결과가 PASS여도 Adaptive Policy Safety는 FAIL이다.
+- An unapproved deviation makes Adaptive Policy Safety FAIL even when the technical result is PASS.
 - 승인되지 않은 상태를 Ready 또는 Approved로 표현하지 않는다.
 - Do not describe an unapproved state as Ready or Approved.
 

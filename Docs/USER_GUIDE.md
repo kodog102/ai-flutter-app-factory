@@ -261,6 +261,10 @@ Agreement를 승인하기 전에 작업 도구가 위험도를 함께 제안하�
 
 빌드 파일을 만드는 것과 실제 업로드·배포·출시는 다르다. 소스와 dependency를 바꾸지 않고 기존 검증 코드로 산출물만 만들면 기본적으로 Low다. Simulator나 환경 오류가 발생해도 위험도를 올리지 않고 최초 시도 1회와 원인이 명확할 때 재시도 1회까지만 수행한다.
 
+Agreement 또는 실행 계획을 수정했다면, 승인 전에 작업 도구가 **최신 통합 Agreement와 Execution Profile 전체**를 다시 제시해야 한다. 이전 제안이나 일부 수정 메시지에 대한 승인은 사용할 수 없다. 통합본에는 Risk Level, 이유, 역할, Agent Instances와 역할 매핑, Context Pack, Verification Ladder, QA·Repair 한도, 환경 시도·재시도·시간 예산과 Stop Conditions가 포함되어야 한다.
+
+승인 직전에는 작업 도구가 Approved Execution Profile과 Planned Actual Execution을 비교해야 한다. 필수 역할, 독립 QA, Agent Instances, Context Pack, 검증, QA·Repair·환경 예산 또는 중단 조건이 다르면 구현을 시작하지 말고 Profile Delta와 이유를 다시 제시하게 한다. Medium 또는 High의 Independent QA는 구현과 다른 실행 주체 또는 분리된 새 문맥이어야 하며, 이를 만들 수 없으면 Main 단독 실행을 허용하지 않는다.
+
 복사해서 사용할 위험도 제안 요청:
 
 ```text
@@ -268,15 +272,18 @@ Agreement를 승인하기 전에 작업 도구가 위험도를 함께 제안하�
 
 함께 제시할 것:
 - Risk Level과 구체적인 이유
-- 필요한 역할과 실제 Agent Instances 수
+- Activated Roles, Agent Instances, Role / Instance Mapping과 Capability Tier
 - 변경에 필요한 파일만 담은 Context Pack
 - V0부터 V5 중 필요한 최소 검증 단계
-- 생략할 QA, 전체 테스트, 플랫폼 빌드와 그 이유
+- QA Count, Repair Limit과 생략할 QA, 전체 테스트, 플랫폼 빌드의 이유
 - 환경 검증의 최초 시도·재시도·시간 한도
+- Stop Conditions
 
 빌드 산출물 생성과 실제 배포를 구분하세요.
 환경 실패를 이유로 Risk Level을 높이지 마세요.
 User가 요청하지 않은 README나 다른 문서를 수정하지 마세요.
+수정 요청이 있었다면 최신 통합 Agreement와 Execution Profile을 다시 제시한 뒤에만 승인을 받으세요.
+Approved Execution Profile과 Planned Actual Execution이 다르면 구현하지 말고 Profile Delta 승인을 기다리세요.
 ```
 
 장보기 샘플의 승인 예시:
@@ -322,6 +329,8 @@ UI 작업이 있으므로 Design Role을 먼저 활성화하라.
 Implementation과 독립 QA를 분리하라.
 QA가 PASS이면 결과와 화면을 보고하고 commit은 하지 마라.
 ```
+
+실행 중에는 승인되지 않은 역할·QA·검증·Repair·환경 복구나 우회를 추가하거나 대체할 수 없다. Simulator 또는 Emulator는 최초 시도 1회와 원인이 명확한 재시도 1회만 허용하며, 복구를 포함한 문제 해결은 기본 10–15분 안에서 중단한다. 예산이 소진되면 서비스 재시작, 초기화, 다른 기기 또는 다른 도구 우회 대신 `Environment Blocked`와 남은 수동 확인을 보고하게 한다.
 
 ## 8. Product 개발 루프 실행
 
@@ -417,6 +426,8 @@ commit과 push는 하지 마세요.
 
 Android Emulator도 실제 플랫폼 차이를 확인해야 할 때만 별도 요청으로 같은 시나리오를 반복한다. Simulator나 Emulator가 실패하면 최초 시도 1회와 원인이 명확할 때의 재시도 1회까지만 허용하고, 기본 10–15분 안에 환경 차단으로 보고한다.
 
+Repair가 필요하면 원래 Execution Profile을 다시 초기화하지 않는다. Required Defect, Allowed Files, Focused Verification, QA Recheck Scope와 Additional Attempt Budget만 Profile Delta로 제시하고 승인받는다.
+
 ## 10. 최종 승인과 Commit
 
 다음을 모두 확인한 뒤에만 commit을 요청한다.
@@ -427,6 +438,26 @@ Android Emulator도 실제 플랫폼 차이를 확인해야 할 때만 별도 �
 - 분석, 테스트와 필요한 build가 통과함
 - 예상하지 못한 파일이 없음
 - 민감정보가 없음
+- Approved-vs-Actual 비교에서 승인되지 않은 편차가 없음
+
+최종 결과에는 아래 비교를 포함하게 한다. 승인되지 않은 편차가 있으면 기술 검증이 통과했어도 Adaptive Policy Safety는 FAIL이다.
+
+```text
+Approved vs Actual
+
+Risk Level:
+Roles:
+Agent Instances:
+Role / Instance Mapping:
+Context Pack:
+QA Count:
+Repair Count:
+Verification Level:
+Environment Attempts:
+Environment Retries:
+Environment Time:
+Deviations:
+```
 
 ```text
 최종 구현과 승인된 Risk Level에 따른 검증 결과를 승인한다.

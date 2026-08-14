@@ -218,3 +218,27 @@ Status: **Implemented — User Result Approval Pending**
 검증된 결과를 Low·Medium·High 분류, Agent Instances 상한, Context Pack, Verification Ladder, Evidence 재사용, 환경 재시도 예산과 분리된 품질·효율 판정으로 기존 SSOT에 반영했다. 특정 Provider, 모델 또는 IDE는 Core 정책에 포함하지 않는다. Product Loop Runtime 동작은 이 문서 정책 승격에서 변경하지 않는다.
 
 The verified results are reflected in existing authorities as Low, Medium, and High classification, Agent Instance limits, Context Pack, Verification Ladder, Evidence reuse, environment retry budgets, and separate quality and efficiency verdicts. The Core policy does not include a specific Provider, model, or IDE. This documentation promotion does not change Product Loop Runtime behavior.
+
+## 13. Execution Profile Lock & Deviation Gate
+
+Status: **Implemented — User Result Approval Pending**
+
+### Goal
+
+- 수정된 Agreement가 최종 통합본과 Execution Profile을 다시 승인한 뒤에만 실행되도록 고정한다
+- Lock execution so a revised Agreement runs only after the final consolidated version and Execution Profile are approved
+- 승인된 역할, 독립 QA, 검증, Repair와 환경 예산에서 임의로 벗어나는 실행을 중단한다
+- Stop execution that deviates without approval from Roles, independent QA, verification, Repair, or environment budgets
+
+### Delivered Contract
+
+- 최종 통합 Agreement와 Execution Profile 승인 규칙, Approved-vs-Planned 사전 Gate와 Runtime Deviation Gate를 기존 SSOT와 생성 Product `AGENTS.md`에 반영한다
+- Reflect final consolidated Agreement and Execution Profile approval, the Approved-vs-Planned pre-execution Gate, and the Runtime Deviation Gate in existing SSOTs and generated Product `AGENTS.md`
+- Medium·High 독립 QA의 별도 instance 또는 새 문맥, 독립 실행 주체 생성 불가 시 중단, Repair Delta와 Approved-vs-Actual 결과 보고를 요구한다
+- Require a separate instance or fresh context for Medium and High independent QA, stopping when an independent runtime worker cannot be created, Repair Deltas, and an Approved-vs-Actual final report
+- 환경 검증을 최초 1회, 원인이 명확한 재시도 1회 및 기본 10–15분으로 제한하고 예산 소진 후 우회를 금지한다
+- Limit environment verification to one initial attempt, one retry with a clear cause, and a default 10–15 minutes, and prohibit workarounds after budget exhaustion
+
+이 정책 보강은 특정 Provider, 모델 또는 IDE를 전제하지 않으며 Product Loop Runtime schema나 동작을 변경하지 않는다.
+
+This policy reinforcement does not assume a specific Provider, model, or IDE and does not change Product Loop Runtime schema or behavior.

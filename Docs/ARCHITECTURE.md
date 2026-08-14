@@ -313,6 +313,80 @@ The Adaptive Execution Policy is the operating contract that selects Roles, Agen
 
 This policy does not change the fixed baseline, Health Gate, QA candidate, or approval semantics of the V1.2.1 Product Loop Runtime. When the current Runtime is invoked, its defined technical verification still runs. The Adaptive Execution Policy is the Core operating rule that prevents unnecessary expansion of external implementation Roles and additional verification.
 
+##### Execution Profile Lock
+
+Agreement 또는 Execution Profile에 수정 요청이 한 번이라도 있으면 구현 전에 최신 통합본을 다시 제시한다. User 승인은 마지막으로 제시된 통합본에만 적용하며, 이전 버전이나 부분 수정안에 임의로 연결하지 않는다.
+
+When an Agreement or Execution Profile receives any revision request, re-present the latest consolidated version before implementation. User approval applies only to that last presented consolidated version and must not be attached to an earlier version or partial revision.
+
+통합본은 다음 실행 계약을 빠짐없이 포함한다.
+
+The consolidated version includes the following execution contract without omissions.
+
+```text
+Risk Level
+Risk Reasons
+Activated Roles
+Agent Instances
+Role / Instance Mapping
+Capability Tier
+Context Pack
+Verification Ladder
+QA Count
+Repair Limit
+Environment Attempts / Retries / Time Budget
+Stop Conditions
+```
+
+##### Pre-execution Profile Gate
+
+구현 전에 Approved Execution Profile과 Planned Actual Execution을 비교한다. 필수 Role, 독립 QA, Agent Instances, Context Pack, Verification Ladder, QA·Repair 횟수, 환경 시도·재시도·시간 예산 또는 Stop Conditions 중 하나라도 다르면 구현이나 추가 검증을 시작하지 않는다. 대신 차이, 이유와 필요한 Profile Delta를 User에게 제시하고 승인을 기다린다.
+
+Before implementation, compare the Approved Execution Profile with Planned Actual Execution. If required Roles, independent QA, Agent Instances, Context Pack, Verification Ladder, QA or Repair count, environment attempt, retry or time budget, or Stop Conditions differ, do not start implementation or additional verification. Instead, present the difference, reason, and required Profile Delta to the User and wait for approval.
+
+##### Independent QA Instance Rule
+
+Medium과 High에서 요구되는 Independent QA는 Implementation과 다른 Agent Instance 또는 분리된 새 문맥에서 수행한다. Main의 자기 검토로 대체하지 않으며, 필요한 독립 실행 주체를 만들 수 없으면 Main 단독으로 계속하지 않는다. QA에는 Agreement, 명시된 candidate, diff와 검증 Evidence만 전달한다.
+
+Independent QA required for Medium and High runs in a different Agent Instance or separate fresh context from Implementation. Do not replace it with Main self-review, and do not continue with Main alone if the required independent runtime worker cannot be created. Give QA only the Agreement, explicit candidate, diff, and verification Evidence.
+
+##### Runtime Deviation and Environment Budget Gate
+
+실행 중 User 승인 없이 Role 또는 QA를 추가·제거하거나, 검증 범위를 강화·약화하거나, Repair·환경 시도·환경 복구·다른 플랫폼 또는 도구 우회를 추가하지 않는다. 환경 실패는 기능 Repair나 Risk Level 변경의 근거가 아니다.
+
+During execution, do not add or remove Roles or QA, strengthen or weaken verification, or add Repair, environment attempts, environment recovery, or another platform or tool workaround without User approval. An environment failure is not evidence for a functional Repair or a Risk Level change.
+
+환경 검증은 최초 시도 1회와 실패 원인이 명확할 때의 재시도 1회를 기본 한도로 하며, Simulator 또는 Emulator 복구를 포함한 문제 해결은 기본 10–15분 안에서 중단한다. 예산을 소진하면 서비스 재시작, Simulator 초기화, 다른 기기 사용 또는 다른 우회로 진행하지 않고 `Environment Blocked`와 남은 수동 확인만 보고한다.
+
+Environment verification defaults to one initial attempt and one retry only when the failure cause is clear, and troubleshooting including Simulator or Emulator recovery stops within 10–15 minutes by default. After the budget is exhausted, do not continue through service restart, Simulator reset, another device, or another workaround; report only `Environment Blocked` and remaining manual verification.
+
+##### Repair and Actual-report Gate
+
+Repair는 기존 Execution Profile을 자동으로 초기화하지 않는다. Repair 제안은 Required Defect, Allowed Files, Focused Verification, QA Recheck Scope와 Additional Attempt Budget만 Delta로 제시하며, 새 Agent Instance가 필요하면 이유를 명시한다.
+
+Repair does not automatically reset the existing Execution Profile. A Repair proposal presents only Required Defect, Allowed Files, Focused Verification, QA Recheck Scope, and Additional Attempt Budget as its Delta, and states the reason when a new Agent Instance is required.
+
+최종 보고에는 아래 Approved-vs-Actual 비교를 포함한다. 승인되지 않은 편차가 있으면 Technical Result가 PASS여도 Adaptive Policy Safety는 FAIL이다.
+
+The final report includes the following Approved-vs-Actual comparison. When an unapproved deviation exists, Adaptive Policy Safety is FAIL even if the Technical Result is PASS.
+
+```text
+Approved vs Actual
+
+Risk Level:
+Roles:
+Agent Instances:
+Role / Instance Mapping:
+Context Pack:
+QA Count:
+Repair Count:
+Verification Level:
+Environment Attempts:
+Environment Retries:
+Environment Time:
+Deviations:
+```
+
 ##### Risk Classification
 
 **Low**

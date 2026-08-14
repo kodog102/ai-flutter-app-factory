@@ -36,6 +36,7 @@ void main() {
       'User Authority',
       'Permanent Roles and Change Permissions',
       'Agreement Rule',
+      'Execution Profile Lock and Deviation Gate',
       'Standard Work Loop',
       'Scope and Change Rules',
       'Verification Policy',
@@ -72,6 +73,27 @@ void main() {
     expect(
         documents.agents, contains('does not reinterpret an approved design'));
     expect(documents.agents, contains('QA verdict separated'));
+    expect(
+      documents.agents,
+      contains('User approval applies only to the last presented consolidated'),
+    );
+    expect(
+      documents.agents,
+      contains('compare the Approved Execution Profile with Planned Actual'),
+    );
+    expect(
+      documents.agents,
+      contains('different Agent Instance or separate fresh context'),
+    );
+    expect(
+      documents.agents,
+      contains('Do not continue with Main alone'),
+    );
+    expect(documents.agents, contains('`Environment Blocked`'));
+    expect(
+        documents.agents, contains('do not continue through service restart'));
+    expect(documents.agents, contains('Repair does not reset'));
+    expect(documents.agents, contains('`Approved vs Actual` comparison'));
     expect(documents.agents, contains('Commit and push only'));
     expect(documents.agents, contains('Approved Operational Baseline Handoff'));
     expect(documents.agents, contains('check for drift'));
@@ -139,6 +161,39 @@ void main() {
       ).allMatches(loop),
       hasLength(5),
     );
+  });
+
+  test('renders execution profile lock before the unchanged five-step loop',
+      () {
+    final documents = renderer.render(
+      _request(
+        name: 'Profile Product',
+        purpose: 'Validate execution-profile authority.',
+        scope: 'Preserve the approved operating contract.',
+      ),
+    );
+
+    final profileStart = documents.agents.indexOf(
+      '## 실행 프로필 고정 및 편차 중단 / Execution Profile Lock and Deviation Gate',
+    );
+    final loopStart = documents.agents.indexOf(
+      '## 표준 작업 순환 / Standard Work Loop',
+    );
+    expect(profileStart, greaterThanOrEqualTo(0));
+    expect(loopStart, greaterThan(profileStart));
+
+    for (final requiredField in [
+      'Risk Reasons',
+      'Role / Instance Mapping',
+      'Capability Tier',
+      'QA Count',
+      'Repair Limit',
+      'Stop Conditions',
+      'Profile Delta',
+      'Environment Attempts / Retries / Time Budget',
+    ]) {
+      expect(documents.agents, contains(requiredField), reason: requiredField);
+    }
   });
 
   test('renders README and AGENTS without trailing whitespace or tabs', () {

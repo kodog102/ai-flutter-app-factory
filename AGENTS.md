@@ -66,6 +66,10 @@
 - An Agreement rule that must exist before implementation and consists of Goal, Included Scope, Excluded Scope, Acceptance Criteria, and Verification
 - 작업 위험도에 따른 역할, QA와 검증 범위를 정하는 Adaptive Execution Policy 진입 규칙
 - An entry rule for the Adaptive Execution Policy that selects Roles, QA, and verification scope according to task risk
+- 수정 후 최종 통합 Agreement와 Execution Profile을 다시 제시하고 승인하는 규칙
+- A rule to re-present and approve the consolidated Agreement and Execution Profile after a revision
+- 승인된 실행 프로필과 실제 실행의 편차를 구현 전에 중단하는 규칙
+- A rule to stop before implementation when actual execution deviates from the approved Execution Profile
 
 ## Architecture Role
 
@@ -329,6 +333,29 @@ Status allows only the following values.
 - QA evaluates the Agreement, explicit candidate, diff, and verification Evidence; Main does not repeat the passed review from the beginning
 - 위험도, Verification Ladder, Evidence 재사용과 환경 재시도 규칙의 단일 권한은 `Docs/ARCHITECTURE.md`다
 - `Docs/ARCHITECTURE.md` is the single authority for risk levels, the Verification Ladder, Evidence reuse, and environment retry rules
+
+### Execution Profile Lock and Deviation Gate
+
+- Agreement 또는 실행 프로필에 수정 요청이 있으면 구현 전에 최신 통합본을 다시 제시하고 User 승인을 기다린다
+- When an Agreement or Execution Profile is revised, re-present the latest consolidated version before implementation and wait for User approval
+- User 승인은 마지막으로 제시된 통합 Agreement와 Execution Profile에만 적용한다
+- User approval applies only to the last presented consolidated Agreement and Execution Profile
+- 통합본은 Risk Level, Risk Reasons, Activated Roles, Agent Instances, Role / Instance Mapping, Capability Tier, Context Pack, Verification Ladder, QA Count, Repair Limit, Environment Attempts / Retries / Time Budget와 Stop Conditions를 포함한다
+- The consolidated version includes Risk Level, Risk Reasons, Activated Roles, Agent Instances, Role / Instance Mapping, Capability Tier, Context Pack, Verification Ladder, QA Count, Repair Limit, Environment Attempts / Retries / Time Budget, and Stop Conditions
+- 구현 전에 Approved Execution Profile과 Planned Actual Execution을 비교한다
+- Before implementation, compare the Approved Execution Profile with Planned Actual Execution
+- 필수 Role, 독립 QA, Agent Instances, Context Pack, Verification, QA·Repair 예산, 환경 예산 또는 Stop Conditions가 다르면 실행하지 않고 Profile Delta와 이유를 User에게 제시한다
+- When required Roles, independent QA, Agent Instances, Context Pack, Verification, QA or Repair budget, environment budget, or Stop Conditions differ, do not execute; present the Profile Delta and reason to the User
+- Medium·High의 독립 QA는 Implementation과 다른 Agent Instance 또는 분리된 새 문맥에서 수행하며 Main 자기 검토로 대체하지 않는다
+- Independent QA for Medium and High runs in a different Agent Instance or separate fresh context from Implementation and is not replaced by Main self-review
+- 필요한 독립 실행 주체를 만들 수 없으면 Main 단독으로 계속하지 않는다
+- Do not continue with Main alone when the required independent runtime worker cannot be created
+- 실행 중 승인되지 않은 Role, QA, 검증, Repair, 환경 복구 또는 우회를 추가·제거·대체하지 않는다
+- Do not add, remove, or substitute unapproved Roles, QA, verification, Repair, environment recovery, or workarounds during execution
+- 환경 시도는 최초 1회와 원인이 명확한 재시도 1회, Simulator 또는 Emulator 문제 해결은 기본 10–15분으로 제한하며 예산 소진 후에는 `Environment Blocked`와 남은 수동 확인만 보고한다
+- Limit environment work to one initial attempt and one retry with a clear cause, and Simulator or Emulator troubleshooting to 10–15 minutes by default; after exhaustion, report only `Environment Blocked` and remaining manual verification
+- Repair는 기존 Execution Profile을 초기화하지 않으며 Required Defect, Allowed Files, Focused Verification, QA Recheck Scope와 Additional Attempt Budget만 Delta로 제시한다
+- Repair does not reset the existing Execution Profile; present only Required Defect, Allowed Files, Focused Verification, QA Recheck Scope, and Additional Attempt Budget as its Delta
 
 ## Provider Policy
 
