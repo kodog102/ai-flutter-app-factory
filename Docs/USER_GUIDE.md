@@ -261,9 +261,13 @@ Agreement를 승인하기 전에 작업 도구가 위험도를 함께 제안하�
 
 빌드 파일을 만드는 것과 실제 업로드·배포·출시는 다르다. 소스와 dependency를 바꾸지 않고 기존 검증 코드로 산출물만 만들면 기본적으로 Low다. Simulator나 환경 오류가 발생해도 위험도를 올리지 않고 최초 시도 1회와 원인이 명확할 때 재시도 1회까지만 수행한다.
 
-Agreement 또는 실행 계획을 수정했다면, 승인 전에 작업 도구가 **최신 통합 Agreement와 Execution Profile 전체**를 다시 제시해야 한다. 이전 제안이나 일부 수정 메시지에 대한 승인은 사용할 수 없다. 통합본에는 Risk Level, 이유, 역할, Agent Instances와 역할 매핑, Context Pack, Verification Ladder, QA·Repair 한도, 환경 시도·재시도·시간 예산과 Stop Conditions가 포함되어야 한다.
+Agreement 또는 실행 계획을 수정했다면, 승인 전에 작업 도구가 **최신 통합 Agreement와 Execution Profile 전체**를 다시 제시해야 한다. 이전 제안이나 일부 수정 메시지에 대한 승인은 사용할 수 없다. 통합본에는 Risk Level, 이유, 역할, Agent Instances와 역할 매핑, Context Pack, Direct Approval Actions, Direct Executor, Verification Ladder, QA·Repair 한도, 환경 시도·재시도·시간 예산과 Stop Conditions가 포함되어야 한다.
 
-승인 직전에는 작업 도구가 Approved Execution Profile과 Planned Actual Execution을 비교해야 한다. 필수 역할, 독립 QA, Agent Instances, Context Pack, 검증, QA·Repair·환경 예산 또는 중단 조건이 다르면 구현을 시작하지 말고 Profile Delta와 이유를 다시 제시하게 한다. Medium 또는 High의 Independent QA는 구현과 다른 실행 주체 또는 분리된 새 문맥이어야 하며, 이를 만들 수 없으면 Main 단독 실행을 허용하지 않는다.
+Direct Approval Action은 사용자의 명시적 승인을 직접 확인할 수 있는 실행 주체만 수행할 수 있는 작업이다. 실기기 앱 설치, 인증서 또는 프로비저닝을 사용하는 서명, TestFlight·스토어·외부 콘솔 업로드, Release 또는 실서비스 배포, 외부 데이터의 삭제 또는 덮어쓰기가 여기에 해당한다. Agreement에는 그런 작업과 Direct Executor를 적고, 없으면 `None`으로 표시하게 한다. Direct Executor는 기본적으로 Main 또는 사용자 승인 메시지를 직접 볼 수 있는 다른 실행 주체다. 하위 실행 주체는 준비·진단·구현·QA를 할 수 있지만 그 승인 메시지를 직접 볼 수 없다면 이 작업을 실행하면 안 된다. Main도 사용자의 명시적 승인 전에는 실행할 수 없다.
+
+승인 가시성이 불명확하거나 실제 Direct Executor가 승인된 내용과 다르면, 실행하지 말고 Role / Instance Mapping과 이유를 포함한 Profile Delta를 다시 제시하게 한다.
+
+승인 직전에는 작업 도구가 Approved Execution Profile과 Planned Actual Execution을 비교해야 한다. 필수 역할, 독립 QA, Agent Instances, Context Pack, Direct Approval Actions, Direct Executor, 검증, QA·Repair·환경 예산 또는 중단 조건이 다르면 구현을 시작하지 말고 Profile Delta와 이유를 다시 제시하게 한다. Medium 또는 High의 Independent QA는 구현과 다른 실행 주체 또는 분리된 새 문맥이어야 하며, 이를 만들 수 없으면 Main 단독 실행을 허용하지 않는다.
 
 복사해서 사용할 위험도 제안 요청:
 
@@ -274,6 +278,7 @@ Agreement 또는 실행 계획을 수정했다면, 승인 전에 작업 도구�
 - Risk Level과 구체적인 이유
 - Activated Roles, Agent Instances, Role / Instance Mapping과 Capability Tier
 - 변경에 필요한 파일만 담은 Context Pack
+- Direct Approval Actions와 Direct Executor (`None` 가능)
 - V0부터 V5 중 필요한 최소 검증 단계
 - QA Count, Repair Limit과 생략할 QA, 전체 테스트, 플랫폼 빌드의 이유
 - 환경 검증의 최초 시도·재시도·시간 한도
@@ -450,6 +455,8 @@ Roles:
 Agent Instances:
 Role / Instance Mapping:
 Context Pack:
+Direct Approval Actions:
+Direct Executor:
 QA Count:
 Repair Count:
 Verification Level:

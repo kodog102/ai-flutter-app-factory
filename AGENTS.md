@@ -70,6 +70,8 @@
 - A rule to re-present and approve the consolidated Agreement and Execution Profile after a revision
 - 승인된 실행 프로필과 실제 실행의 편차를 구현 전에 중단하는 규칙
 - A rule to stop before implementation when actual execution deviates from the approved Execution Profile
+- 직접 승인 작업과 해당 작업을 수행할 Direct Executor를 Agreement 단계에서 정하는 규칙
+- A rule to identify Direct Approval Actions and their Direct Executor during the Agreement
 
 ## Architecture Role
 
@@ -334,18 +336,35 @@ Status allows only the following values.
 - 위험도, Verification Ladder, Evidence 재사용과 환경 재시도 규칙의 단일 권한은 `Docs/ARCHITECTURE.md`다
 - `Docs/ARCHITECTURE.md` is the single authority for risk levels, the Verification Ladder, Evidence reuse, and environment retry rules
 
+### Direct Approval Actions
+
+- Direct Approval Action은 User의 명시적 승인을 직접 확인할 수 있는 실행 주체만 수행할 수 있는 작업이다
+- A Direct Approval Action may be performed only by a runtime worker that can directly verify the User's explicit approval
+- 실기기 앱 설치, 인증서 또는 프로비저닝을 사용하는 서명, TestFlight·스토어·외부 콘솔 업로드, Release 또는 실서비스 배포, 외부 데이터의 삭제 또는 덮어쓰기가 대표적인 Direct Approval Action이다
+- Physical-device app installation, signing with certificates or provisioning, TestFlight, store, or external-console uploads, Release or live-service deployment, and external-data deletion or overwrite are representative Direct Approval Actions
+- Agreement는 Direct Approval Actions와 Direct Executor를 명시하며, 해당 작업이 없으면 `None`으로 표시한다
+- The Agreement states Direct Approval Actions and Direct Executor, or records `None` when no such action exists
+- Direct Executor는 기본적으로 Main 또는 User 승인 메시지를 직접 볼 수 있는 다른 실행 주체다
+- The Direct Executor defaults to Main or another runtime worker that can directly see the User approval message
+- User의 명시적 승인이 없으면 Main을 포함한 어떤 실행 주체도 Direct Approval Action을 수행할 수 없다
+- No runtime worker, including Main, may perform a Direct Approval Action without the User's explicit approval
+- 하위 실행 주체는 준비, 진단, 구현 또는 QA를 수행할 수 있지만 User 승인 메시지를 직접 확인할 수 없으면 Direct Approval Action을 수행하지 않는다
+- Downstream workers may prepare, diagnose, implement, or perform QA, but do not perform a Direct Approval Action when they cannot directly verify the User approval message
+- 승인 가시성이 불명확하거나 실제 Direct Executor가 승인된 실행 프로필과 다르면 작업 전에 중단하고 Role / Instance Mapping을 포함한 Profile Delta와 이유를 User에게 제시한다
+- When approval visibility is unclear or the actual Direct Executor differs from the approved Execution Profile, stop before the action and present the User with a Profile Delta, its reason, and the Role / Instance Mapping
+
 ### Execution Profile Lock and Deviation Gate
 
 - Agreement 또는 실행 프로필에 수정 요청이 있으면 구현 전에 최신 통합본을 다시 제시하고 User 승인을 기다린다
 - When an Agreement or Execution Profile is revised, re-present the latest consolidated version before implementation and wait for User approval
 - User 승인은 마지막으로 제시된 통합 Agreement와 Execution Profile에만 적용한다
 - User approval applies only to the last presented consolidated Agreement and Execution Profile
-- 통합본은 Risk Level, Risk Reasons, Activated Roles, Agent Instances, Role / Instance Mapping, Capability Tier, Context Pack, Verification Ladder, QA Count, Repair Limit, Environment Attempts / Retries / Time Budget와 Stop Conditions를 포함한다
-- The consolidated version includes Risk Level, Risk Reasons, Activated Roles, Agent Instances, Role / Instance Mapping, Capability Tier, Context Pack, Verification Ladder, QA Count, Repair Limit, Environment Attempts / Retries / Time Budget, and Stop Conditions
+- 통합본은 Risk Level, Risk Reasons, Activated Roles, Agent Instances, Role / Instance Mapping, Capability Tier, Context Pack, Direct Approval Actions, Direct Executor, Verification Ladder, QA Count, Repair Limit, Environment Attempts / Retries / Time Budget와 Stop Conditions를 포함한다
+- The consolidated version includes Risk Level, Risk Reasons, Activated Roles, Agent Instances, Role / Instance Mapping, Capability Tier, Context Pack, Direct Approval Actions, Direct Executor, Verification Ladder, QA Count, Repair Limit, Environment Attempts / Retries / Time Budget, and Stop Conditions
 - 구현 전에 Approved Execution Profile과 Planned Actual Execution을 비교한다
 - Before implementation, compare the Approved Execution Profile with Planned Actual Execution
-- 필수 Role, 독립 QA, Agent Instances, Context Pack, Verification, QA·Repair 예산, 환경 예산 또는 Stop Conditions가 다르면 실행하지 않고 Profile Delta와 이유를 User에게 제시한다
-- When required Roles, independent QA, Agent Instances, Context Pack, Verification, QA or Repair budget, environment budget, or Stop Conditions differ, do not execute; present the Profile Delta and reason to the User
+- 필수 Role, 독립 QA, Agent Instances, Context Pack, Direct Approval Actions, Direct Executor, Verification, QA·Repair 예산, 환경 예산 또는 Stop Conditions가 다르면 실행하지 않고 Profile Delta와 이유를 User에게 제시한다
+- When required Roles, independent QA, Agent Instances, Context Pack, Direct Approval Actions, Direct Executor, Verification, QA or Repair budget, environment budget, or Stop Conditions differ, do not execute; present the Profile Delta and reason to the User
 - Medium·High의 독립 QA는 Implementation과 다른 Agent Instance 또는 분리된 새 문맥에서 수행하며 Main 자기 검토로 대체하지 않는다
 - Independent QA for Medium and High runs in a different Agent Instance or separate fresh context from Implementation and is not replaced by Main self-review
 - 필요한 독립 실행 주체를 만들 수 없으면 Main 단독으로 계속하지 않는다

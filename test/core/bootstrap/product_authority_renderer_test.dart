@@ -81,6 +81,24 @@ void main() {
       documents.agents,
       contains('compare the Approved Execution Profile with Planned Actual'),
     );
+    expect(documents.agents, contains('Direct Approval Actions'));
+    expect(documents.agents, contains('Direct Executor'));
+    expect(
+      documents.agents,
+      contains('physical-device app installation'),
+    );
+    expect(
+      documents.agents,
+      contains('can directly verify the User\'s explicit approval'),
+    );
+    expect(
+      documents.agents,
+      contains('No runtime worker, including Main, may perform'),
+    );
+    expect(
+      documents.agents,
+      contains('When approval visibility is unclear'),
+    );
     expect(
       documents.agents,
       contains('different Agent Instance or separate fresh context'),
@@ -190,6 +208,8 @@ void main() {
       'Repair Limit',
       'Stop Conditions',
       'Profile Delta',
+      'Direct Approval Actions',
+      'Direct Executor',
       'Environment Attempts / Retries / Time Budget',
     ]) {
       expect(documents.agents, contains(requiredField), reason: requiredField);

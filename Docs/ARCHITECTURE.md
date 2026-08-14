@@ -331,6 +331,8 @@ Agent Instances
 Role / Instance Mapping
 Capability Tier
 Context Pack
+Direct Approval Actions
+Direct Executor
 Verification Ladder
 QA Count
 Repair Limit
@@ -340,9 +342,27 @@ Stop Conditions
 
 ##### Pre-execution Profile Gate
 
-구현 전에 Approved Execution Profile과 Planned Actual Execution을 비교한다. 필수 Role, 독립 QA, Agent Instances, Context Pack, Verification Ladder, QA·Repair 횟수, 환경 시도·재시도·시간 예산 또는 Stop Conditions 중 하나라도 다르면 구현이나 추가 검증을 시작하지 않는다. 대신 차이, 이유와 필요한 Profile Delta를 User에게 제시하고 승인을 기다린다.
+구현 전에 Approved Execution Profile과 Planned Actual Execution을 비교한다. 필수 Role, 독립 QA, Agent Instances, Context Pack, Direct Approval Actions, Direct Executor, Verification Ladder, QA·Repair 횟수, 환경 시도·재시도·시간 예산 또는 Stop Conditions 중 하나라도 다르면 구현이나 추가 검증을 시작하지 않는다. 대신 차이, 이유와 필요한 Profile Delta를 User에게 제시하고 승인을 기다린다.
 
-Before implementation, compare the Approved Execution Profile with Planned Actual Execution. If required Roles, independent QA, Agent Instances, Context Pack, Verification Ladder, QA or Repair count, environment attempt, retry or time budget, or Stop Conditions differ, do not start implementation or additional verification. Instead, present the difference, reason, and required Profile Delta to the User and wait for approval.
+Before implementation, compare the Approved Execution Profile with Planned Actual Execution. If required Roles, independent QA, Agent Instances, Context Pack, Direct Approval Actions, Direct Executor, Verification Ladder, QA or Repair count, environment attempt, retry or time budget, or Stop Conditions differ, do not start implementation or additional verification. Instead, present the difference, reason, and required Profile Delta to the User and wait for approval.
+
+##### Direct Approval Action Boundary
+
+Direct Approval Action은 User의 명시적 승인을 직접 확인할 수 있는 실행 주체만 수행할 수 있는 작업이다. Agreement는 Direct Approval Actions와 Direct Executor를 명시하며, 해당 작업이 없으면 `None`으로 표시한다.
+
+A Direct Approval Action may be performed only by a runtime worker that can directly verify the User's explicit approval. The Agreement states Direct Approval Actions and Direct Executor, or records `None` when no such action exists.
+
+대표적인 Direct Approval Action은 실기기 앱 설치, 인증서 또는 프로비저닝을 사용하는 서명, TestFlight·스토어·외부 콘솔 업로드, Release 또는 실서비스 배포, 외부 데이터의 삭제 또는 덮어쓰기다. 빌드 산출물 생성은 실제 배포가 아니며, 이 자체만으로 Direct Approval Action이 되지 않는다.
+
+Representative Direct Approval Actions are physical-device app installation, signing with certificates or provisioning, TestFlight, store, or external-console uploads, Release or live-service deployment, and external-data deletion or overwrite. Generating a build artifact is not actual deployment and is not, by itself, a Direct Approval Action.
+
+Direct Executor는 기본적으로 Main 또는 User 승인 메시지를 직접 볼 수 있는 다른 실행 주체다. User의 명시적 승인 없이는 Main을 포함한 어떤 실행 주체도 Direct Approval Action을 수행할 수 없다. 하위 실행 주체는 준비, 진단, 구현 또는 QA를 수행할 수 있지만 승인 메시지를 직접 확인할 수 없으면 Direct Approval Action을 수행하지 않는다.
+
+The Direct Executor defaults to Main or another runtime worker that can directly see the User approval message. No runtime worker, including Main, may perform a Direct Approval Action without the User's explicit approval. Downstream workers may prepare, diagnose, implement, or perform QA, but do not perform a Direct Approval Action when they cannot directly verify the User approval message.
+
+승인 가시성이 불명확하거나 실제 Direct Executor가 승인된 실행 프로필과 다르면 해당 작업 전에 중단한다. 실행하지 않은 상태에서 Role / Instance Mapping, 차이와 이유를 포함한 Profile Delta를 User에게 제시하고 승인을 기다린다.
+
+When approval visibility is unclear or the actual Direct Executor differs from the approved Execution Profile, stop before that action. Without executing it, present the User with a Profile Delta containing the Role / Instance Mapping, the difference, and its reason, then wait for approval.
 
 ##### Independent QA Instance Rule
 
@@ -378,6 +398,8 @@ Roles:
 Agent Instances:
 Role / Instance Mapping:
 Context Pack:
+Direct Approval Actions:
+Direct Executor:
 QA Count:
 Repair Count:
 Verification Level:
@@ -636,6 +658,7 @@ The Product Repository `AGENTS.md` includes at least the following.
 - Verification policy
 - Git policy
 - Reporting requirements
+- Direct Approval Actions and Direct Executor
 
 Factory 문장을 그대로 복사하지 않고 Product 관점에서 작성한다. 특정 제품, Provider, 모델 또는 IDE 이름을 역할명으로 사용하지 않는다.
 
