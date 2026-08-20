@@ -12,9 +12,17 @@ concurrency:
 
 jobs:
   integration:
-    name: Run real integration tests
+    name: Run ${{ matrix.test-file }}
     runs-on: macos-15
-    timeout-minutes: 30
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        test-file:
+          - test/integration/bootstrap_executor_integration_test.dart
+          - test/integration/factory_bootstrap_command_integration_test.dart
+          - test/integration/factory_product_loop_command_integration_test.dart
+          - test/integration/product_loop_guard_integration_test.dart
     env:
       RUN_FACTORY_BOOTSTRAP_INTEGRATION: "true"
       AI_FLUTTER_FACTORY_RUN_INTEGRATION: "1"
@@ -41,4 +49,4 @@ jobs:
         run: dart pub get
 
       - name: Run real integration tests
-        run: dart test --reporter expanded test/integration
+        run: dart test --reporter expanded ${{ matrix.test-file }}
