@@ -273,8 +273,8 @@ Status: **Active Baseline — 2026-08-20**
 
 ### Verified Baseline
 
-- Factory 기준점은 동기화된 `main@203066f`이며 공개 Release는 계속 `v1.2.1`이다
-- The Factory baseline is synchronized at `main@203066f`, while the public Release remains `v1.2.1`
+- Factory 기준점은 동기화된 `main@2f7f76593e98baacc4bc841e5696fc9694690e0f`이며 공개 Release는 `v1.2.2`다
+- The Factory baseline is synchronized at `main@2f7f76593e98baacc4bc841e5696fc9694690e0f`, and the public Release is `v1.2.2`
 - P0 CI Compatibility Recovery는 GitHub Actions run `32333512924`가 `main@203066f`에서 green인 Evidence와 함께 완료됐다
 - P0 CI Compatibility Recovery is completed with green Evidence from GitHub Actions run `32333512924` at `main@203066f`
 - 일반 테스트는 185개 통과했고 실제 환경 통합 테스트 14개는 opt-in 조건으로 생략됐다
@@ -286,22 +286,20 @@ Status: **Active Baseline — 2026-08-20**
 
 ### Confirmed Problems
 
-1. 공개 `v1.2.1` tag와 Release는 유지되며 V1.2.2 Release Candidate의 게시, tag와 공개 Release는 아직 완료되지 않았다.
-   The public `v1.2.1` tag and Release remain in place; publication, tagging, and public Release for the V1.2.2 Release Candidate are not yet complete.
-2. 실제 Git·Flutter 통합 테스트가 기본 CI에서 실행되지 않아 로컬 증거에 의존한다.
+1. 실제 Git·Flutter 통합 테스트가 기본 CI에서 실행되지 않아 로컬 증거에 의존한다.
    Real Git and Flutter integration tests do not run in default CI and depend on local evidence.
-3. Adaptive Execution Policy와 Execution Profile Lock은 문서와 생성 Product Authority에는 반영됐지만 모든 실행 경계에서 구조화된 runtime 검증으로 강제되지는 않는다.
+2. Adaptive Execution Policy와 Execution Profile Lock은 문서와 생성 Product Authority에는 반영됐지만 모든 실행 경계에서 구조화된 runtime 검증으로 강제되지는 않는다.
    Adaptive Execution Policy and Execution Profile Lock are reflected in documents and generated Product Authority but are not yet enforced by structured runtime validation at every execution boundary.
-4. 기존 Product의 `AGENTS.md` drift를 자동으로 진단하거나 동기화하는 read-only 경로가 없다.
+3. 기존 Product의 `AGENTS.md` drift를 자동으로 진단하거나 동기화하는 read-only 경로가 없다.
    There is no read-only path that automatically diagnoses or synchronizes `AGENTS.md` drift in existing Products.
-5. 현재 진입 명령과 입력 준비는 비개발자에게 여전히 개발 도구 중심이다.
+4. 현재 진입 명령과 입력 준비는 비개발자에게 여전히 개발 도구 중심이다.
    Current entry commands and input preparation remain developer-tool-oriented for non-developers.
-6. 대형 실행 파일과 장문 Authority, 사용 여부가 불명확한 legacy template·generator·metadata가 유지보수 비용과 권한 혼동을 만든다.
+5. 대형 실행 파일과 장문 Authority, 사용 여부가 불명확한 legacy template·generator·metadata가 유지보수 비용과 권한 혼동을 만든다.
    A large executor, long authority documents, and legacy template, generator, and metadata with unclear active use create maintenance cost and authority ambiguity.
 
 ## 16. Flutter Factory Completion Program
 
-Status: **In Progress — P1 Release Candidate**
+Status: **In Progress — P2 Next**
 
 ### P0 — CI Compatibility Recovery
 
@@ -328,7 +326,7 @@ Evidence:
 
 ### P1 — V1.2.2 SSOT and Release Closure
 
-Status: **In Progress — Release Candidate**
+Status: **Completed — User Approved**
 
 Goal:
 
@@ -344,18 +342,20 @@ Exit Criteria:
 - 공개 CI가 green이며 push, tag와 Release는 각각 명시적인 Direct Approval Action 승인을 받는다
 - Public CI is green, and push, tag, and Release each receive explicit Direct Approval Action approval
 
-Release Candidate Lifecycle:
+Release Closure Evidence:
 
-- candidate commit을 준비한 뒤 push하고 CI를 확인한다
-- Prepare the candidate commit, then push it and confirm CI
-- 명시적인 Direct Approval Action 승인 후 tag와 공개 Release를 수행한다
-- After explicit Direct Approval Action approval, create the tag and public Release
-- 게시가 완료된 뒤에만 후속 closure 문서에서 P1을 완료로 기록한다
-- Record P1 as completed in later closure documents only after publication is complete
+- `v1.2.2` tag는 `2f7f76593e98baacc4bc841e5696fc9694690e0f`를 정확히 가리킨다
+- The `v1.2.2` tag resolves exactly to `2f7f76593e98baacc4bc841e5696fc9694690e0f`
+- [Flutter Factory v1.2.2 — Stabilization](https://github.com/kodog102/ai-flutter-app-factory/releases/tag/v1.2.2) 공개 Release는 draft와 prerelease가 아니며 `2026-08-20T05:04:01Z`에 게시됐다
+- The [Flutter Factory v1.2.2 — Stabilization](https://github.com/kodog102/ai-flutter-app-factory/releases/tag/v1.2.2) public Release is neither draft nor prerelease and was published at `2026-08-20T05:04:01Z`
+- Candidate CI run `32334095801`은 같은 commit에서 33초 만에 green이었다
+- Candidate CI run `32334095801` was green in 33 seconds at the same commit
+- V1.2.2 version, 문서, tag와 공개 Release의 기준점 차이가 해소됐다
+- The V1.2.2 version, document, tag, and public Release baseline drift is resolved
 
 ### P2 — Real Integration CI
 
-Status: **Pending — Blocked by P1**
+Status: **Pending — Next Authorized Proposal**
 
 Goal:
 
@@ -485,6 +485,6 @@ Exit Criteria:
 - 미완료 단계를 Ready 또는 Released로 표현하지 않는다
 - Do not describe an incomplete phase as Ready or Released
 
-현재 다음 작업은 **P1 — Release Closure** 하나뿐이다.
+현재 다음 작업은 **P2 — Real Integration CI** 제안 하나뿐이다.
 
-The only current next task is **P1 — Release Closure**.
+The only current next task is the **P2 — Real Integration CI** proposal.
