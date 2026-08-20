@@ -273,41 +273,39 @@ Status: **Active Baseline — 2026-08-20**
 
 ### Verified Baseline
 
-- Factory 기준점은 `main@32e5ea7`이며 공개 Release는 `v1.2.1`이다
-- The Factory baseline is `main@32e5ea7`, and the public Release is `v1.2.1`
-- 로컬 `main`은 원격보다 1 commit 앞서 있으며 이 상태는 아직 공개 Release에 포함되지 않았다
-- Local `main` is one commit ahead of the remote, and that state is not yet included in the public Release
+- Factory 기준점은 동기화된 `main@203066f`이며 공개 Release는 계속 `v1.2.1`이다
+- The Factory baseline is synchronized at `main@203066f`, while the public Release remains `v1.2.1`
+- P0 CI Compatibility Recovery는 GitHub Actions run `32333512924`가 `main@203066f`에서 green인 Evidence와 함께 완료됐다
+- P0 CI Compatibility Recovery is completed with green Evidence from GitHub Actions run `32333512924` at `main@203066f`
 - 일반 테스트는 185개 통과했고 실제 환경 통합 테스트 14개는 opt-in 조건으로 생략됐다
 - The normal suite passed 185 tests, while 14 real-environment integration tests were skipped behind opt-in guards
-- 최신 원격 CI 기준점 `d31cecd`는 Dart 3.13에서 두 개의 `unawaited_return_in_try_block` 분석 경고로 실패했다
-- The latest remote CI baseline `d31cecd` failed on Dart 3.13 because of two `unawaited_return_in_try_block` analysis warnings
+- 이전 원격 CI 기준점 `d31cecd`는 Dart 3.13에서 두 개의 `unawaited_return_in_try_block` 분석 경고로 실패했으나 P0에서 해결됐다
+- The prior remote CI baseline `d31cecd` failed on Dart 3.13 because of two `unawaited_return_in_try_block` analysis warnings, which P0 resolved
   - `lib/core/bootstrap/bootstrap_executor.dart:1722`
   - `lib/core/product_loop/factory_product_loop_command.dart:89`
 
 ### Confirmed Problems
 
-1. 공개 저장소의 최신 CI가 실패하여 현재 변경의 신뢰 가능한 공개 검증 신호가 없다.
-   The latest public CI fails, so current changes do not have a reliable public verification signal.
-2. 공개 `v1.2.1` tag, 현재 source, `pubspec.yaml`, README와 Roadmap 사이에 Release 기준점과 상태 차이가 있다.
-   The public `v1.2.1` tag, current source, `pubspec.yaml`, README, and Roadmap have differing Release baselines and states.
-3. 실제 Git·Flutter 통합 테스트가 기본 CI에서 실행되지 않아 로컬 증거에 의존한다.
+1. 공개 `v1.2.1` tag와 Release는 유지되며 V1.2.2 Release Candidate의 게시, tag와 공개 Release는 아직 완료되지 않았다.
+   The public `v1.2.1` tag and Release remain in place; publication, tagging, and public Release for the V1.2.2 Release Candidate are not yet complete.
+2. 실제 Git·Flutter 통합 테스트가 기본 CI에서 실행되지 않아 로컬 증거에 의존한다.
    Real Git and Flutter integration tests do not run in default CI and depend on local evidence.
-4. Adaptive Execution Policy와 Execution Profile Lock은 문서와 생성 Product Authority에는 반영됐지만 모든 실행 경계에서 구조화된 runtime 검증으로 강제되지는 않는다.
+3. Adaptive Execution Policy와 Execution Profile Lock은 문서와 생성 Product Authority에는 반영됐지만 모든 실행 경계에서 구조화된 runtime 검증으로 강제되지는 않는다.
    Adaptive Execution Policy and Execution Profile Lock are reflected in documents and generated Product Authority but are not yet enforced by structured runtime validation at every execution boundary.
-5. 기존 Product의 `AGENTS.md` drift를 자동으로 진단하거나 동기화하는 read-only 경로가 없다.
+4. 기존 Product의 `AGENTS.md` drift를 자동으로 진단하거나 동기화하는 read-only 경로가 없다.
    There is no read-only path that automatically diagnoses or synchronizes `AGENTS.md` drift in existing Products.
-6. 현재 진입 명령과 입력 준비는 비개발자에게 여전히 개발 도구 중심이다.
+5. 현재 진입 명령과 입력 준비는 비개발자에게 여전히 개발 도구 중심이다.
    Current entry commands and input preparation remain developer-tool-oriented for non-developers.
-7. 대형 실행 파일과 장문 Authority, 사용 여부가 불명확한 legacy template·generator·metadata가 유지보수 비용과 권한 혼동을 만든다.
+6. 대형 실행 파일과 장문 Authority, 사용 여부가 불명확한 legacy template·generator·metadata가 유지보수 비용과 권한 혼동을 만든다.
    A large executor, long authority documents, and legacy template, generator, and metadata with unclear active use create maintenance cost and authority ambiguity.
 
 ## 16. Flutter Factory Completion Program
 
-Status: **In Progress — P0 Next**
+Status: **In Progress — P1 Release Candidate**
 
 ### P0 — CI Compatibility Recovery
 
-Status: **Pending — Next Authorized Proposal**
+Status: **Completed**
 
 Goal:
 
@@ -323,9 +321,14 @@ Exit Criteria:
 - Bootstrap과 Product Loop 동작 회귀가 없으며 승인된 파일만 변경된다
 - Bootstrap and Product Loop behavior do not regress, and only approved files change
 
+Evidence:
+
+- GitHub Actions run `32333512924`는 `main@203066f`에서 green이다
+- GitHub Actions run `32333512924` is green at `main@203066f`
+
 ### P1 — V1.2.2 SSOT and Release Closure
 
-Status: **Pending — Blocked by P0**
+Status: **In Progress — Release Candidate**
 
 Goal:
 
@@ -340,6 +343,15 @@ Exit Criteria:
 - Adaptive Execution, Execution Profile Lock, and Direct Approval Action statuses match actual Git results
 - 공개 CI가 green이며 push, tag와 Release는 각각 명시적인 Direct Approval Action 승인을 받는다
 - Public CI is green, and push, tag, and Release each receive explicit Direct Approval Action approval
+
+Release Candidate Lifecycle:
+
+- candidate commit을 준비한 뒤 push하고 CI를 확인한다
+- Prepare the candidate commit, then push it and confirm CI
+- 명시적인 Direct Approval Action 승인 후 tag와 공개 Release를 수행한다
+- After explicit Direct Approval Action approval, create the tag and public Release
+- 게시가 완료된 뒤에만 후속 closure 문서에서 P1을 완료로 기록한다
+- Record P1 as completed in later closure documents only after publication is complete
 
 ### P2 — Real Integration CI
 
@@ -473,6 +485,6 @@ Exit Criteria:
 - 미완료 단계를 Ready 또는 Released로 표현하지 않는다
 - Do not describe an incomplete phase as Ready or Released
 
-현재 다음 작업은 **P0 — CI Compatibility Recovery** 제안 하나뿐이다.
+현재 다음 작업은 **P1 — Release Closure** 하나뿐이다.
 
-The only current next task is the **P0 — CI Compatibility Recovery** proposal.
+The only current next task is **P1 — Release Closure**.
