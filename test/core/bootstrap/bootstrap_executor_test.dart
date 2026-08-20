@@ -211,10 +211,10 @@ void main() {
           contains('Factory Validation App'),
           contains('Validate executable Bootstrap.'),
           contains('Prepare a neutral Flutter scaffold.'),
-          contains('Product feature implementation has not started'),
-          contains('Automated technical validation has passed'),
-          contains('User Ready approval is pending'),
-          contains('First Agreement approval is pending'),
+          contains('Product 기능 구현은 아직 시작되지 않았다'),
+          contains('자동 기술 검증은 통과했다'),
+          contains('User의 Ready 승인은 대기 중이다'),
+          contains('첫 Agreement 승인은 대기 중이다'),
         ),
       );
       expect(
@@ -222,8 +222,8 @@ void main() {
           path.join(ready.normalizedOutputPath, 'AGENTS.md'),
         ).readAsString(),
         allOf(
-          contains('Repository Identity and Boundary'),
-          contains('Agreement Rule'),
+          contains('저장소 정체성과 경계'),
+          contains('Agreement 규칙'),
           contains('Approved Operational Baseline Handoff'),
         ),
       );
@@ -937,7 +937,7 @@ void main() {
       ).readAsString();
       expect(
         preservedReadme,
-        isNot(contains('Automated technical validation has passed')),
+        isNot(contains('자동 기술 검증은 통과했다')),
       );
       expect(await Directory(ready.normalizedOutputPath).exists(), isFalse);
     });

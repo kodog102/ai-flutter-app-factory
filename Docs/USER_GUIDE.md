@@ -123,7 +123,7 @@ Factory Root:
 - 보유한 도메인이 없다면 샘플의 Organization 식별자에만 `com.example`을 사용한다.
 - 출력 경로는 반드시 절대 경로를 사용하며 Factory 내부를 지정하지 않는다.
 
-## 4. Factory 실행 요청
+## 4. 팩토리 실행 요청
 
 열 개 입력을 다음 `product_request.yaml`에 작성한다. 이 파일은 Factory와 Product 출력 경로 밖에 두며 symlink가 아닌 128 KiB 이하의 UTF-8 일반 파일이어야 한다.
 
@@ -147,7 +147,7 @@ bootstrap:
     - android
 ```
 
-### 기존 빈 Repository 입력
+### 기존 빈 저장소 입력
 
 기존의 빈 Git Repository를 보존해야 할 때는 아래 조건을 모두 만족해야 한다.
 
@@ -214,7 +214,7 @@ Prepared ≠ Ready ≠ Approved ≠ Released
 
 `Prepared`는 Factory 자동 검증이 끝났다는 뜻일 뿐이다. 사용자의 Ready 승인과 첫 Agreement 승인은 별도로 필요하다.
 
-## 6. Ready 상태와 기준선 승인
+## 6. 준비 완료 상태와 기준선 승인
 
 Prepared 보고서에서 다음을 확인한다.
 
@@ -239,7 +239,7 @@ commit과 push는 별도 승인 전까지 수행하지 마라.
 
 내용이 다르면 승인하지 말고 차이만 수정 요청한다.
 
-## 7. 첫 Agreement 승인
+## 7. 첫 작업 합의 승인
 
 Agreement는 법률 계약이 아니라 **이번에 할 작은 작업의 범위 합의**다.
 
@@ -265,7 +265,7 @@ Agreement 또는 실행 계획을 수정했다면, 승인 전에 작업 도구�
 
 Direct Approval Action은 사용자의 명시적 승인을 직접 확인할 수 있는 실행 주체만 수행할 수 있는 작업이다. 실기기 앱 설치, 인증서 또는 프로비저닝을 사용하는 서명, TestFlight·스토어·외부 콘솔 업로드, Release 또는 실서비스 배포, 외부 데이터의 삭제 또는 덮어쓰기가 여기에 해당한다. Agreement에는 그런 작업과 Direct Executor를 적고, 없으면 `None`으로 표시하게 한다. Direct Executor는 기본적으로 Main 또는 사용자 승인 메시지를 직접 볼 수 있는 다른 실행 주체다. 하위 실행 주체는 준비·진단·구현·QA를 할 수 있지만 그 승인 메시지를 직접 볼 수 없다면 이 작업을 실행하면 안 된다. Main도 사용자의 명시적 승인 전에는 실행할 수 없다.
 
-승인 가시성이 불명확하거나 실제 Direct Executor가 승인된 내용과 다르면, 실행하지 말고 Role / Instance Mapping과 이유를 포함한 Profile Delta를 다시 제시하게 한다.
+승인 가시성이 불명확하거나 실제 Direct Executor가 승인된 내용과 다르면, 실행하지 말고 역할과 인스턴스 대응 관계 및 이유를 포함한 프로필 편차를 다시 제시하게 한다.
 
 승인 직전에는 작업 도구가 Approved Execution Profile과 Planned Actual Execution을 비교해야 한다. 필수 역할, 독립 QA, Agent Instances, Context Pack, Direct Approval Actions, Direct Executor, 검증, QA·Repair·환경 예산 또는 중단 조건이 다르면 구현을 시작하지 말고 Profile Delta와 이유를 다시 제시하게 한다. Medium 또는 High의 Independent QA는 구현과 다른 실행 주체 또는 분리된 새 문맥이어야 하며, 이를 만들 수 없으면 Main 단독 실행을 허용하지 않는다.
 
@@ -337,7 +337,7 @@ QA가 PASS이면 결과와 화면을 보고하고 commit은 하지 마라.
 
 실행 중에는 승인되지 않은 역할·QA·검증·Repair·환경 복구나 우회를 추가하거나 대체할 수 없다. Simulator 또는 Emulator는 최초 시도 1회와 원인이 명확한 재시도 1회만 허용하며, 복구를 포함한 문제 해결은 기본 10–15분 안에서 중단한다. 예산이 소진되면 서비스 재시작, 초기화, 다른 기기 또는 다른 도구 우회 대신 `Environment Blocked`와 남은 수동 확인을 보고하게 한다.
 
-## 8. Product 개발 루프 실행
+## 8. 제품 개발 루프 실행
 
 Agreement 구현 전에 작업 도구에 V1.2.1 기준선 Capture를 요청한다. 요청 파일과 빈 Evidence 디렉터리는 Factory와 Product 밖에 둔다.
 
@@ -433,7 +433,7 @@ Android Emulator도 실제 플랫폼 차이를 확인해야 할 때만 별도 �
 
 Repair가 필요하면 원래 Execution Profile을 다시 초기화하지 않는다. Required Defect, Allowed Files, Focused Verification, QA Recheck Scope와 Additional Attempt Budget만 Profile Delta로 제시하고 승인받는다.
 
-## 10. 최종 승인과 Commit
+## 10. 최종 승인과 커밋
 
 다음을 모두 확인한 뒤에만 commit을 요청한다.
 
@@ -476,19 +476,19 @@ commit hash, 메시지, 파일 목록과 최종 Git 상태를 보고하라.
 
 ## 문제 해결
 
-### Preflight에서 중단됨
+### 사전 점검에서 중단됨
 
 입력값을 임의로 바꾸지 말고 `reasons`에서 지목한 필드만 수정한다. 경로가 위험하다는 결과가 나오면 다른 절대 경로를 사용한다.
 
-### Existing Empty Repository가 거절됨
+### 기존 빈 저장소가 거절됨
 
 처음 사용하는 사용자는 `newRepository`를 선택하는 것이 안전하다. Existing mode는 직접 `.git`을 가진 독립 Repository이며 `.git` 외 항목이 없는 경우에만 사용한다. 요청에는 `initialBranchName: null`과 비어 있지 않은 `repositoryPolicy`가 필요하다. 위의 **기존 빈 Repository 입력** 예제를 그대로 복사해 다시 시도한다.
 
-### PartialFailure가 반환됨
+### 부분 실패가 반환됨
 
 보고된 target 또는 staging 경로를 직접 삭제하거나 덮어쓰지 않는다. 작업 도구에 읽기 전용 검사를 요청하고, 소유권과 외부 변경이 확인될 때까지 기다린다.
 
-### iOS 또는 Android build가 실패함
+### iOS 또는 Android 빌드가 실패함
 
 Product 코드를 먼저 수정하지 않는다. 실패가 환경 문제인지 Product 문제인지 분리해서 보고하도록 요청한다. 로그인, 라이선스, SDK 설치 또는 관리자 권한이 필요하면 사용자가 별도로 승인한다.
 

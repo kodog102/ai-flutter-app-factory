@@ -52,9 +52,9 @@ void main() {
         expect(
           await File(path.join(targetPath, 'README.md')).readAsString(),
           allOf(
-            contains('Automated technical validation has passed'),
-            contains('User Ready approval is pending'),
-            contains('First Agreement approval is pending'),
+            contains('자동 기술 검증은 통과했다'),
+            contains('User의 Ready 승인은 대기 중이다'),
+            contains('첫 Agreement 승인은 대기 중이다'),
           ),
         );
         expect(await File(path.join(targetPath, 'AGENTS.md')).exists(), isTrue);
@@ -206,7 +206,7 @@ void main() {
         );
         expect(
           await File(path.join(target.path, 'README.md')).readAsString(),
-          contains('Automated technical validation has passed'),
+          contains('자동 기술 검증은 통과했다'),
         );
         expect(
             await File(path.join(target.path, 'AGENTS.md')).exists(), isTrue);

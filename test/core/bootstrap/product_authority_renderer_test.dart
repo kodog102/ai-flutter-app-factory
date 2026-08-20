@@ -6,115 +6,118 @@ import 'package:test/test.dart';
 void main() {
   const renderer = ProductAuthorityRenderer();
 
-  test('renders complete Korean-first Product-local authority', () {
+  test('renders complete Korean-only Product-local authority', () {
     final documents = renderer.render(
       _request(
-        name: 'Inventory Companion',
-        purpose: 'Track household inventory.',
-        scope: 'Clarify the first inventory workflow.',
+        name: '재고 도우미',
+        purpose: '가정용 재고를 추적한다.',
+        scope: '첫 재고 작업 흐름을 명확히 한다.',
       ),
     );
 
-    expect(documents.readme, contains('Inventory Companion'));
-    expect(documents.readme, contains('Track household inventory.'));
+    expect(documents.readme, contains('재고 도우미'));
+    expect(documents.readme, contains('가정용 재고를 추적한다.'));
     expect(
       documents.readme,
-      contains('Clarify the first inventory workflow.'),
+      contains('첫 재고 작업 흐름을 명확히 한다.'),
     );
-    expect(documents.readme, contains('Repository-local 시작점'));
+    expect(documents.readme, contains('저장소 내부 시작점'));
     expect(
       documents.readme,
-      contains('Automated technical validation has passed'),
+      contains('자동 기술 검증은 통과했다'),
     );
-    expect(documents.readme, contains('User Ready approval is pending'));
-    expect(documents.readme, contains('First Agreement approval is pending'));
+    expect(documents.readme, contains('User의 Ready 승인은 대기 중이다'));
+    expect(documents.readme, contains('첫 Agreement 승인은 대기 중이다'));
     expect(documents.readme, contains('`AGENTS.md`'));
     expect(documents.readme, isNot(contains('/Users/')));
 
     const sections = [
-      'Repository Identity and Boundary',
-      'User Authority',
-      'Permanent Roles and Change Permissions',
-      'Agreement Rule',
-      'Execution Profile Lock and Deviation Gate',
-      'Standard Work Loop',
-      'Scope and Change Rules',
-      'Verification Policy',
-      'Git Policy',
-      'Reporting Requirements',
-      'Product Context Maintenance',
+      '저장소 정체성과 경계',
+      '사용자 권한',
+      '상시 역할과 변경 권한',
+      'Agreement 규칙',
+      '실행 프로필 고정 및 편차 중단',
+      '수행 역량 등급',
+      '표준 작업 순환',
+      '범위와 변경 규칙',
+      '검증 정책',
+      'Git 정책',
+      '보고 요구사항',
+      '문서 언어',
+      '제품 문맥 유지',
     ];
     for (final section in sections) {
       expect(documents.agents, contains(section), reason: section);
     }
     for (final field in [
-      'Goal',
-      'Included Scope',
-      'Excluded Scope',
-      'Acceptance Criteria',
-      'Verification',
+      '목표',
+      '포함 범위',
+      '제외 범위',
+      '인수 기준',
+      '검증',
     ]) {
       expect(documents.agents, contains(field), reason: field);
     }
-    expect(documents.agents, contains('final approver'));
-    expect(documents.agents, contains('outside the Product root'));
-    expect(documents.agents, contains('external read-only reference'));
+    expect(documents.agents, contains('최종 승인자'));
+    expect(documents.agents, contains('Product root 밖의 파일'));
+    expect(documents.agents, contains('외부의 읽기 전용 참고 대상'));
     expect(
       documents.agents,
       contains(
-        'Design Role is activated only when an Agreement contains UI/UX or visual-design scope',
+        'Design Role은 Agreement에 UI/UX 또는 시각적 설계 범위가 있을 때만 활성화',
       ),
     );
     expect(
       documents.agents,
-      contains('prepares the design direction and implementation handoff'),
+      contains('디자인 방향과 구현 handoff를 준비'),
     );
-    expect(documents.agents, contains('does not modify production code'));
-    expect(
-        documents.agents, contains('does not reinterpret an approved design'));
-    expect(documents.agents, contains('QA verdict separated'));
+    expect(documents.agents, contains('production code를 수정하거나'));
+    expect(documents.agents, contains('승인된 디자인 방향을 임의로 재해석하지'));
+    expect(documents.agents, contains('구현과 분리된 관점에서 검증'));
     expect(
       documents.agents,
-      contains('User approval applies only to the last presented consolidated'),
+      contains('마지막으로 제시된 통합 Agreement와 Execution Profile에만 적용'),
     );
     expect(
       documents.agents,
-      contains('compare the Approved Execution Profile with Planned Actual'),
+      contains('Approved Execution Profile과 Planned Actual Execution을 비교'),
     );
     expect(documents.agents, contains('Direct Approval Actions'));
     expect(documents.agents, contains('Direct Executor'));
     expect(
       documents.agents,
-      contains('physical-device app installation'),
+      contains('실기기 앱 설치'),
     );
     expect(
       documents.agents,
-      contains('can directly verify the User\'s explicit approval'),
+      contains('User의 명시적 승인을 직접 확인할 수 있는'),
     );
     expect(
       documents.agents,
-      contains('No runtime worker, including Main, may perform'),
+      contains('Main을 포함한 어떤 실행 주체도 Direct Approval Action을 수행할 수 없다'),
     );
     expect(
       documents.agents,
-      contains('When approval visibility is unclear'),
+      contains('승인 가시성이 불명확하거나'),
     );
     expect(
       documents.agents,
-      contains('different Agent Instance or separate fresh context'),
+      contains('다른 Agent Instance 또는 분리된 새 문맥'),
     );
     expect(
       documents.agents,
-      contains('Do not continue with Main alone'),
+      contains('Main 단독으로 계속하지 않는다'),
     );
     expect(documents.agents, contains('`Environment Blocked`'));
-    expect(
-        documents.agents, contains('do not continue through service restart'));
-    expect(documents.agents, contains('Repair does not reset'));
-    expect(documents.agents, contains('`Approved vs Actual` comparison'));
-    expect(documents.agents, contains('Commit and push only'));
+    expect(documents.agents, contains('서비스 재시작, Simulator 초기화'));
+    expect(documents.agents, contains('Repair는 기존 Execution Profile을 초기화하지'));
+    expect(documents.agents, contains('`Approved vs Actual` 비교'));
+    expect(documents.agents, contains('commit과 push는 User가 명시적으로 요청'));
     expect(documents.agents, contains('Approved Operational Baseline Handoff'));
-    expect(documents.agents, contains('check for drift'));
+    expect(documents.agents, contains('실제 상태 사이의 drift를 확인'));
+    expect(documents.agents, contains('토큰 사용량이나 비용 자체를 성능 지표로 사용하지 않는다'));
+    expect(documents.agents, isNot(contains('Operating authority for')));
+    expect(documents.agents, isNot(contains('Standard Work Loop')));
     for (final runtimeName in [
       'OpenAI',
       'Codex',
@@ -154,31 +157,22 @@ void main() {
     expect(combined, contains('&lt;script&gt;'));
   });
 
-  test('renders the bilingual Standard Work Loop as five mirrored steps', () {
+  test('renders the Korean-only Standard Work Loop as five steps', () {
     final documents = renderer.render(
       _request(
-        name: 'Workflow Product',
-        purpose: 'Validate the work loop.',
-        scope: 'Prepare the first Agreement.',
+        name: '작업 흐름 제품',
+        purpose: '작업 순환을 검증한다.',
+        scope: '첫 Agreement를 준비한다.',
       ),
     );
-    final loop = documents.agents
-        .split('## 표준 작업 순환 / Standard Work Loop')
-        .last
-        .split('## 범위와 변경 규칙 / Scope and Change Rules')
-        .first;
+    final loop =
+        documents.agents.split('## 표준 작업 순환').last.split('## 범위와 변경 규칙').first;
 
     expect(
       RegExp(r'^\d+\. ', multiLine: true).allMatches(loop),
       hasLength(5),
     );
-    expect(
-      RegExp(
-        r'^\d+\. [^\n]+\n {3}(?!\d+\. )[^\n]+$',
-        multiLine: true,
-      ).allMatches(loop),
-      hasLength(5),
-    );
+    expect(RegExp(r'^ {3}[A-Za-z]', multiLine: true).hasMatch(loop), isFalse);
   });
 
   test('renders execution profile lock before the unchanged five-step loop',
@@ -192,10 +186,10 @@ void main() {
     );
 
     final profileStart = documents.agents.indexOf(
-      '## 실행 프로필 고정 및 편차 중단 / Execution Profile Lock and Deviation Gate',
+      '## 실행 프로필 고정 및 편차 중단',
     );
     final loopStart = documents.agents.indexOf(
-      '## 표준 작업 순환 / Standard Work Loop',
+      '## 표준 작업 순환',
     );
     expect(profileStart, greaterThanOrEqualTo(0));
     expect(loopStart, greaterThan(profileStart));
@@ -232,6 +226,26 @@ void main() {
     }
   });
 
+  test('does not render English-only explanatory lines', () {
+    final documents = renderer.render(
+      _request(
+        name: '한글 제품',
+        purpose: '한글 목적을 설명한다.',
+        scope: '한글 범위를 설명한다.',
+      ),
+    );
+
+    for (final document in [documents.readme, documents.agents]) {
+      for (final line in document.split('\n')) {
+        final hasEnglishWord = RegExp(r'[A-Za-z]{3}').hasMatch(line);
+        final hasKorean = RegExp(r'[가-힣]').hasMatch(line);
+        if (hasEnglishWord && !hasKorean) {
+          expect(line, equals('# AGENTS.md'));
+        }
+      }
+    }
+  });
+
   test('renders a Markdown-sensitive Product name as safe plain text', () {
     final documents = renderer.render(
       _request(
@@ -249,17 +263,17 @@ void main() {
     expect(combined, isNot(contains('<script>')));
     expect(combined, isNot(contains('\n# Inject')));
     expect(combined, isNot(contains('```')));
-    expect(documents.readme, contains('## Product 목적 / Product Purpose'));
+    expect(documents.readme, contains('## 제품 목적'));
     expect(
       documents.agents,
       contains(
-        '## Repository 정체성과 경계 / Repository Identity and Boundary',
+        '## 저장소 정체성과 경계',
       ),
     );
-    expect(documents.agents, contains('## Agreement 규칙 / Agreement Rule'));
+    expect(documents.agents, contains('## Agreement 규칙'));
     expect(
       documents.agents,
-      contains('## Product Context 유지 / Product Context Maintenance'),
+      contains('## 제품 문맥 유지'),
     );
   });
 

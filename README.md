@@ -1,4 +1,4 @@
-# AI Flutter App Factory
+# AI Flutter 앱 팩토리
 
 ## 개요
 
@@ -38,7 +38,7 @@ dart run ai_flutter_app_factory:factory_bootstrap --request /absolute/intake/pro
 
 요청 파일 위치와 schema는 [Docs/SETUP.md](Docs/SETUP.md), 비개발자 실행·승인 순서는 [Docs/USER_GUIDE.md](Docs/USER_GUIDE.md)를 따른다. V1.1은 Product 기능을 구현하지 않으며 V1.2 Product Loop Guard를 포함하지 않는다.
 
-### V1.2 Product Loop Guard Runtime
+### V1.2 제품 루프 보호 실행 환경
 
 Product Loop는 Product Repository에서 작은 Agreement 하나를 안전하게 완료하는 반복 작업 단위다. 자율적으로 Product를 개발하는 AI 기능이 아니라, 승인된 시작 상태와 구현 후 검증 대상을 고정해 예상 밖 변경이 다음 단계로 넘어가지 못하게 하는 운영 흐름이다.
 
@@ -57,13 +57,13 @@ V1.2 Runtime foundation은 승인된 Product 기준선을 검사하고, QA candi
 
 Product Context 의미 검토, QA 판정과 User 승인은 자동화하지 않는다. Provider, Agent Adapter와 orchestration은 현재 범위가 아니다.
 
-### Adaptive Execution Policy
+### 적응형 실행 정책
 
 Product 작업은 Low·Medium·High 위험도로 분류하고 필요한 역할과 검증만 활성화한다. 작은 문구·문서·산출물 생성은 Main 단독 처리를 기본으로 하고, 일반 기능은 독립 QA 1회, 네이티브 경계·보안·실제 배포 같은 High 작업은 독립 QA를 필수로 한다.
 
 빌드 파일 생성은 실제 배포와 구분하며, 환경 장애가 발생해도 위험도를 올리거나 무기한 재시도하지 않는다. Agent Instances 상한, Context Pack, Verification Ladder와 Evidence 재사용의 단일 권한은 [Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md)의 `Adaptive Execution Policy`다. 비개발자 실행 방법은 [Docs/USER_GUIDE.md](Docs/USER_GUIDE.md)를 따른다.
 
-### V1.2.1 Product Loop 명령
+### V1.2.1 제품 루프 명령
 
 V1.2.1은 기존 Runtime을 하나의 명령 진입점으로 제공한다. User 승인과 외부 구현 경계를 보존하기 위해 같은 명령을 `capture`와 `validate` 두 단계로 실행한다.
 
@@ -86,7 +86,7 @@ dart run ai_flutter_app_factory:factory_product_loop \
 
 Ready Product는 새로운 작업 주체가 Factory를 다시 읽지 않고 Product Repository만으로 첫 Agreement를 제안할 수 있는 상태다.
 
-### 활성 Runtime
+### 활성 실행 환경
 
 ```text
 BootstrapRequest
