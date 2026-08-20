@@ -86,7 +86,7 @@ final class FactoryProductLoopCommand {
       final capture = _capture ?? runtime.captureBaseline;
       final validate = _validate ?? runtime.validate;
 
-      return switch (parsed.phase) {
+      return await switch (parsed.phase) {
         _ProductLoopPhase.capture => _captureBaseline(
             requestFile: requestFile,
             capture: capture,

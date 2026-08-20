@@ -1719,7 +1719,7 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
           'Existing Repository Git metadata or policy changed.',
         );
       }
-      return _verifyExistingOwnership(
+      return await _verifyExistingOwnership(
         ready,
         baseline,
         generatedEntries,
