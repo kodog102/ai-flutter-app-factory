@@ -195,7 +195,7 @@ Initial validation found that the public user guide did not provide the required
 
 ## 12. Adaptive Execution Policy Promotion
 
-Status: **Implemented — User Result Approval Pending**
+Status: **Completed — User Approved**
 
 ### Goal
 
@@ -221,7 +221,7 @@ The verified results are reflected in existing authorities as Low, Medium, and H
 
 ## 13. Execution Profile Lock & Deviation Gate
 
-Status: **Implemented — User Result Approval Pending**
+Status: **Completed — User Approved**
 
 ### Goal
 
@@ -242,3 +242,237 @@ Status: **Implemented — User Result Approval Pending**
 이 정책 보강은 특정 Provider, 모델 또는 IDE를 전제하지 않으며 Product Loop Runtime schema나 동작을 변경하지 않는다.
 
 This policy reinforcement does not assume a specific Provider, model, or IDE and does not change Product Loop Runtime schema or behavior.
+
+## 14. Direct Approval Action Boundary
+
+Status: **Completed — User Approved**
+
+### Goal
+
+- 실기기 설치, 서명, 외부 업로드, Release와 같은 직접 승인 작업이 User 승인을 직접 확인할 수 있는 실행 주체에서만 수행되도록 한다
+- Ensure that Direct Approval Actions such as physical-device installation, signing, external upload, and Release are performed only by a runtime worker that can directly verify User approval
+- 서브에이전트의 승인 가시성 차이로 인한 반복 중단과 임의 우회를 방지한다
+- Prevent repeated stops and unapproved workarounds caused by different approval visibility in downstream agents
+
+### Delivered Contract
+
+- Agreement에서 Direct Approval Actions와 Direct Executor를 명시하며, 해당 작업이 없으면 `None`으로 기록한다
+- State Direct Approval Actions and the Direct Executor in the Agreement, or record `None` when no such action exists
+- 실제 실행 주체가 승인된 Direct Executor와 다르면 작업 전에 Profile Delta 승인을 요구한다
+- Require approval of a Profile Delta before action when the actual runtime worker differs from the approved Direct Executor
+- User 승인 메시지를 직접 확인할 수 없는 하위 실행 주체는 준비, 진단, 구현 또는 QA만 수행한다
+- Limit downstream workers that cannot directly verify the User approval message to preparation, diagnosis, implementation, or QA
+
+이 경계는 특정 Provider, 모델 또는 IDE에 의존하지 않으며 자동 승인 권한을 만들지 않는다.
+
+This boundary does not depend on a specific Provider, model, or IDE and does not create automatic approval authority.
+
+## 15. Current Verified Gaps
+
+Status: **Active Baseline — 2026-08-20**
+
+### Verified Baseline
+
+- Factory 기준점은 `main@32e5ea7`이며 공개 Release는 `v1.2.1`이다
+- The Factory baseline is `main@32e5ea7`, and the public Release is `v1.2.1`
+- 로컬 `main`은 원격보다 1 commit 앞서 있으며 이 상태는 아직 공개 Release에 포함되지 않았다
+- Local `main` is one commit ahead of the remote, and that state is not yet included in the public Release
+- 일반 테스트는 185개 통과했고 실제 환경 통합 테스트 14개는 opt-in 조건으로 생략됐다
+- The normal suite passed 185 tests, while 14 real-environment integration tests were skipped behind opt-in guards
+- 최신 원격 CI 기준점 `d31cecd`는 Dart 3.13에서 두 개의 `unawaited_return_in_try_block` 분석 경고로 실패했다
+- The latest remote CI baseline `d31cecd` failed on Dart 3.13 because of two `unawaited_return_in_try_block` analysis warnings
+  - `lib/core/bootstrap/bootstrap_executor.dart:1722`
+  - `lib/core/product_loop/factory_product_loop_command.dart:89`
+
+### Confirmed Problems
+
+1. 공개 저장소의 최신 CI가 실패하여 현재 변경의 신뢰 가능한 공개 검증 신호가 없다.
+   The latest public CI fails, so current changes do not have a reliable public verification signal.
+2. 공개 `v1.2.1` tag, 현재 source, `pubspec.yaml`, README와 Roadmap 사이에 Release 기준점과 상태 차이가 있다.
+   The public `v1.2.1` tag, current source, `pubspec.yaml`, README, and Roadmap have differing Release baselines and states.
+3. 실제 Git·Flutter 통합 테스트가 기본 CI에서 실행되지 않아 로컬 증거에 의존한다.
+   Real Git and Flutter integration tests do not run in default CI and depend on local evidence.
+4. Adaptive Execution Policy와 Execution Profile Lock은 문서와 생성 Product Authority에는 반영됐지만 모든 실행 경계에서 구조화된 runtime 검증으로 강제되지는 않는다.
+   Adaptive Execution Policy and Execution Profile Lock are reflected in documents and generated Product Authority but are not yet enforced by structured runtime validation at every execution boundary.
+5. 기존 Product의 `AGENTS.md` drift를 자동으로 진단하거나 동기화하는 read-only 경로가 없다.
+   There is no read-only path that automatically diagnoses or synchronizes `AGENTS.md` drift in existing Products.
+6. 현재 진입 명령과 입력 준비는 비개발자에게 여전히 개발 도구 중심이다.
+   Current entry commands and input preparation remain developer-tool-oriented for non-developers.
+7. 대형 실행 파일과 장문 Authority, 사용 여부가 불명확한 legacy template·generator·metadata가 유지보수 비용과 권한 혼동을 만든다.
+   A large executor, long authority documents, and legacy template, generator, and metadata with unclear active use create maintenance cost and authority ambiguity.
+
+## 16. Flutter Factory Completion Program
+
+Status: **In Progress — P0 Next**
+
+### P0 — CI Compatibility Recovery
+
+Status: **Pending — Next Authorized Proposal**
+
+Goal:
+
+- 현재 stable Dart 환경에서 발생하는 두 분석 경고를 동작 변경 없이 해결하고 공개 CI 신뢰를 복구한다
+- Resolve the two analysis warnings on the current stable Dart environment without behavior change and restore trustworthy public CI
+
+Exit Criteria:
+
+- Repository format, analyze와 일반 테스트가 현재 stable toolchain에서 통과한다
+- Repository format, analyze, and normal tests pass on the current stable toolchain
+- GitHub Actions의 동일 검증이 green이다
+- The equivalent GitHub Actions checks are green
+- Bootstrap과 Product Loop 동작 회귀가 없으며 승인된 파일만 변경된다
+- Bootstrap and Product Loop behavior do not regress, and only approved files change
+
+### P1 — V1.2.2 SSOT and Release Closure
+
+Status: **Pending — Blocked by P0**
+
+Goal:
+
+- 완료 정책, version metadata, README, Roadmap, tag와 공개 Release를 하나의 승인 기준점으로 정렬한다
+- Align completed policies, version metadata, README, Roadmap, tag, and public Release to one approved baseline
+
+Exit Criteria:
+
+- V1.2.2 문서·version·tag·Release가 동일 commit을 가리킨다
+- V1.2.2 documents, version, tag, and Release point to the same commit
+- Adaptive Execution, Execution Profile Lock와 Direct Approval Action 상태가 실제 Git 결과와 일치한다
+- Adaptive Execution, Execution Profile Lock, and Direct Approval Action statuses match actual Git results
+- 공개 CI가 green이며 push, tag와 Release는 각각 명시적인 Direct Approval Action 승인을 받는다
+- Public CI is green, and push, tag, and Release each receive explicit Direct Approval Action approval
+
+### P2 — Real Integration CI
+
+Status: **Pending — Blocked by P1**
+
+Goal:
+
+- 빠른 기본 CI와 실제 Git·Flutter 통합 검증을 분리해 공개 Evidence로 남긴다
+- Separate fast default CI from real Git and Flutter integration validation and retain both as public Evidence
+
+Exit Criteria:
+
+- 기본 CI는 빠른 format·analyze·test 신호를 유지한다
+- Default CI retains a fast format, analyze, and test signal
+- Bootstrap과 Product Loop 실제 통합 시나리오는 별도 자동 또는 수동 workflow에서 재현 가능하다
+- Real Bootstrap and Product Loop integration scenarios are reproducible in a separate automatic or manual workflow
+- 실패 원인, 실행 환경과 결과가 공개 실행 기록에 남고 비밀값은 노출되지 않는다
+- Failure causes, environment, and results are retained in public run evidence without exposing secrets
+
+### P3 — Product Authority Audit
+
+Status: **Pending — Blocked by P2**
+
+Goal:
+
+- 기존 Product Authority의 누락과 drift를 변경 없이 진단하는 read-only 경로를 제공한다
+- Provide a read-only path that diagnoses missing fields and drift in existing Product Authority without mutation
+
+Exit Criteria:
+
+- Product `AGENTS.md`의 계약 version, 필수 항목과 알려진 drift를 구조화된 결과로 반환한다
+- Return the Product `AGENTS.md` contract version, required fields, and known drift as a structured result
+- 진단은 Product와 Factory 파일을 수정하지 않으며 불명확한 상태에서 fail-closed 한다
+- Diagnosis does not modify Product or Factory files and fails closed on ambiguous state
+- 기존 Product와 새 Bootstrap Product에서 독립 검증을 통과한다
+- Independent validation passes on an existing Product and a newly bootstrapped Product
+
+### P4 — Executable Execution Profile Validation
+
+Status: **Pending — Blocked by P3**
+
+Goal:
+
+- 승인된 Execution Profile과 Planned·Actual 실행의 편차를 Provider 비종속 구조로 검증한다
+- Validate deviations between the approved Execution Profile and Planned or Actual execution with a Provider-independent structure
+
+Exit Criteria:
+
+- 필수 Profile 필드, Direct Approval Actions와 Direct Executor를 typed 또는 구조화된 값으로 표현한다
+- Represent required Profile fields, Direct Approval Actions, and Direct Executor as typed or structured values
+- 승인 누락과 편차는 Product 변경 전에 결정적인 Stop 결과를 반환한다
+- Missing approval and deviations return deterministic Stop results before Product mutation
+- 자동 승인, 자동 권한 확장 또는 Main 자기 QA를 허용하지 않는다
+- Do not allow automatic approval, automatic authority expansion, or Main self-QA
+
+### P5 — Non-developer Usability
+
+Status: **Pending — Blocked by P4**
+
+Goal:
+
+- 비개발자가 환경과 입력을 확인하고 sample Flutter Product를 한 진입점에서 준비할 수 있게 한다
+- Enable a non-developer to check the environment and inputs and prepare a sample Flutter Product from one entry point
+
+Exit Criteria:
+
+- read-only `doctor`, 요청 파일 준비 도움과 dry-run 결과를 제공한다
+- Provide a read-only `doctor`, request-file preparation help, and dry-run result
+- 긴 개발 명령을 외우지 않아도 되는 짧고 문서화된 실행 경로가 있다
+- Provide a short, documented execution path that does not require memorizing long development commands
+- 새 사용자가 공개 User Guide만으로 sample Product를 준비하고 승인 지점과 중단 사유를 이해한다
+- A new user can prepare a sample Product using only the public User Guide and understand approval gates and stop reasons
+
+### P6 — Security and Resilience Hardening
+
+Status: **Pending — Blocked by P5**
+
+Goal:
+
+- 경로, symlink, ownership, TOCTOU, 입력 공격과 dependency·CI 공급망 위험에 대한 방어를 강화한다
+- Strengthen defenses against path, symlink, ownership, TOCTOU, input attacks, and dependency or CI supply-chain risks
+
+Exit Criteria:
+
+- 승인된 위협 목록과 회귀 테스트가 존재하고 CI에서 검증된다
+- An approved threat list and regression tests exist and run in CI
+- cleanup과 rollback의 ownership 보존 규칙에 회귀가 없다
+- Cleanup and rollback ownership-preservation rules do not regress
+- dependency와 workflow 권한은 최소 권한 원칙으로 검토되고 기록된다
+- Dependencies and workflow permissions are reviewed and recorded under least privilege
+
+### P7 — Structure and Legacy Closure
+
+Status: **Pending — Blocked by P6**
+
+Goal:
+
+- 검증 Evidence를 보존하면서 대형 executor를 책임별로 분리하고 legacy 자산의 권한과 존치 여부를 확정한다
+- Split the large executor by responsibility while preserving validation Evidence, and decide the authority and retention of legacy assets
+
+Exit Criteria:
+
+- characterization tests 이후에만 executor 구조를 변경하며 public API 호환성을 유지한다
+- Change executor structure only after characterization tests and preserve public API compatibility
+- legacy template, generator와 metadata는 활성 경로로 복구되거나 승인 후 제거·격리된다
+- Legacy template, generator, and metadata are either restored as active paths or removed or isolated after approval
+- 핵심 Authority가 중복 없이 더 짧게 탐색 가능하고 전체 검증이 통과한다
+- Core Authority is shorter and easier to navigate without duplication, and full validation passes
+
+## 17. Version Targets
+
+- `V1.2.2 — Stabilization`: P0과 P1 완료
+- `V1.2.2 — Stabilization`: Complete P0 and P1
+- `V1.3 — Executable Operating Policy`: P2, P3와 P4 완료
+- `V1.3 — Executable Operating Policy`: Complete P2, P3, and P4
+- `V1.4 — Accessible and Hardened Factory`: P5, P6와 P7 완료
+- `V1.4 — Accessible and Hardened Factory`: Complete P5, P6, and P7
+
+## 18. Progression Lock
+
+- 고도화 작업은 `P0 → P1 → P2 → P3 → P4 → P5 → P6 → P7` 순서로 수행한다
+- Perform advancement work in the order `P0 → P1 → P2 → P3 → P4 → P5 → P6 → P7`
+- 이전 단계의 Exit Criteria, 독립 QA, User 결과 승인과 commit이 완료되기 전에는 다음 단계를 시작하지 않는다
+- Do not begin the next phase until the previous phase completes its Exit Criteria, independent QA, User result approval, and commit
+- 각 단계는 Agreement와 Execution Profile 승인 후 구현하며 push, tag, Release와 외부 게시 작업은 별도의 Direct Approval Action 승인을 요구한다
+- Implement each phase only after Agreement and Execution Profile approval; push, tag, Release, and external publication require separate Direct Approval Action approval
+- 순서, 목표, 범위 또는 Exit Criteria를 변경하려면 최신 통합 Roadmap Delta를 제시하고 User 승인을 받는다
+- To change order, goals, scope, or Exit Criteria, present the latest consolidated Roadmap Delta and obtain User approval
+- 실패와 환경 차단은 Evidence로 기록하되 다음 단계로 건너뛰거나 우선순위를 자동 변경하지 않는다
+- Record failures and environment blocks as Evidence, but do not skip phases or automatically change priority
+- 미완료 단계를 Ready 또는 Released로 표현하지 않는다
+- Do not describe an incomplete phase as Ready or Released
+
+현재 다음 작업은 **P0 — CI Compatibility Recovery** 제안 하나뿐이다.
+
+The only current next task is the **P0 — CI Compatibility Recovery** proposal.
