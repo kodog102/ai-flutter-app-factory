@@ -299,7 +299,7 @@ Status: **Active Baseline — 2026-08-20**
 
 ## 16. Flutter Factory Completion Program
 
-Status: **In Progress — P2 Next**
+Status: **In Progress — P3 Next Authorized**
 
 ### P0 — CI Compatibility Recovery
 
@@ -355,7 +355,7 @@ Release Closure Evidence:
 
 ### P2 — Real Integration CI
 
-Status: **Pending — Next Authorized Proposal**
+Status: **Completed — User Approved**
 
 Goal:
 
@@ -371,9 +371,22 @@ Exit Criteria:
 - 실패 원인, 실행 환경과 결과가 공개 실행 기록에 남고 비밀값은 노출되지 않는다
 - Failure causes, environment, and results are retained in public run evidence without exposing secrets
 
+### Public Validation Evidence
+
+- User가 `main@306b9fcb837bd3723dc775233c57b9367babaef6`의 P2 범위를 승인했으며 [GitHub Actions run 32364191119](https://github.com/kodog102/ai-flutter-app-factory/actions/runs/32364191119)는 전체 성공했다
+- The User approved the P2 scope at `main@306b9fcb837bd3723dc775233c57b9367babaef6`, and [GitHub Actions run 32364191119](https://github.com/kodog102/ai-flutter-app-factory/actions/runs/32364191119) completed successfully
+- 전체 실행은 20m42s였고 8/8 matrix job이 green이었으며 opt-in 실제 통합 테스트 14개가 각각 한 번씩 실행됐다
+- Total duration was 20m42s; all 8/8 matrix jobs were green, and all 14 opt-in real integrations ran exactly once
+- Job duration: Product Loop Guard 5m52s; Executor Cross-domain 10m17s; Executor Staged and Rollback 11m26s; Executor Existing and Tracked 13m58s
+- Job duration: Executor Ownership and Hook 11m29s; Factory Product Loop Command 1m02s; Executor New Repository 5m51s; Factory Bootstrap Command 10m18s
+
+P2 Exit Criteria가 충족됐다. P3만 다음으로 승인된 stage이며 P0·P1 완료 상태와 이후 단계의 progression lock은 유지한다.
+
+The P2 Exit Criteria are met. P3 is the sole next authorized stage; P0 and P1 completion status and downstream progression locks remain unchanged.
+
 ### P3 — Product Authority Audit
 
-Status: **Pending — Blocked by P2**
+Status: **Pending — Next Authorized Proposal**
 
 Goal:
 
@@ -485,6 +498,6 @@ Exit Criteria:
 - 미완료 단계를 Ready 또는 Released로 표현하지 않는다
 - Do not describe an incomplete phase as Ready or Released
 
-현재 다음 작업은 **P2 — Real Integration CI** 제안 하나뿐이다.
+현재 다음 작업은 **P3 — Product Authority Audit** 제안 하나뿐이다.
 
-The only current next task is the **P2 — Real Integration CI** proposal.
+The only current next task is the **P3 — Product Authority Audit** proposal.
