@@ -12,17 +12,37 @@ concurrency:
 
 jobs:
   integration:
-    name: Run ${{ matrix.test-file }}
+    name: Run ${{ matrix.label }}
     runs-on: macos-15
-    timeout-minutes: 45
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        test-file:
-          - test/integration/bootstrap_executor_integration_test.dart
-          - test/integration/factory_bootstrap_command_integration_test.dart
-          - test/integration/factory_product_loop_command_integration_test.dart
-          - test/integration/product_loop_guard_integration_test.dart
+        include:
+          - label: Product Loop Guard
+            test-file: test/integration/product_loop_guard_integration_test.dart
+            name-pattern: ""
+          - label: Factory Product Loop Command
+            test-file: test/integration/factory_product_loop_command_integration_test.dart
+            name-pattern: ""
+          - label: Factory Bootstrap Command
+            test-file: test/integration/factory_bootstrap_command_integration_test.dart
+            name-pattern: ""
+          - label: Bootstrap Executor New Repository
+            test-file: test/integration/bootstrap_executor_integration_test.dart
+            name-pattern: '^disposable New Repository receives an executable empty scaffold$'
+          - label: Bootstrap Executor Existing and Tracked
+            test-file: test/integration/bootstrap_executor_integration_test.dart
+            name-pattern: '^(disposable Existing Repository preserves Git policy and adds scaffold|tracked scaffold path stops before Existing Repository mutation)$'
+          - label: Bootstrap Executor Staged and Rollback
+            test-file: test/integration/bootstrap_executor_integration_test.dart
+            name-pattern: '^(non-conflicting staged deletion preserves status and receives scaffold|Existing rollback preserves an external staging entry)$'
+          - label: Bootstrap Executor Ownership and Hook
+            test-file: test/integration/bootstrap_executor_integration_test.dart
+            name-pattern: '^(New non-Git ownership mismatch preserves target and reports no Git impact|New post-manifest hook failure preserves external staging content)$'
+          - label: Bootstrap Executor Cross-domain
+            test-file: test/integration/bootstrap_executor_integration_test.dart
+            name-pattern: '^cross-domain Products receive isolated authority and proposals$'
     env:
       RUN_FACTORY_BOOTSTRAP_INTEGRATION: "true"
       AI_FLUTTER_FACTORY_RUN_INTEGRATION: "1"
@@ -48,5 +68,10 @@ jobs:
       - name: Install dependencies
         run: dart pub get
 
-      - name: Run real integration tests
+      - name: Run whole integration file
+        if: ${{ matrix.name-pattern == '' }}
         run: dart test --reporter expanded ${{ matrix.test-file }}
+
+      - name: Run integration shard
+        if: ${{ matrix.name-pattern != '' }}
+        run: dart test --reporter expanded ${{ matrix.test-file }} --name "${{ matrix.name-pattern }}"

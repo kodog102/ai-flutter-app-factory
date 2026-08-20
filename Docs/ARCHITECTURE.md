@@ -491,6 +491,14 @@ Existing Evidence may be reused when the source and dependency baseline, affecte
 
 Environment verification defaults to one initial attempt and one retry only when the failure cause is clear. Stop Simulator or Emulator troubleshooting within 10–15 minutes by default. After the budget is exhausted, do not raise the Risk Level or pursue indefinite workarounds; report the environment block and remaining manual verification.
 
+##### Remote Verification Efficiency Guard
+
+- 원격 검증은 최신 동일 범위 Evidence로 예상 소요 시간을 계산하고, 예상 shard가 15분을 넘으면 실행 전에 분할한다. / Calculate expected remote duration from the latest like-for-like Evidence and split any shard expected to exceed 15 minutes before it runs.
+- 첫 timeout 뒤에는 구조적 sharding을 검토하기 전 timeout만 늘리는 Repair를 금지한다. / After the first timeout, do not propose a timeout-only Repair until structural sharding has been considered.
+- 상태 확인은 시작, 예상 완료 시점, 최종의 최대 세 번으로 제한하며 Main은 연속 polling하지 않는다. / Limit status checks to at most three: start, expected completion, and final; Main does not poll continuously.
+- 확인 예산을 소진하면 실행 URL을 인계하고 능동 monitoring을 중단한다. / When the check budget is exhausted, hand off the run URL and stop active monitoring.
+- 원격 실패 뒤에는 같은 Agreement 안에서 재시도하지 않는다. / Do not retry after a remote failure within the same Agreement.
+
 ##### QA and Result Boundary
 
 - Low는 독립 QA를 기본 생략한다 / Low omits independent QA by default
