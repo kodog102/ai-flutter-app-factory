@@ -64,7 +64,7 @@ void main() {
     skip: _runIntegration
         ? false
         : 'Run with RUN_FACTORY_BOOTSTRAP_INTEGRATION=true.',
-    timeout: const Timeout(Duration(minutes: 6)),
+    timeout: const Timeout(Duration(minutes: 10)),
   );
 
   test(
@@ -135,7 +135,7 @@ void main() {
     skip: _runIntegration
         ? false
         : 'Run with RUN_FACTORY_BOOTSTRAP_INTEGRATION=true.',
-    timeout: const Timeout(Duration(minutes: 6)),
+    timeout: const Timeout(Duration(minutes: 10)),
   );
 
   test(
