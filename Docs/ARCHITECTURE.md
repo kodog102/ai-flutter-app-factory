@@ -153,6 +153,16 @@ product_request.yaml
 
 V1.1 command layer는 기존 Runtime의 preflight, 실행, ownership, rollback 또는 승인 의미를 대체하지 않는다. Product 기능을 구현하거나 Provider를 호출하지 않는다. V1.2 Product Loop Guard Runtime foundation은 아래 별도 계약을 따르며, Agent Adapter는 구현되어 있지 않다.
 
+#### 비개발자 안내 모드
+
+기존 한 번 실행 명령과 같은 진입점은 서로 배타적인 세 안내 모드를 제공한다.
+
+- `--doctor`는 Factory Repository 위치와 Dart, Flutter, Git, iOS 및 Android 도구 상태를 읽기 전용으로 확인한다. 고정된 안전 요약과 확인된 버전만 보고하고 외부 명령의 원문 출력은 전달하지 않는다. 설치, 갱신, 사용권 동의나 환경 복구는 수행하지 않는다.
+- `--print-request-template`은 열 개 필수 입력이 있는 요청 예시를 표준 출력으로만 제공한다. 필수 자리표시는 의도적으로 실행할 수 없는 값이며 파일을 생성하지 않는다.
+- `--request <절대 경로> --dry-run`은 실제 실행과 같은 요청 파일 해석기와 사전 검사를 사용한다. 실행기를 호출하지 않고 Product, Factory와 Git을 변경하지 않는다.
+
+안내 모드와 실제 실행 모드를 함께 지정하면 사용법 오류로 중단한다. `--doctor` 성공은 현재 확인한 도구가 사용 가능하다는 뜻이고 `--dry-run` 성공은 사전 검사 후보가 통과했다는 뜻이다. 어느 결과도 `Prepared`, `Ready` 또는 `Approved`를 선언하지 않는다. 기존 `--request <절대 경로>` 실행 계약과 종료 코드는 유지한다.
+
 ### V1.2 제품 루프 보호 계약
 
 V1.2 Product Loop Guard는 Bootstrap 이후 Product Repository 안에서 수행되는 작은 Agreement의 기준선, 검증과 승인 경계를 정의한다. 이 계약은 특정 Provider, 모델 또는 IDE를 전제하지 않는다.

@@ -188,6 +188,40 @@ dart run ai_flutter_app_factory:factory_bootstrap --request /absolute/intake/pro
 
 명령은 `stdout`에 JSON 한 문서, `stderr`에 한국어 우선 요약을 출력한다. JSON과 요약을 모두 보존해 사용자에게 제시하되, 명령 완료 후 Product 기능 구현을 시작하지 않는다.
 
+### 처음 사용하는 사용자의 권장 순서
+
+1. 환경 상태를 확인한다.
+
+   ```text
+   dart run ai_flutter_app_factory:factory_bootstrap --doctor
+   ```
+
+   이 검사는 도구를 설치하거나 갱신하지 않는다. 부족한 항목이 있으면 보고된 항목만 담당자에게 전달한다.
+
+2. 요청 예시를 화면에 출력한다.
+
+   ```text
+   dart run ai_flutter_app_factory:factory_bootstrap --print-request-template
+   ```
+
+   명령은 파일을 만들지 않는다. 출력 내용을 Factory와 Product Repository 밖의 `product_request.yaml`에 직접 저장하고 필수 자리표시를 실제 값으로 바꾼다.
+
+3. 실제 생성 없이 입력과 경로를 검사한다.
+
+   ```text
+   dart run ai_flutter_app_factory:factory_bootstrap --request /absolute/intake/product_request.yaml --dry-run
+   ```
+
+   통과해도 실행 후보일 뿐 `Ready` 또는 `Approved`가 아니다. Product 파일과 Git은 변경되지 않는다.
+
+4. 사용자가 요청 내용과 대상 경로를 확인한 뒤 기존 실행 명령을 별도로 승인하고 실행한다.
+
+   ```text
+   dart run ai_flutter_app_factory:factory_bootstrap --request /absolute/intake/product_request.yaml
+   ```
+
+실제 실행이 `Prepared`를 반환해도 Ready 승인과 첫 Agreement 승인은 별도다.
+
 ## 5. 실행 결과 이해
 
 | 결과 | 뜻 | 사용자가 할 일 |
@@ -197,7 +231,7 @@ dart run ai_flutter_app_factory:factory_bootstrap --request /absolute/intake/pro
 | `BootstrapExecutionStopped` | 실행 중 안전하게 중단되거나 복구됨 | 확인된 사실과 미수행 항목 검토 |
 | `BootstrapExecutionPartialFailure` | 자동 정리의 안전성을 보장할 수 없음 | 표시된 경로를 이동·삭제하지 말고 별도 검사 요청 |
 
-V1.1 명령의 종료 코드는 다음처럼 해석한다.
+기존 `--request <절대 경로>` 실제 실행의 종료 코드는 다음처럼 해석한다. `--doctor`, `--print-request-template`과 `--dry-run` 안내 모드의 종료 코드는 앞의 권장 순서에서 설명한 의미를 따르며 `0`을 `Prepared`로 해석하지 않는다.
 
 | 종료 코드 | 뜻 | 사용자가 할 일 |
 |---|---|---|

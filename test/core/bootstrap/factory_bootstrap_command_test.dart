@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:ai_flutter_app_factory/ai_flutter_app_factory.dart';
+import 'package:ai_flutter_app_factory/core/bootstrap/bootstrap_process_runner.dart';
 import 'package:ai_flutter_app_factory/core/bootstrap/factory_bootstrap_command.dart';
+import 'package:ai_flutter_app_factory/core/bootstrap/factory_environment_doctor.dart';
 import 'package:path/path.dart' as path;
 import 'package:test/test.dart';
 
@@ -50,6 +52,11 @@ void main() {
       const ['--request'],
       const ['--unknown', '/tmp/value'],
       const ['--request', '/tmp/value', '--extra'],
+      const ['--doctor', '--request', '/tmp/value'],
+      const ['--print-request-template', '--dry-run'],
+      const ['--request', '--doctor'],
+      const ['--request', '--print-request-template'],
+      const ['--request', '--dry-run'],
     ]) {
       final result = await FactoryBootstrapCommand(
         factoryRoot: factoryRoot,
@@ -61,6 +68,88 @@ void main() {
       expect(report['approvalStatuses']['agreementApprovalStatus'], 'Pending');
       _expectHumanSummary(result.stderrText);
     }
+  });
+
+  test('--doctor reports tool availability without approval claims', () async {
+    final result = await FactoryBootstrapCommand(
+      factoryRoot: factoryRoot,
+      doctor: FactoryEnvironmentDoctor(
+        factoryRoot: factoryRoot,
+        processRunner: _CommandDoctorRunner(complete: true),
+      ),
+    ).run(['--doctor']);
+
+    expect(result.exitCode, 0);
+    final report = jsonDecode(result.stdoutJson) as Map<String, dynamic>;
+    expect(report['outcomeState'], 'environmentOperational');
+    expect(report['doctor']['status'], 'operational');
+    expect(report['doctor']['checks'], hasLength(6));
+    expect(report['approvalStatuses']['readyApprovalStatus'], 'Pending');
+    expect(await Directory(outputPath).exists(), isFalse);
+    _expectHumanSummary(result.stderrText);
+  });
+
+  test('--doctor exits 3 when a required tool is unavailable', () async {
+    final result = await FactoryBootstrapCommand(
+      factoryRoot: factoryRoot,
+      doctor: FactoryEnvironmentDoctor(
+        factoryRoot: factoryRoot,
+        processRunner: _CommandDoctorRunner(complete: false),
+      ),
+    ).run(['--doctor']);
+
+    expect(result.exitCode, 3);
+    expect(
+      jsonDecode(result.stdoutJson)['outcomeState'],
+      'environmentIncomplete',
+    );
+    expect(result.stderrText, contains('자동 설치'));
+    _expectHumanSummary(result.stderrText);
+  });
+
+  test('--print-request-template writes only the example to stdout', () async {
+    final result = await FactoryBootstrapCommand(
+      factoryRoot: factoryRoot,
+    ).run(['--print-request-template']);
+
+    expect(result.exitCode, 0);
+    expect(result.stdoutJson, contains('schemaVersion: 1'));
+    expect(result.stdoutJson, contains('productDisplayName:'));
+    expect(
+        await File(path.join(intakeRoot.path, 'product_request.yaml')).exists(),
+        isFalse);
+    expect(await Directory(outputPath).exists(), isFalse);
+    _expectHumanSummary(result.stderrText);
+  });
+
+  test('--dry-run reuses preflight and never calls execute', () async {
+    final file = await _writeValidRequest(intakeRoot, outputPath);
+    var executeCalled = false;
+    final progress = <String>[];
+
+    final result = await FactoryBootstrapCommand(
+      factoryRoot: factoryRoot,
+      inspect: (request) async => _ready(request, outputPath),
+      execute: (ready) async {
+        executeCalled = true;
+        return _prepared(ready.validatedRequest);
+      },
+      progress: progress.add,
+    ).run(['--request', file.path, '--dry-run']);
+
+    expect(result.exitCode, 0);
+    expect(executeCalled, isFalse);
+    final report = jsonDecode(result.stdoutJson) as Map<String, dynamic>;
+    expect(report['outcomeState'], 'preflightCandidate');
+    expect(report['dryRun']['status'], 'candidate');
+    expect(report['dryRun']['notPerformed'], contains('Flutter scaffold 생성'));
+    expect(report['approvalStatuses']['readyApprovalStatus'], 'Pending');
+    expect(await Directory(outputPath).exists(), isFalse);
+    expect(progress, [
+      '요청 파일을 안전하게 검사하고 있습니다.',
+      '요청 Schema 검증을 통과해 Runtime 사전 검사를 시작합니다.',
+    ]);
+    _expectHumanSummary(result.stderrText);
   });
 
   test('parse failure exits 2 and never calls Runtime', () async {
@@ -344,4 +433,38 @@ void _expectHumanSummary(String stderrText) {
   expect(stderrText.trim(), isNotEmpty);
   expect(stderrText, matches(RegExp(r'^[가-힣]')));
   expect(stderrText, contains('다음 사용자 결정'));
+}
+
+final class _CommandDoctorRunner implements BootstrapProcessRunner {
+  const _CommandDoctorRunner({required this.complete});
+
+  final bool complete;
+
+  @override
+  Future<BootstrapProcessResult> run(
+    String executable,
+    List<String> arguments, {
+    required String workingDirectory,
+  }) async {
+    final command = '$executable ${arguments.join(' ')}';
+    final output = switch (command) {
+      'git rev-parse --show-toplevel' => workingDirectory,
+      'dart --version' => 'Dart SDK version: 3.13.0 (stable)',
+      'flutter --version' => 'Flutter 3.41.0 • stable',
+      'git --version' => 'git version 2.53.0',
+      'xcodebuild -version' => 'Xcode 17.0',
+      'flutter doctor --verbose' when complete =>
+        '[✓] Android toolchain - develop for Android devices',
+      'flutter doctor --verbose' => '[!] Android toolchain',
+      _ => '',
+    };
+    return BootstrapProcessResult(
+      executable: executable,
+      arguments: arguments,
+      workingDirectory: workingDirectory,
+      exitCode: 0,
+      stdout: output,
+      stderr: '',
+    );
+  }
 }

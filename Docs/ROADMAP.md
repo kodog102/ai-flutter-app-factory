@@ -217,7 +217,7 @@ CLI, Template engine 또는 orchestration 기능은 검증된 필요가 생기�
 
 ## 16. Flutter 팩토리 완성 계획
 
-상태: **진행 중 — P4 구현 결과 승인 대기**
+상태: **진행 중 — P5 구현 결과 승인 대기**
 
 ### P0 — CI 호환성 복구
 
@@ -279,7 +279,7 @@ CLI, Template engine 또는 orchestration 기능은 검증된 필요가 생기�
 - 작업별 실행 시간: Product Loop Guard 5m52s, Executor Cross-domain 10m17s, Executor Staged and Rollback 11m26s, Executor Existing and Tracked 13m58s
 - 작업별 실행 시간: Executor Ownership and Hook 11m29s, Factory Product Loop Command 1m02s, Executor New Repository 5m51s, Factory Bootstrap Command 10m18s
 
-P2와 P3 종료 기준이 충족됐다. P4는 구현 결과 승인을 기다리며 P0·P1·P2·P3 완료 상태와 이후 단계의 진행 잠금은 유지한다.
+P2와 P3 종료 기준이 충족됐다. P4도 사용자 승인을 받아 완료됐으며 P5는 구현 결과 승인을 기다린다. 이후 단계의 진행 잠금은 유지한다.
 
 ### P3 — 제품 권한 감사
 
@@ -305,7 +305,7 @@ P2와 P3 종료 기준이 충족됐다. P4는 구현 결과 승인을 기다리�
 
 ### P4 — 실행 가능한 실행 프로필 검증
 
-상태: **구현됨 — 사용자 결과 승인 대기**
+상태: **완료 — 사용자 승인**
 
 목표:
 
@@ -323,20 +323,29 @@ P2와 P3 종료 기준이 충족됐다. P4는 구현 결과 승인을 기다리�
 - `ExecutionProfileValidator`가 정규화된 제안 SHA-256, 승인 증거와 계획·실제 실행 편차를 구조화해 검사한다
 - 승인 증거 누락, Main 자기 QA, 직접 실행 주체 오류와 예산 초과를 작업 실행 없이 중단한다
 - 일치 결과는 사용자 승인, QA 통과 또는 Product 변경 권한을 자동 선언하지 않는다
+- User가 `main@8fe35cd3b44df69f8814e9a1718fc4fc1790afdc`의 P4 결과를 승인했다
 
 ### P5 — 비개발자 사용성
 
-상태: **대기 — P4에 의해 차단됨**
+상태: **구현됨 — 사용자 결과 승인 대기**
 
 목표:
 
-- 비개발자가 환경과 입력을 확인하고 sample Flutter Product를 한 진입점에서 준비할 수 있게 한다
+- 비개발자가 환경과 입력을 확인하고 예시 Flutter Product를 한 진입점에서 준비할 수 있게 한다
 
 종료 기준:
 
-- read-only `doctor`, 요청 파일 준비 도움과 dry-run 결과를 제공한다
+- 읽기 전용 `doctor`, 요청 파일 준비 도움과 `dry-run` 결과를 제공한다
 - 긴 개발 명령을 외우지 않아도 되는 짧고 문서화된 실행 경로가 있다
-- 새 사용자가 공개 User Guide만으로 sample Product를 준비하고 승인 지점과 중단 사유를 이해한다
+- 새 사용자가 공개 User Guide만으로 예시 Product를 준비하고 승인 지점과 중단 사유를 이해한다
+
+구현 결과:
+
+- 기존 `factory_bootstrap` 진입점에 환경 확인, 요청 예시 출력과 실행 전 검사 모드를 추가했다
+- 환경 확인은 Factory Repository와 Dart, Flutter, Git, iOS 및 Android 도구를 변경 없이 검사하고 안전한 요약만 반환한다
+- 요청 예시는 파일을 만들지 않고 표준 출력에만 표시하며 필수 자리표시는 직접 수정해야 하는 값으로 제공한다
+- 실행 전 검사는 실제 실행과 같은 요청 해석 및 사전 검사를 재사용하지만 실행기를 호출하거나 Product와 Git을 변경하지 않는다
+- 안내 모드의 성공을 `Ready` 또는 `Approved`로 표현하지 않고 기존 실제 실행 경로와 종료 의미를 유지한다
 
 ### P6 — 보안과 복원력 강화
 

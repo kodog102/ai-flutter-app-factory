@@ -106,6 +106,22 @@ dart run ai_flutter_app_factory:factory_bootstrap --request /absolute/intake/pro
 
 parse, schema 또는 preflight가 중단되면 Product execution을 시작하지 않는다. 명령은 commit, remote, push, tag, publication 또는 release를 수행하지 않는다.
 
+### 처음 실행하기 전 확인
+
+비개발자는 다음 순서로 환경과 입력을 먼저 확인할 수 있다.
+
+```text
+dart run ai_flutter_app_factory:factory_bootstrap --doctor
+dart run ai_flutter_app_factory:factory_bootstrap --print-request-template
+dart run ai_flutter_app_factory:factory_bootstrap --request /absolute/intake/product_request.yaml --dry-run
+```
+
+- `--doctor`는 Factory Repository 위치와 Dart, Flutter, Git, iOS 및 Android 도구를 변경 없이 확인한다. 모든 항목을 사용할 수 있으면 종료 코드 `0`, 하나라도 부족하면 `3`을 반환한다. 부족한 도구를 설치하거나 갱신하지 않고 사용권 동의도 수행하지 않는다.
+- `--print-request-template`은 요청 예시를 표준 출력에만 표시하고 종료 코드 `0`을 반환한다. 표시된 필수 자리표시를 실제 값으로 바꾼 뒤 Factory 밖의 파일로 직접 저장한다.
+- `--dry-run`은 같은 요청 해석과 사전 검사를 수행하고 통과하면 종료 코드 `0`을 반환하지만 실행기를 호출하지 않는다. Product 파일과 Git 상태는 바뀌지 않으며 결과는 실행 후보일 뿐 승인 상태가 아니다.
+
+안내 모드는 서로 함께 사용할 수 없다. 실제 Product 준비는 안내 결과를 검토한 뒤 기존 `--request <절대 경로>` 명령으로 별도 실행한다.
+
 ## V1.2.1 제품 루프 요청 파일
 
 Product Loop 요청 파일 이름은 `product_loop_request.yaml`이며 Factory와 Product Repository 밖의 regular UTF-8 파일이어야 한다. Evidence 디렉터리도 두 Repository 밖에 미리 존재해야 하며 symlink일 수 없다. Capture 시작 시 Evidence 디렉터리는 비어 있어야 한다.

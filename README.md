@@ -38,6 +38,16 @@ dart run ai_flutter_app_factory:factory_bootstrap --request /absolute/intake/pro
 
 요청 파일 위치와 schema는 [Docs/SETUP.md](Docs/SETUP.md), 비개발자 실행·승인 순서는 [Docs/USER_GUIDE.md](Docs/USER_GUIDE.md)를 따른다. V1.1은 Product 기능을 구현하지 않으며 V1.2 Product Loop Guard를 포함하지 않는다.
 
+처음 사용하는 사용자는 같은 진입점에서 환경 확인, 요청 예시 출력과 실행 전 검사를 순서대로 수행할 수 있다.
+
+```text
+dart run ai_flutter_app_factory:factory_bootstrap --doctor
+dart run ai_flutter_app_factory:factory_bootstrap --print-request-template
+dart run ai_flutter_app_factory:factory_bootstrap --request /absolute/intake/product_request.yaml --dry-run
+```
+
+`--doctor`는 팩토리 위치와 필수 도구 상태를 읽기 전용으로 확인하며 설치, 갱신이나 사용권 동의를 대신하지 않는다. 요청 예시는 표준 출력으로만 제공되고 파일을 만들지 않는다. `--dry-run`은 실제 실행과 같은 요청 해석 및 사전 검사를 사용하지만 실행기를 호출하거나 Product와 Git을 변경하지 않는다. 통과 결과는 실행 후보일 뿐 `Ready` 또는 `Approved`가 아니다.
+
 ### V1.2 제품 루프 보호 실행 환경
 
 Product Loop는 Product Repository에서 작은 Agreement 하나를 안전하게 완료하는 반복 작업 단위다. 자율적으로 Product를 개발하는 AI 기능이 아니라, 승인된 시작 상태와 구현 후 검증 대상을 고정해 예상 밖 변경이 다음 단계로 넘어가지 못하게 하는 운영 흐름이다.

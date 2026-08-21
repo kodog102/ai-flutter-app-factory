@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'bootstrap_execution_result.dart';
 import 'bootstrap_preflight_result.dart';
 import 'bootstrap_process_runner.dart';
+import 'factory_environment_doctor.dart';
 import 'product_request_file.dart';
 
 const int bootstrapCommandSchemaVersion = 1;
@@ -17,7 +18,44 @@ final class BootstrapCommandReport {
       'exitCode': exitCode,
       'usage':
           'dart run ai_flutter_app_factory:factory_bootstrap --request /absolute/intake/product_request.yaml',
-      'supportedArguments': ['--request <absolute path>', '--help'],
+      'supportedArguments': [
+        '--doctor',
+        '--print-request-template',
+        '--request <absolute path> [--dry-run]',
+        '--help',
+      ],
+      'approvalStatuses': _pendingApprovals,
+    });
+  }
+
+  static String doctor({
+    required int exitCode,
+    required FactoryEnvironmentDoctorResult result,
+  }) {
+    return _encode({
+      'commandSchemaVersion': bootstrapCommandSchemaVersion,
+      'outcomeState': result.isOperational
+          ? 'environmentOperational'
+          : 'environmentIncomplete',
+      'exitCode': exitCode,
+      'doctor': {
+        'status': result.isOperational ? 'operational' : 'incomplete',
+        'checks': [
+          for (final check in result.checks)
+            {
+              'id': check.id.name,
+              'status': check.status.name,
+              'summary': check.summary,
+              if (check.version != null) 'version': check.version,
+            },
+        ],
+        'notPerformed': [
+          'SDK 또는 도구 설치',
+          '라이선스 승인',
+          '팩토리 또는 제품 파일 변경',
+          'Bootstrap 실행',
+        ],
+      },
       'approvalStatuses': _pendingApprovals,
     });
   }
@@ -82,6 +120,36 @@ final class BootstrapCommandReport {
     });
   }
 
+  static String dryRun({
+    required int exitCode,
+    required ProductRequestFileReady requestFile,
+    required BootstrapPreflightReady ready,
+  }) {
+    return _encode({
+      ..._base(
+        outcomeState: 'preflightCandidate',
+        exitCode: exitCode,
+        requestFile: requestFile,
+      ),
+      'dryRun': {
+        'status': 'candidate',
+        'normalizedOutputPath': ready.normalizedOutputPath,
+        'repositoryMode': ready.confirmedRepositoryMode.name,
+        'technology': ready.confirmedTechnology,
+        'targetPlatforms': ready.confirmedTargetPlatforms,
+        'targetExists': ready.inspection.targetExists,
+        'hasIndependentGitDirectory':
+            ready.inspection.hasIndependentGitDirectory,
+        'notPerformed': [
+          'Operational Bootstrap 실행',
+          'Flutter scaffold 생성',
+          '제품 또는 Git 변경',
+          '기술 검증과 Ready 또는 Agreement 승인',
+        ],
+      },
+    });
+  }
+
   static String execution({
     required int exitCode,
     required ProductRequestFileReady requestFile,
@@ -113,8 +181,7 @@ final class BootstrapCommandReport {
       'outcomeState': 'unexpectedCommandFailure',
       'exitCode': exitCode,
       'failure': {
-        'message':
-            'The command layer failed before a safe result was available.',
+        'message': '안전한 결과를 만들기 전에 명령 계층이 실패했다.',
       },
       'approvalStatuses': _pendingApprovals,
     });

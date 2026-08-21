@@ -210,16 +210,66 @@ void main() {
         ? false
         : 'Run with RUN_FACTORY_BOOTSTRAP_INTEGRATION=true.',
   );
+
+  test(
+    'dry-run validates a real request without creating a Product',
+    () async {
+      final factoryStatusBefore = await _factoryStatus();
+      final fixture = await _temporaryFixture(
+        'factory_bootstrap_command_dry_run_',
+      );
+      try {
+        final intake = await Directory(
+          path.join(fixture.path, 'intake'),
+        ).create();
+        final targetPath = path.join(fixture.path, 'dry_run_product');
+        final request = await _writeRequest(
+          intake,
+          _requestYaml(outputPath: targetPath),
+        );
+
+        final command = await _runCommandArguments([
+          '--request',
+          request.path,
+          '--dry-run',
+        ]);
+
+        expect(
+          command.exitCode,
+          0,
+          reason: '${command.stderr}\n${command.stdout}',
+        );
+        final report = _jsonReport(command);
+        expect(report['outcomeState'], 'preflightCandidate');
+        expect(report['dryRun']['status'], 'candidate');
+        expect(
+          report['approvalStatuses']['readyApprovalStatus'],
+          'Pending',
+        );
+        expect(await Directory(targetPath).exists(), isFalse);
+        expect(_ownedStaging(fixture), isEmpty);
+        expect(await _factoryStatus(), factoryStatusBefore);
+      } finally {
+        await fixture.delete(recursive: true);
+      }
+    },
+    skip: _runIntegration
+        ? false
+        : 'Run with RUN_FACTORY_BOOTSTRAP_INTEGRATION=true.',
+  );
 }
 
 Future<ProcessResult> _runCommand(File request) {
+  return _runCommandArguments(['--request', request.path]);
+}
+
+Future<ProcessResult> _runCommandArguments(List<String> arguments) {
   return Process.run(
     Platform.resolvedExecutable,
     [
       'run',
       'ai_flutter_app_factory:factory_bootstrap',
-      '--request',
-      request.path,
+      ...arguments,
     ],
     workingDirectory: Directory.current.path,
     runInShell: false,

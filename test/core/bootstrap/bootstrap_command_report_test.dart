@@ -4,7 +4,10 @@ import 'package:ai_flutter_app_factory/core/bootstrap/bootstrap_command_report.d
 import 'package:ai_flutter_app_factory/core/bootstrap/bootstrap_preflight_result.dart';
 import 'package:ai_flutter_app_factory/core/bootstrap/bootstrap_request.dart';
 import 'package:ai_flutter_app_factory/core/bootstrap/bootstrap_stop_reason.dart';
+import 'package:ai_flutter_app_factory/core/bootstrap/factory_environment_doctor.dart';
 import 'package:ai_flutter_app_factory/core/bootstrap/product_request_file.dart';
+import 'package:ai_flutter_app_factory/core/bootstrap/repository_mode.dart';
+import 'package:ai_flutter_app_factory/core/bootstrap/validated_bootstrap_request.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -75,6 +78,54 @@ void main() {
     expect(decoded['requestIssues'].single['code'], 'unknownKey');
     expect(decoded['approvalStatuses']['readyApprovalStatus'], 'Pending');
   });
+
+  test('doctor report contains fixed summaries without raw command output', () {
+    final report = BootstrapCommandReport.doctor(
+      exitCode: 3,
+      result: FactoryEnvironmentDoctorResult(
+        checks: const [
+          FactoryDoctorCheck(
+            id: FactoryDoctorCheckId.androidToolchain,
+            status: FactoryDoctorCheckStatus.unavailable,
+            summary: 'Android build 도구를 확인할 수 없다.',
+          ),
+        ],
+      ),
+    );
+
+    final decoded = jsonDecode(report) as Map<String, dynamic>;
+    expect(decoded['outcomeState'], 'environmentIncomplete');
+    expect(decoded['doctor']['checks'].single['status'], 'unavailable');
+    expect(decoded['doctor']['notPerformed'], contains('SDK 또는 도구 설치'));
+    expect(decoded['approvalStatuses']['readyApprovalStatus'], 'Pending');
+  });
+
+  test('dry-run report preserves Pending approvals and omitted execution', () {
+    final report = BootstrapCommandReport.dryRun(
+      exitCode: 0,
+      requestFile: _requestFile(),
+      ready: BootstrapPreflightReady(
+        validatedRequest: _validatedRequest(),
+        normalizedOutputPath: '/portable/product',
+        inspection: BootstrapTargetInspection(
+          inspectedPath: '/portable/product',
+          normalizedPath: '/portable/product',
+          targetExists: false,
+          repositoryMode: RepositoryMode.newRepository,
+          nearestExistingParent: '/portable',
+          hasIndependentGitDirectory: false,
+          targetEntries: const [],
+        ),
+      ),
+    );
+
+    final decoded = jsonDecode(report) as Map<String, dynamic>;
+    expect(decoded['outcomeState'], 'preflightCandidate');
+    expect(decoded['dryRun']['status'], 'candidate');
+    expect(decoded['dryRun']['notPerformed'], contains('Flutter scaffold 생성'));
+    expect(decoded['approvalStatuses']['readyApprovalStatus'], 'Pending');
+    expect(decoded, isNot(contains('execution')));
+  });
 }
 
 ProductRequestFileReady _requestFile() {
@@ -95,5 +146,21 @@ ProductRequestFileReady _requestFile() {
     requestId: 'safe-001',
     requestSha256: 'hash',
     originalBytes: const [1, 2, 3],
+  );
+}
+
+ValidatedBootstrapRequest _validatedRequest() {
+  return ValidatedBootstrapRequest(
+    productDisplayName: 'Product',
+    productPurpose: 'Purpose',
+    initialProductScopeOrFirstIntendedOutcome: 'Scope',
+    exactOutputPath: '/portable/product',
+    repositoryMode: RepositoryMode.newRepository,
+    initialBranchName: 'main',
+    repositoryPolicy: null,
+    flutterProjectName: 'product',
+    organizationIdentifier: 'com.example',
+    requestedTechnology: 'flutter',
+    targetPlatforms: const ['ios', 'android'],
   );
 }
