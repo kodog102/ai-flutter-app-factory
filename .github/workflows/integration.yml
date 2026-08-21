@@ -49,14 +49,15 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
 
       - name: Set up Flutter
-        # subosito/flutter-action v2.23.0
-        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           channel: stable
-          cache: true
+          cache: false
 
       - name: Show tool versions
         run: |
@@ -66,7 +67,7 @@ jobs:
           xcodebuild -version
 
       - name: Install dependencies
-        run: dart pub get
+        run: dart pub get --enforce-lockfile
 
       - name: Run whole integration file
         if: ${{ matrix.name-pattern == '' }}
