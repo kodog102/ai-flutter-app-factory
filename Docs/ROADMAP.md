@@ -217,7 +217,7 @@ CLI, Template engine 또는 orchestration 기능은 검증된 필요가 생기�
 
 ## 16. Flutter 팩토리 완성 계획
 
-상태: **진행 중 — P5 구현 결과 승인 대기**
+상태: **진행 중 — P6-2 의존성과 자동화 공급망 검토 준비**
 
 ### P0 — CI 호환성 복구
 
@@ -279,7 +279,7 @@ CLI, Template engine 또는 orchestration 기능은 검증된 필요가 생기�
 - 작업별 실행 시간: Product Loop Guard 5m52s, Executor Cross-domain 10m17s, Executor Staged and Rollback 11m26s, Executor Existing and Tracked 13m58s
 - 작업별 실행 시간: Executor Ownership and Hook 11m29s, Factory Product Loop Command 1m02s, Executor New Repository 5m51s, Factory Bootstrap Command 10m18s
 
-P2와 P3 종료 기준이 충족됐다. P4와 P5도 사용자 승인과 commit을 마쳤으며 P6-1은 구현 결과 승인을 기다린다. 이후 단계의 진행 잠금은 유지한다.
+P2와 P3 종료 기준이 충족됐다. P4와 P5도 사용자 승인과 커밋을 마쳤으며 P6-1은 구현 결과 승인과 커밋을 완료했다. P6-2 이후 단계의 진행 잠금은 유지한다.
 
 ### P3 — 제품 권한 감사
 
@@ -350,7 +350,7 @@ P2와 P3 종료 기준이 충족됐다. P4와 P5도 사용자 승인과 commit�
 
 ### P6 — 보안과 복원력 강화
 
-상태: **진행 중 — P6-1 사용자 결과 승인 대기**
+상태: **진행 중 — P6-1 완료, P6-2 준비**
 
 목표:
 
@@ -369,7 +369,8 @@ P6-1 구현 결과:
 - 초기 소유권 획득 전 외부 파일, 실패한 scaffold·검증 명령의 부분 변경과 설치 직전 심볼릭 링크 경쟁 조건을 실패 폐쇄로 검증한다
 - 실제 Git·Flutter 환경에서 초기 staging 외부 파일 보존을 검증하는 통합 후보를 추가했다
 - 운영체제 경로 API의 마지막 검사와 변경 사이에 남는 짧은 TOCTOU 창은 잔여 위험으로 유지한다
-- dependency와 workflow 최소 권한 검토는 P6-2 범위로 남긴다
+- 사용자가 `main@67e9e7f390d56f7b082ad8ec4255d4d7b7924fb4`의 P6-1 결과와 커밋을 승인했다
+- 의존성과 자동화 최소 권한 검토는 P6-2 범위로 남긴다
 
 ### P7 — 구조와 이전 요소 마감
 
@@ -400,4 +401,4 @@ P6-1 구현 결과:
 - 실패와 환경 차단은 Evidence로 기록하되 다음 단계로 건너뛰거나 우선순위를 자동 변경하지 않는다
 - 미완료 단계를 Ready 또는 Released로 표현하지 않는다
 
-현재 진행 중인 작업은 **P6-1 — 보안 경계 기준선 고정** 하나뿐이다.
+현재 진행 중인 작업은 **P6-2 — 의존성과 자동화 공급망 검토** 하나뿐이다. 아직 구현은 시작하지 않았다.
