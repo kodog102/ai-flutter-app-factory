@@ -9,9 +9,10 @@ void main() {
     final fixture = await Directory.systemTemp.createTemp(
       'factory_public_api_',
     );
-    final factoryRoot = await Directory(
-      path.join(fixture.path, 'factory'),
-    ).create();
+    final factoryRoot = await _gitRepository(
+      Directory(path.join(fixture.path, 'factory')),
+      {'README.md': 'Factory\n'},
+    );
     final targetPath = path.join(fixture.path, 'product');
 
     try {
@@ -89,6 +90,49 @@ void main() {
       expect(proposal.snapshot.isClean, isTrue);
       expect(proposal.proposalStatus, 'Proposed');
       expect(proposal.userApprovalStatus, 'Pending');
+    } finally {
+      await fixture.delete(recursive: true);
+    }
+  });
+
+  test('public Product Authority auditor returns structured drift', () async {
+    final fixture = await Directory.systemTemp.createTemp(
+      'factory_product_authority_public_api_',
+    );
+    final factoryRoot = await _gitRepository(
+      Directory(path.join(fixture.path, 'factory')),
+      {'README.md': 'Factory\n'},
+    );
+    final productRoot = await _gitRepository(
+      Directory(path.join(fixture.path, 'product')),
+      {
+        'README.md': '제품\n',
+        'AGENTS.md': '# AGENTS.md\n',
+      },
+    );
+
+    try {
+      final result = await ProductAuthorityAuditor(
+        factoryRoot: factoryRoot,
+      ).audit(productRoot);
+
+      expect(result, isA<ProductAuthorityAuditReport>());
+      final report = result as ProductAuthorityAuditReport;
+      expect(report.isCompliant, isFalse);
+      expect(
+        report.expectedContractVersion,
+        ProductAuthorityContract.currentVersion,
+      );
+      expect(
+        report.drifts,
+        contains(
+          isA<ProductAuthorityDrift>().having(
+            (drift) => drift.category,
+            'category',
+            ProductAuthorityDriftCategory.missingContractVersion,
+          ),
+        ),
+      );
     } finally {
       await fixture.delete(recursive: true);
     }

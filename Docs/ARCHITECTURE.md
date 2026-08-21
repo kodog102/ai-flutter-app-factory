@@ -504,6 +504,16 @@ Factory 문장을 그대로 복사하지 않고 Product 관점에서 작성한�
 
 사람이 읽는 Factory 설명 문서와 생성되는 Product 권한 문서는 한글로 작성한다. 같은 내용을 영어로 반복하는 병기 구조나 영어 전용 설명 절을 만들지 않는다. 코드 식별자, 공개 API 이름, 파일 경로, 명령, 구성 키와 실행 리터럴은 원문을 유지할 수 있다.
 
+#### 제품 권한 감사 계약
+
+생성되는 Product `AGENTS.md`의 현재 권한 계약 표식은 정확히 하나의 `권한 계약 버전: 1`이다. `ProductAuthorityContract`는 이 버전과 필수 절·필수 승인 경계 표식의 단일 실행 계약을 소유하고, `ProductAuthorityRenderer`와 `ProductAuthorityAuditor`가 같은 계약을 사용한다. 중복되거나 충돌하는 버전 표식은 준수로 판정하지 않는다.
+
+`ProductAuthorityAuditor`는 Factory 밖의 독립 Product Repository를 읽기 전용으로 감사한다. Factory root와 Product root는 각각 독립 Git Repository의 확인된 top-level과 정확히 일치해야 하고 서로 중첩되지 않은 실제 디렉터리여야 한다. `.git`은 symlink나 file이 아닌 독립 디렉터리여야 한다. `AGENTS.md`는 symlink가 아닌 256 KiB 이하의 UTF-8 일반 파일이어야 한다.
+
+안전한 입력에서는 `ProductAuthorityAuditReport`가 감지한 계약 버전, 각 요구사항 상태와 알려진 편차를 반환한다. 문서 누락, 불완전한 Git metadata, 경계 충돌, 검사 실패 또는 감사 중 파일 변경처럼 신뢰할 수 없는 상태에서는 `ProductAuthorityAuditStopped`를 반환하고 권한 준수 여부를 추정하지 않는다.
+
+감사는 Factory나 Product 파일, Git index, commit 또는 작업 트리를 변경하지 않는다. 누락을 자동 수정하거나 권한 문서를 동기화하는 기능은 이 계약에 포함하지 않는다.
+
 #### 첫 Agreement 제안
 
 Bootstrap 결과에는 첫 Agreement 제안이 포함되어야 하며, 다음 항목을 포함한다.

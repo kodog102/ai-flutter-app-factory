@@ -1,3 +1,4 @@
+import '../product_authority/product_authority_contract.dart';
 import 'validated_bootstrap_request.dart';
 
 final class ProductAuthorityDocuments {
@@ -67,6 +68,8 @@ final class ProductAuthorityRenderer {
     required String scope,
   }) {
     return '''# AGENTS.md
+
+${ProductAuthorityContract.versionLine}
 
 > $name Product Repository의 운영 권한
 

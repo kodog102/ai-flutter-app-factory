@@ -549,6 +549,12 @@ Factory V1이 자동으로 제공하지 않는 것:
 | Independent QA | 구현한 역할과 분리된 관점에서 결과를 검증하는 단계 |
 | PartialFailure | 자동 정리를 계속하면 위험할 수 있어 User 검사가 필요한 상태 |
 
+## 기존 제품 권한 확인
+
+기존 Product Repository의 `AGENTS.md`가 현재 Factory 권한 계약과 일치하는지 확인할 때는 `ProductAuthorityAuditor`를 사용한다. 감사 결과가 준수 보고이면 누락된 항목이 없는지 확인하고, 편차가 있으면 해당 목록을 다음 Agreement의 입력으로 사용한다.
+
+구조화된 중단 결과가 나오면 Product 경계, Git top-level과 `AGENTS.md` 파일 상태를 먼저 확인한다. 중단 상태를 준수로 간주하거나 문서를 자동 수정하지 않는다. 감사 자체는 Product 파일과 Git 상태를 바꾸지 않는다.
+
 ## 권한 문서
 
 - `AGENTS.md` — 역할과 User 승인 권한

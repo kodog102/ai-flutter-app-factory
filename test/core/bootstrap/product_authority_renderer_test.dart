@@ -1,6 +1,7 @@
 import 'package:ai_flutter_app_factory/core/bootstrap/product_authority_renderer.dart';
 import 'package:ai_flutter_app_factory/core/bootstrap/repository_mode.dart';
 import 'package:ai_flutter_app_factory/core/bootstrap/validated_bootstrap_request.dart';
+import 'package:ai_flutter_app_factory/core/product_authority/product_authority_contract.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -116,6 +117,10 @@ void main() {
     expect(documents.agents, contains('Approved Operational Baseline Handoff'));
     expect(documents.agents, contains('실제 상태 사이의 drift를 확인'));
     expect(documents.agents, contains('토큰 사용량이나 비용 자체를 성능 지표로 사용하지 않는다'));
+    expect(
+      documents.agents,
+      contains(ProductAuthorityContract.versionLine),
+    );
     expect(documents.agents, isNot(contains('Operating authority for')));
     expect(documents.agents, isNot(contains('Standard Work Loop')));
     for (final runtimeName in [

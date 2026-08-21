@@ -23,6 +23,9 @@ export 'core/product_loop/product_loop_guard_runtime.dart';
 export 'core/product_loop/product_loop_process_runner.dart'
     show ProductLoopProcessResult, ProductLoopProcessRunner;
 export 'core/product_loop/product_loop_repository_snapshot.dart';
+export 'core/product_authority/product_authority_audit_result.dart';
+export 'core/product_authority/product_authority_auditor.dart';
+export 'core/product_authority/product_authority_contract.dart';
 
 /// Official Flutter V1 execution boundary for Factory consumers.
 final class FlutterAppFactoryRuntime {

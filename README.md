@@ -63,6 +63,12 @@ Product 작업은 Low·Medium·High 위험도로 분류하고 필요한 역할�
 
 빌드 파일 생성은 실제 배포와 구분하며, 환경 장애가 발생해도 위험도를 올리거나 무기한 재시도하지 않는다. Agent Instances 상한, Context Pack, Verification Ladder와 Evidence 재사용의 단일 권한은 [Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md)의 `Adaptive Execution Policy`다. 비개발자 실행 방법은 [Docs/USER_GUIDE.md](Docs/USER_GUIDE.md)를 따른다.
 
+### 제품 권한 감사
+
+기존 Product Repository의 `AGENTS.md`는 공개 Dart API인 `ProductAuthorityAuditor`로 읽기 전용 검사할 수 있다. 감사기는 권한 계약 버전 1, 필수 절과 승인 경계 표식을 확인해 준수 여부와 알려진 편차를 구조화된 결과로 반환한다.
+
+Product Repository 경계, Git top-level 또는 `AGENTS.md` 파일 상태를 안전하게 확인할 수 없으면 결과를 추정하지 않고 구조화된 중단을 반환한다. 감사 과정은 Factory와 Product 파일 또는 Git 상태를 수정하지 않으며 문서를 자동 수정하거나 동기화하지 않는다.
+
 ### V1.2.1 제품 루프 명령
 
 V1.2.1은 기존 Runtime을 하나의 명령 진입점으로 제공한다. User 승인과 외부 구현 경계를 보존하기 위해 같은 명령을 `capture`와 `validate` 두 단계로 실행한다.

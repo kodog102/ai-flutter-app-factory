@@ -211,13 +211,13 @@ CLI, Template engine 또는 orchestration 기능은 검증된 필요가 생기�
 
 1. 실제 Git·Flutter 통합 테스트가 기본 CI에서 실행되지 않아 로컬 증거에 의존한다.
 2. Adaptive Execution Policy와 Execution Profile Lock은 문서와 생성 Product Authority에는 반영됐지만 모든 실행 경계에서 구조화된 runtime 검증으로 강제되지는 않는다.
-3. 기존 Product의 `AGENTS.md` drift를 자동으로 진단하거나 동기화하는 read-only 경로가 없다.
+3. 기존 Product의 `AGENTS.md` 편차를 자동 동기화하는 경로는 없으며, 읽기 전용 감사 결과의 적용은 별도 승인된 Agreement가 필요하다.
 4. 현재 진입 명령과 입력 준비는 비개발자에게 여전히 개발 도구 중심이다.
 5. 대형 실행 파일과 장문 Authority, 사용 여부가 불명확한 legacy template·generator·metadata가 유지보수 비용과 권한 혼동을 만든다.
 
 ## 16. Flutter 팩토리 완성 계획
 
-상태: **진행 중 — P3 다음 승인 대상**
+상태: **진행 중 — P3 구현 결과 승인 대기**
 
 ### P0 — CI 호환성 복구
 
@@ -283,17 +283,24 @@ P2 Exit Criteria가 충족됐다. P3만 다음으로 승인된 stage이며 P0·P
 
 ### P3 — 제품 권한 감사
 
-상태: **대기 — 다음 승인 제안**
+상태: **구현됨 — 사용자 결과 승인 대기**
 
 목표:
 
-- 기존 Product Authority의 누락과 drift를 변경 없이 진단하는 read-only 경로를 제공한다
+- 기존 Product Authority의 누락과 편차를 변경 없이 진단하는 읽기 전용 경로를 제공한다
 
 종료 기준:
 
-- Product `AGENTS.md`의 계약 version, 필수 항목과 알려진 drift를 구조화된 결과로 반환한다
+- Product `AGENTS.md`의 계약 버전, 필수 항목과 알려진 편차를 구조화된 결과로 반환한다
 - 진단은 Product와 Factory 파일을 수정하지 않으며 불명확한 상태에서 fail-closed 한다
 - 기존 Product와 새 Bootstrap Product에서 독립 검증을 통과한다
+
+구현 결과:
+
+- `ProductAuthorityContract`가 권한 계약 버전 1과 필수 항목을 정의한다
+- `ProductAuthorityAuditor`가 독립 Git Repository와 Product `AGENTS.md`를 변경 없이 검사한다
+- 안전한 입력은 준수·편차 보고로, 신뢰할 수 없는 경계와 파일 상태는 구조화된 중단으로 반환한다
+- 새 Bootstrap Product와 기존 Product를 대상으로 한 검증 후보를 제공한다
 
 ### P4 — 실행 가능한 실행 프로필 검증
 

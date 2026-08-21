@@ -58,6 +58,10 @@ void main() {
           ),
         );
         expect(await File(path.join(targetPath, 'AGENTS.md')).exists(), isTrue);
+        await _expectAuthorityAuditPass(
+          factoryRoot: fixture.factory,
+          productRoot: Directory(targetPath),
+        );
         expect(
             await Directory(path.join(targetPath, 'Docs')).exists(), isFalse);
         expect(
@@ -210,6 +214,10 @@ void main() {
         );
         expect(
             await File(path.join(target.path, 'AGENTS.md')).exists(), isTrue);
+        await _expectAuthorityAuditPass(
+          factoryRoot: fixture.factory,
+          productRoot: target,
+        );
         expect(
           completed.baselineHandoffProposal.gitStatusEntries,
           await _gitStatusEntries(target),
@@ -695,6 +703,20 @@ Future<void> _expectSmokeTestPasses(String productPath) async {
     runInShell: false,
   );
   expect(result.exitCode, 0, reason: '${result.stdout}\n${result.stderr}');
+}
+
+Future<void> _expectAuthorityAuditPass({
+  required Directory factoryRoot,
+  required Directory productRoot,
+}) async {
+  final statusBefore = await _gitStatusEntries(productRoot);
+  final result = await ProductAuthorityAuditor(
+    factoryRoot: factoryRoot,
+  ).audit(productRoot);
+
+  expect(result, isA<ProductAuthorityAuditReport>());
+  expect((result as ProductAuthorityAuditReport).isCompliant, isTrue);
+  expect(await _gitStatusEntries(productRoot), statusBefore);
 }
 
 Future<Directory> _repositoryWithStagedDeletion(

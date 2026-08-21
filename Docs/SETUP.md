@@ -193,6 +193,25 @@ Future<void> main() async {
 
 실행 순서는 `BootstrapRequest` → `inspect` → `BootstrapPreflightReady` → `execute`다. `BootstrapPreflightStopped`는 Product mutation 전에 구조화된 중단 근거를 반환한다.
 
+### 제품 권한 감사
+
+기존 Product Repository의 권한 문서는 package-root 공개 API로 읽기 전용 검사한다.
+
+```dart
+final authorityAudit = await ProductAuthorityAuditor(
+  factoryRoot: Directory('/exact/factory/path'),
+).audit(Directory('/exact/product/path'));
+
+if (authorityAudit case ProductAuthorityAuditReport report) {
+  print(report.isCompliant);
+  print(report.drifts.length);
+} else if (authorityAudit case ProductAuthorityAuditStopped stopped) {
+  print(stopped.description);
+}
+```
+
+`ProductAuthorityAuditReport`는 권한 계약 버전 1과 필수 항목의 준수 상태를 반환한다. `ProductAuthorityAuditStopped`는 Repository 경계, Git 또는 `AGENTS.md`를 신뢰할 수 없어 판정을 수행하지 않은 경우다. 이 API는 파일이나 Git 상태를 수정하지 않으며 자동 수정 또는 동기화를 수행하지 않는다.
+
 ## V1.2 제품 루프 보호 공개 실행 환경
 
 Product Loop Guard는 Bootstrap 이후 별도 Product Repository에서 사용한다. 먼저 기준선 Proposal을 capture하고 User가 승인한 동일 기준선을 `inspect`한 뒤, 승인된 Product 구현이 끝났을 때 `validate`를 실행한다.
