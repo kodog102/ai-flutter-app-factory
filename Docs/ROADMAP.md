@@ -217,7 +217,7 @@ CLI, Template engine 또는 orchestration 기능은 검증된 필요가 생기�
 
 ## 16. Flutter 팩토리 완성 계획
 
-상태: **진행 중 — P3 구현 결과 승인 대기**
+상태: **진행 중 — P4 구현 결과 승인 대기**
 
 ### P0 — CI 호환성 복구
 
@@ -279,11 +279,11 @@ CLI, Template engine 또는 orchestration 기능은 검증된 필요가 생기�
 - 작업별 실행 시간: Product Loop Guard 5m52s, Executor Cross-domain 10m17s, Executor Staged and Rollback 11m26s, Executor Existing and Tracked 13m58s
 - 작업별 실행 시간: Executor Ownership and Hook 11m29s, Factory Product Loop Command 1m02s, Executor New Repository 5m51s, Factory Bootstrap Command 10m18s
 
-P2 Exit Criteria가 충족됐다. P3만 다음으로 승인된 stage이며 P0·P1 완료 상태와 이후 단계의 progression lock은 유지한다.
+P2와 P3 종료 기준이 충족됐다. P4는 구현 결과 승인을 기다리며 P0·P1·P2·P3 완료 상태와 이후 단계의 진행 잠금은 유지한다.
 
 ### P3 — 제품 권한 감사
 
-상태: **구현됨 — 사용자 결과 승인 대기**
+상태: **완료 — 사용자 승인**
 
 목표:
 
@@ -292,7 +292,7 @@ P2 Exit Criteria가 충족됐다. P3만 다음으로 승인된 stage이며 P0·P
 종료 기준:
 
 - Product `AGENTS.md`의 계약 버전, 필수 항목과 알려진 편차를 구조화된 결과로 반환한다
-- 진단은 Product와 Factory 파일을 수정하지 않으며 불명확한 상태에서 fail-closed 한다
+- 진단은 Product와 Factory 파일을 수정하지 않으며 불명확한 상태에서 실패 폐쇄한다
 - 기존 Product와 새 Bootstrap Product에서 독립 검증을 통과한다
 
 구현 결과:
@@ -301,20 +301,28 @@ P2 Exit Criteria가 충족됐다. P3만 다음으로 승인된 stage이며 P0·P
 - `ProductAuthorityAuditor`가 독립 Git Repository와 Product `AGENTS.md`를 변경 없이 검사한다
 - 안전한 입력은 준수·편차 보고로, 신뢰할 수 없는 경계와 파일 상태는 구조화된 중단으로 반환한다
 - 새 Bootstrap Product와 기존 Product를 대상으로 한 검증 후보를 제공한다
+- User가 `main@e24b5d9572ee0b4553f64faa0f4a7b43f3da3244`의 P3 결과를 승인했다
 
 ### P4 — 실행 가능한 실행 프로필 검증
 
-상태: **대기 — P3에 의해 차단됨**
+상태: **구현됨 — 사용자 결과 승인 대기**
 
 목표:
 
-- 승인된 Execution Profile과 Planned·Actual 실행의 편차를 Provider 비종속 구조로 검증한다
+- 승인된 실행 프로필과 계획·실제 실행의 편차를 공급자 비종속 구조로 검증한다
 
 종료 기준:
 
-- 필수 Profile 필드, Direct Approval Actions와 Direct Executor를 typed 또는 구조화된 값으로 표현한다
-- 승인 누락과 편차는 Product 변경 전에 결정적인 Stop 결과를 반환한다
+- 필수 프로필 필드, 직접 승인 작업과 직접 실행 주체를 자료형 또는 구조화된 값으로 표현한다
+- 승인 누락과 편차는 Product 변경 전에 결정적인 중단 결과를 반환한다
 - 자동 승인, 자동 권한 확장 또는 Main 자기 QA를 허용하지 않는다
+
+구현 결과:
+
+- `ExecutionProfile`이 역할, 실행 주체, 문맥 묶음, 직접 승인 경계와 검증·환경 예산을 불변 값으로 표현한다
+- `ExecutionProfileValidator`가 정규화된 제안 SHA-256, 승인 증거와 계획·실제 실행 편차를 구조화해 검사한다
+- 승인 증거 누락, Main 자기 QA, 직접 실행 주체 오류와 예산 초과를 작업 실행 없이 중단한다
+- 일치 결과는 사용자 승인, QA 통과 또는 Product 변경 권한을 자동 선언하지 않는다
 
 ### P5 — 비개발자 사용성
 

@@ -137,6 +137,70 @@ void main() {
       await fixture.delete(recursive: true);
     }
   });
+
+  test('public Execution Profile validator preserves approval boundaries', () {
+    const validator = ExecutionProfileValidator();
+    final profile = _publicExecutionProfile();
+    final proposal = validator.propose(profile) as ExecutionProfileProposal;
+
+    final result = validator.inspect(
+      approvedProfile: profile,
+      approvedProfileSha256: proposal.sha256,
+      plannedExecution: _publicExecutionProfile(),
+    );
+
+    expect(result, isA<ExecutionProfilePlanMatched>());
+    final matched = result as ExecutionProfilePlanMatched;
+    expect(matched.profileStatus, 'Matched');
+    expect(matched.executionStatus, 'NotPerformed');
+  });
+}
+
+ExecutionProfile _publicExecutionProfile() {
+  return ExecutionProfile(
+    riskLevel: ExecutionRiskLevel.medium,
+    riskReasons: const ['공개 API 검증'],
+    activatedRoles: const {
+      ExecutionRole.implementation,
+      ExecutionRole.independentQa,
+    },
+    agentInstances: [
+      ExecutionAgentInstance(
+        instanceId: 'main',
+        roles: const {ExecutionRole.implementation},
+        canObserveUserApproval: true,
+      ),
+      ExecutionAgentInstance(
+        instanceId: 'qa',
+        roles: const {ExecutionRole.independentQa},
+        canObserveUserApproval: false,
+      ),
+    ],
+    capabilityTier: '현재 등급',
+    contextPack: ExecutionContextPack(
+      approvedAgreement: const ['공개 API 계약'],
+      allowedFiles: const ['lib/', 'test/'],
+      protectedTargets: const ['Product Repository'],
+      authorityExcerpts: const ['실행 프로필 잠금'],
+      relevantTests: const ['test/public_api_test.dart'],
+      baselinesAndCommands: const ['dart test'],
+    ),
+    directApprovalActions: const [],
+    directExecutorId: null,
+    verificationLadder: const {
+      ExecutionVerificationLevel.v0,
+      ExecutionVerificationLevel.v1,
+      ExecutionVerificationLevel.v2,
+    },
+    qaCount: 1,
+    repairLimit: 1,
+    environmentBudget: const ExecutionEnvironmentBudget(
+      maximumAttempts: 1,
+      maximumRetries: 1,
+      maximumMinutes: 15,
+    ),
+    stopConditions: const ['프로필 편차'],
+  );
 }
 
 Future<Directory> _gitRepository(

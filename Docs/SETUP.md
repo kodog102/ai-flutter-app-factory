@@ -212,6 +212,34 @@ if (authorityAudit case ProductAuthorityAuditReport report) {
 
 `ProductAuthorityAuditReport`는 권한 계약 버전 1과 필수 항목의 준수 상태를 반환한다. `ProductAuthorityAuditStopped`는 Repository 경계, Git 또는 `AGENTS.md`를 신뢰할 수 없어 판정을 수행하지 않은 경우다. 이 API는 파일이나 Git 상태를 수정하지 않으며 자동 수정 또는 동기화를 수행하지 않는다.
 
+### 실행 프로필 검증
+
+실행 프로필은 `ExecutionProfile`과 하위 불변 값으로 작성한다. 다음 순서에서 `profile`은 사용자에게 제시할 완전한 실행 프로필이고 `plannedExecution`은 실제로 계획한 실행 구성이다.
+
+```dart
+const validator = ExecutionProfileValidator();
+final proposalResult = validator.propose(profile);
+
+if (proposalResult case ExecutionProfileProposal proposal) {
+  // proposal.sha256을 사용자에게 제시하고 외부 승인을 기다린다.
+  final inspected = validator.inspect(
+    approvedProfile: proposal.profile,
+    approvedProfileSha256: userApprovedSha256,
+    plannedExecution: plannedExecution,
+  );
+
+  if (inspected case ExecutionProfilePlanMatched matched) {
+    final actualResult = validator.validateActual(
+      matchedPlan: matched,
+      actual: actualExecution,
+    );
+    print(actualResult.runtimeType);
+  }
+}
+```
+
+`ExecutionProfileProposal`은 승인 요청 후보일 뿐이다. `ExecutionProfilePlanMatched`와 `ExecutionProfileActualMatched`는 검증기만 생성할 수 있으며 사용자 승인이나 작업 완료를 선언하지 않는다. 실제 환경 재시도가 있으면 `ExecutionEnvironmentRetryEvidence`로 각 재시도의 명확한 원인과 확인 증거를 기록해야 한다. 중단 결과가 반환되면 Product 변경, QA 수행과 승인 제안을 진행하지 않는다. 이 API는 명령 실행과 파일 또는 Git 변경을 수행하지 않는다.
+
 ## V1.2 제품 루프 보호 공개 실행 환경
 
 Product Loop Guard는 Bootstrap 이후 별도 Product Repository에서 사용한다. 먼저 기준선 Proposal을 capture하고 User가 승인한 동일 기준선을 `inspect`한 뒤, 승인된 Product 구현이 끝났을 때 `validate`를 실행한다.
@@ -232,7 +260,6 @@ if (proposal case ProductLoopBaselineProposal baseline) {
   );
   if (inspected case ProductLoopGuardReady ready) {
     // User가 승인한 Product 구현은 Factory 밖에서 수행한다.
-    // Perform User-approved Product implementation outside the Factory.
     final validation = await loop.validate(ready);
     print(validation.runtimeType);
   }

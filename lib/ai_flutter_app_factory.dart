@@ -17,6 +17,8 @@ export 'core/bootstrap/bootstrap_stop_reason.dart';
 export 'core/bootstrap/bootstrap_technical_validation.dart';
 export 'core/bootstrap/repository_mode.dart';
 export 'core/bootstrap/validated_bootstrap_request.dart';
+export 'core/execution_profile/execution_profile.dart';
+export 'core/execution_profile/execution_profile_validator.dart';
 export 'core/product_loop/product_loop_guard_request.dart';
 export 'core/product_loop/product_loop_guard_result.dart';
 export 'core/product_loop/product_loop_guard_runtime.dart';

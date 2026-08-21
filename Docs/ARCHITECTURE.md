@@ -257,6 +257,18 @@ Stop Conditions
 
 구현 전에 Approved Execution Profile과 Planned Actual Execution을 비교한다. 필수 Role, 독립 QA, Agent Instances, Context Pack, Direct Approval Actions, Direct Executor, Verification Ladder, QA·Repair 횟수, 환경 시도·재시도·시간 예산 또는 Stop Conditions 중 하나라도 다르면 구현이나 추가 검증을 시작하지 않는다. 대신 차이, 이유와 필요한 Profile Delta를 User에게 제시하고 승인을 기다린다.
 
+##### 실행 가능한 프로필 검증 계약
+
+`ExecutionProfileValidator`는 공급자와 실행 도구에 의존하지 않는 순수 Dart 검증 경계다. `ExecutionProfile`은 위험도와 근거, 역할과 실행 주체 대응, 수행 역량 등급, 문맥 묶음, 직접 승인 작업과 직접 실행 주체, 검증 단계, QA·수정·환경 예산과 중단 조건을 불변 값으로 표현한다.
+
+`propose`는 완전한 프로필을 정규화하고 SHA-256이 포함된 `ExecutionProfileProposal`을 반환한다. 이 결과의 상태는 제안됨과 사용자 승인 대기이며, 승인 상태를 외부에서 주입하는 `bool`은 제공하지 않는다. 호출자는 제안 해시를 사용자에게 제시하고, 사용자가 외부에서 승인한 동일 해시만 `inspect`에 전달한다.
+
+`inspect`는 승인 프로필의 해시와 승인 증거를 다시 계산해 비교하고, 계획 실행의 모든 계약 필드를 승인 프로필과 비교한다. 누락되거나 형식이 잘못된 승인 증거, 자기 QA, 역할·실행 주체 편차, 직접 승인 경계 오류, 검증 단계 또는 예산 편차는 `ExecutionProfileInspectionStopped`로 반환한다. `ExecutionProfilePlanMatched`는 증거와 계획이 일치한다는 뜻이며 사용자 승인, 실행 허가, QA 통과 또는 완료를 뜻하지 않는다.
+
+계획·실제 일치 결과는 검증기만 생성할 수 있는 불투명한 값이다. `validateActual`은 전달받은 계획 결과의 승인 해시와 승인·계획 일치를 방어적으로 다시 확인한 뒤, 관찰된 실행 프로필과 QA·수정·환경 사용량을 승인 프로필 및 예산과 비교한다. 편차 값은 수정할 수 없는 정규화 문자열로 반환한다.
+
+실제 환경 재시도에는 각 재시도의 명확한 실패 원인과 확인 증거가 필요하며 재시도 횟수와 증거 수가 정확히 일치해야 한다. 사유나 증거가 없거나 승인 예산을 넘는 재시도는 정상 실행으로 인정하지 않는다. 일치 결과도 QA와 사용자 승인 상태를 결정하지 않는다. 호출자는 Product를 변경하는 각 실행 경계 전에 현재 실행 구성을 검증해야 하며, 검증기 자체는 Product 실행, 파일·Git 변경, 작업 분배 또는 공급자 호출을 수행하지 않는다.
+
 ##### 직접 승인 작업 경계
 
 Direct Approval Action은 User의 명시적 승인을 직접 확인할 수 있는 실행 주체만 수행할 수 있는 작업이다. Agreement는 Direct Approval Actions와 Direct Executor를 명시하며, 해당 작업이 없으면 `None`으로 표시한다.

@@ -63,6 +63,12 @@ Product 작업은 Low·Medium·High 위험도로 분류하고 필요한 역할�
 
 빌드 파일 생성은 실제 배포와 구분하며, 환경 장애가 발생해도 위험도를 올리거나 무기한 재시도하지 않는다. Agent Instances 상한, Context Pack, Verification Ladder와 Evidence 재사용의 단일 권한은 [Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md)의 `Adaptive Execution Policy`다. 비개발자 실행 방법은 [Docs/USER_GUIDE.md](Docs/USER_GUIDE.md)를 따른다.
 
+### 실행 프로필 검증
+
+`ExecutionProfileValidator`는 실행 프로필 제안의 정규화된 SHA-256과 사용자가 외부에서 승인한 동일 해시를 확인한 뒤, 승인 프로필과 계획·실제 실행의 편차를 구조화해 반환한다. 필수 역할, 별도 독립 QA, 실행 주체 예산, 직접 승인 경계, 검증 단계와 환경 예산이 맞지 않으면 작업 실행 전에 중단한다.
+
+해시 일치는 사용자 승인을 생성하거나 추정하지 않는다. 일치 결과는 프로필 증거가 같다는 뜻일 뿐이며 QA 통과, 사용자 결과 승인 또는 Product 변경 권한을 부여하지 않는다. 검증기는 파일, Git과 외부 상태를 수정하지 않는다.
+
 ### 제품 권한 감사
 
 기존 Product Repository의 `AGENTS.md`는 공개 Dart API인 `ProductAuthorityAuditor`로 읽기 전용 검사할 수 있다. 감사기는 권한 계약 버전 1, 필수 절과 승인 경계 표식을 확인해 준수 여부와 알려진 편차를 구조화된 결과로 반환한다.
