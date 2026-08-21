@@ -237,6 +237,7 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
       }
       existingBaseline = _ExistingBaseline(
         git: capture.state!,
+        rootIdentity: path.normalize(capture.state!.topLevel),
         rootEntries: rootCapture.entries,
       );
     }
@@ -262,13 +263,51 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
     }
 
     final stagingPath = path.normalize(staging.path);
+    final initialStagingCapture = await _captureSnapshot(
+      stagingPath,
+      expectedType: FileSystemEntityType.directory,
+    );
+    if (!initialStagingCapture.succeeded) {
+      return _inspectionPartial(
+        stage: BootstrapExecutionStage.stagingCreation,
+        targetPath: targetPath,
+        stagingPath: stagingPath,
+        commands: commands,
+        failure: initialStagingCapture.inspectionFailure ??
+            _inspectionFailureForCapture(initialStagingCapture),
+        productMutationStarted: false,
+        gitMetadataAffected: false,
+      );
+    }
+    final initialStagingManifest = <String, String>{
+      '.': FileSystemEntityType.directory.toString(),
+    };
+    if (!_sameSnapshot(
+      initialStagingManifest,
+      initialStagingCapture.manifest,
+    )) {
+      return _ownershipPartial(
+        stage: BootstrapExecutionStage.stagingCreation,
+        targetPath: targetPath,
+        stagingPath: stagingPath,
+        createdOrMovedEntries: const [],
+        commands: commands,
+        expectedManifest: initialStagingManifest,
+        actualManifest: initialStagingCapture.manifest,
+        failure:
+            'The newly created staging directory was not empty; no cleanup was performed.',
+        actualManifestAvailable: true,
+        rollbackFailed: [stagingPath],
+      );
+    }
     if (_equalsOrIsWithin(path.normalize(_factoryRoot.path), stagingPath)) {
-      return _stopAfterCleanup(
+      return _stopAfterOwnedCleanup(
         category: BootstrapExecutionStopCategory.stagingCreationFailed,
         stage: BootstrapExecutionStage.stagingCreation,
         commands: commands,
         staging: staging,
         targetPath: targetPath,
+        ownedManifest: initialStagingManifest,
         validationFailure: 'Staging resolved inside the Factory Repository.',
       );
     }
@@ -280,12 +319,13 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
         targetPath,
       );
     } catch (error) {
-      return _stopAfterCleanup(
+      return _stopAfterOwnedCleanup(
         category: BootstrapExecutionStopCategory.filesystemMutationFailed,
         stage: BootstrapExecutionStage.stagingCreation,
         commands: commands,
         staging: staging,
         targetPath: targetPath,
+        ownedManifest: initialStagingManifest,
         validationFailure: 'Staging hook failed: $error',
       );
     }
@@ -305,32 +345,68 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
       commands: commands,
     );
     if (!scaffold.succeeded) {
-      return _stopAfterCleanup(
+      return _stopAfterOwnedCleanup(
         category: BootstrapExecutionStopCategory.flutterScaffoldFailed,
         stage: BootstrapExecutionStage.flutterScaffold,
         commands: commands,
         staging: staging,
         targetPath: targetPath,
+        ownedManifest: initialStagingManifest,
         failedCommand: scaffold,
+        validationFailure:
+            'Flutter scaffold creation failed before ownership could be confirmed.',
       );
     }
 
+    final preSmokeCapture = await _captureSnapshot(
+      stagingPath,
+      expectedType: FileSystemEntityType.directory,
+    );
+    if (!preSmokeCapture.succeeded) {
+      return _inspectionPartial(
+        stage: BootstrapExecutionStage.smokeTestGeneration,
+        targetPath: targetPath,
+        stagingPath: stagingPath,
+        commands: commands,
+        failure: preSmokeCapture.inspectionFailure ??
+            _inspectionFailureForCapture(preSmokeCapture),
+        productMutationStarted: false,
+        gitMetadataAffected: false,
+      );
+    }
     final smokeFailure = await _generateSmokeTest(
       staging,
       ready.validatedRequest.flutterProjectName,
     );
     if (smokeFailure != null) {
-      return _stopAfterCleanup(
+      return _stopAfterOwnedCleanup(
         category: smokeFailure.category,
         stage: BootstrapExecutionStage.smokeTestGeneration,
         commands: commands,
         staging: staging,
         targetPath: targetPath,
+        ownedManifest: preSmokeCapture.manifest,
         validationFailure: smokeFailure.message,
       );
     }
 
     final completedValidationSteps = <String>[];
+    final prePubGetCapture = await _captureSnapshot(
+      stagingPath,
+      expectedType: FileSystemEntityType.directory,
+    );
+    if (!prePubGetCapture.succeeded) {
+      return _inspectionPartial(
+        stage: BootstrapExecutionStage.dependencyPreparation,
+        targetPath: targetPath,
+        stagingPath: stagingPath,
+        commands: commands,
+        failure: prePubGetCapture.inspectionFailure ??
+            _inspectionFailureForCapture(prePubGetCapture),
+        productMutationStarted: false,
+        gitMetadataAffected: false,
+      );
+    }
     final pubGet = await _run(
       flutterExecutable,
       ['pub', 'get'],
@@ -348,6 +424,7 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
         staging: staging,
         targetPath: targetPath,
         failedCommand: pubGet,
+        ownedManifest: prePubGetCapture.manifest,
         completedValidationSteps: completedValidationSteps,
         unperformedValidationSteps: const [
           'Static analysis',
@@ -358,6 +435,23 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
       );
     }
     completedValidationSteps.add('Flutter dependency preparation');
+
+    final verifiedScaffoldCapture = await _captureSnapshot(
+      stagingPath,
+      expectedType: FileSystemEntityType.directory,
+    );
+    if (!verifiedScaffoldCapture.succeeded) {
+      return _inspectionPartial(
+        stage: BootstrapExecutionStage.scaffoldVerification,
+        targetPath: targetPath,
+        stagingPath: stagingPath,
+        commands: commands,
+        failure: verifiedScaffoldCapture.inspectionFailure ??
+            _inspectionFailureForCapture(verifiedScaffoldCapture),
+        productMutationStarted: false,
+        gitMetadataAffected: false,
+      );
+    }
 
     String? stagingVerification;
     try {
@@ -392,17 +486,34 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
       );
     }
     if (stagingVerification != null) {
-      return _stopAfterCleanup(
+      return _stopAfterOwnedCleanup(
         category: BootstrapExecutionStopCategory.scaffoldVerificationFailed,
         stage: BootstrapExecutionStage.scaffoldVerification,
         commands: commands,
         staging: staging,
         targetPath: targetPath,
+        ownedManifest: verifiedScaffoldCapture.manifest,
         validationFailure: stagingVerification,
       );
     }
 
     for (final validation in _requiredProductValidations) {
+      final preValidationCapture = await _captureSnapshot(
+        stagingPath,
+        expectedType: FileSystemEntityType.directory,
+      );
+      if (!preValidationCapture.succeeded) {
+        return _inspectionPartial(
+          stage: validation.stage,
+          targetPath: targetPath,
+          stagingPath: stagingPath,
+          commands: commands,
+          failure: preValidationCapture.inspectionFailure ??
+              _inspectionFailureForCapture(preValidationCapture),
+          productMutationStarted: false,
+          gitMetadataAffected: false,
+        );
+      }
       final result = await _run(
         flutterExecutable,
         validation.arguments,
@@ -421,6 +532,7 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
           staging: staging,
           targetPath: targetPath,
           failedCommand: result,
+          ownedManifest: preValidationCapture.manifest,
           completedValidationSteps: completedValidationSteps,
           unperformedValidationSteps: _requiredProductValidations
               .skip(validationIndex + 1)
@@ -434,6 +546,22 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
     final authorityDocuments = _authorityRenderer.render(
       ready.validatedRequest,
     );
+    final preAuthorityCapture = await _captureSnapshot(
+      stagingPath,
+      expectedType: FileSystemEntityType.directory,
+    );
+    if (!preAuthorityCapture.succeeded) {
+      return _inspectionPartial(
+        stage: BootstrapExecutionStage.scaffoldVerification,
+        targetPath: targetPath,
+        stagingPath: stagingPath,
+        commands: commands,
+        failure: preAuthorityCapture.inspectionFailure ??
+            _inspectionFailureForCapture(preAuthorityCapture),
+        productMutationStarted: false,
+        gitMetadataAffected: false,
+      );
+    }
     final authorityWrite = await _writeProductAuthority(
       staging,
       authorityDocuments,
@@ -450,13 +578,31 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
       );
     }
     if (authorityWrite.failure != null) {
-      return _stopAfterCleanup(
+      return _stopAfterOwnedCleanup(
         category: BootstrapExecutionStopCategory.filesystemMutationFailed,
         stage: BootstrapExecutionStage.scaffoldVerification,
         commands: commands,
         staging: staging,
         targetPath: targetPath,
+        ownedManifest: preAuthorityCapture.manifest,
         validationFailure: authorityWrite.failure,
+      );
+    }
+
+    final preparedStagingCapture = await _captureSnapshot(
+      stagingPath,
+      expectedType: FileSystemEntityType.directory,
+    );
+    if (!preparedStagingCapture.succeeded) {
+      return _inspectionPartial(
+        stage: BootstrapExecutionStage.scaffoldVerification,
+        targetPath: targetPath,
+        stagingPath: stagingPath,
+        commands: commands,
+        failure: preparedStagingCapture.inspectionFailure ??
+            _inspectionFailureForCapture(preparedStagingCapture),
+        productMutationStarted: false,
+        gitMetadataAffected: false,
       );
     }
 
@@ -512,6 +658,7 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
           staging: staging,
           commands: commands,
           factoryBaseline: factoryBaseline,
+          preparedManifest: preparedStagingCapture.manifest,
         ),
       RepositoryMode.existingEmptyRepository => _installExisting(
           ready: ready,
@@ -520,6 +667,7 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
           commands: commands,
           baseline: existingBaseline!,
           factoryBaseline: factoryBaseline,
+          ownedManifest: preparedStagingCapture.manifest,
         ),
     };
   }
@@ -610,6 +758,7 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
     required Directory staging,
     required List<BootstrapProcessResult> commands,
     required _GitState factoryBaseline,
+    required Map<String, String> preparedManifest,
   }) async {
     final targetPath = ready.normalizedOutputPath;
     final branch = ready.validatedRequest.initialBranchName!;
@@ -620,37 +769,60 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
       commands: commands,
     );
     if (!gitInit.succeeded) {
-      return _stopAfterCleanup(
+      return _stopAfterOwnedCleanup(
         category: BootstrapExecutionStopCategory.repositoryInitializationFailed,
         stage: BootstrapExecutionStage.repositoryInitialization,
         commands: commands,
         staging: staging,
         targetPath: targetPath,
+        ownedManifest: preparedManifest,
         failedCommand: gitInit,
+        validationFailure:
+            'Git initialization failed before new ownership could be confirmed.',
       );
     }
+
+    final postGitInitCapture = await _captureSnapshot(
+      staging.path,
+      expectedType: FileSystemEntityType.directory,
+    );
+    if (!postGitInitCapture.succeeded) {
+      return _inspectionPartial(
+        stage: BootstrapExecutionStage.repositoryInitialization,
+        targetPath: targetPath,
+        stagingPath: staging.path,
+        commands: commands,
+        failure: postGitInitCapture.inspectionFailure ??
+            _inspectionFailureForCapture(postGitInitCapture),
+        productMutationStarted: false,
+        gitMetadataAffected: true,
+      );
+    }
+    final postGitInitManifest = postGitInitCapture.manifest;
 
     final stagingGit = await _captureGitState(staging.path, commands);
     if (stagingGit.failure != null ||
         stagingGit.state == null ||
         stagingGit.state!.branch != branch) {
-      return _stopAfterCleanup(
+      return _stopAfterOwnedCleanup(
         category: BootstrapExecutionStopCategory.branchInitializationFailed,
         stage: BootstrapExecutionStage.branchInitialization,
         commands: commands,
         staging: staging,
         targetPath: targetPath,
+        ownedManifest: postGitInitManifest,
         failedCommand: stagingGit.failure,
         validationFailure: 'The requested initial branch was not confirmed.',
       );
     }
     if (stagingGit.state!.headExists || stagingGit.state!.remotes.isNotEmpty) {
-      return _stopAfterCleanup(
+      return _stopAfterOwnedCleanup(
         category: BootstrapExecutionStopCategory.repositoryInitializationFailed,
         stage: BootstrapExecutionStage.repositoryInitialization,
         commands: commands,
         staging: staging,
         targetPath: targetPath,
+        ownedManifest: postGitInitManifest,
         validationFailure:
             'A new Bootstrap Repository must have no commit or remote.',
       );
@@ -663,12 +835,13 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
         targetPath,
       );
     } catch (error) {
-      return _stopAfterCleanup(
+      return _stopAfterOwnedCleanup(
         category: BootstrapExecutionStopCategory.targetChangedBeforeInstall,
         stage: BootstrapExecutionStage.targetRevalidation,
         commands: commands,
         staging: staging,
         targetPath: targetPath,
+        ownedManifest: postGitInitManifest,
         validationFailure: 'Target revalidation hook failed: $error',
       );
     }
@@ -691,12 +864,13 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
     if (latest is! BootstrapPreflightReady ||
         !_sameReady(ready, latest) ||
         currentTargetType != FileSystemEntityType.notFound) {
-      return _stopAfterCleanup(
+      return _stopAfterOwnedCleanup(
         category: BootstrapExecutionStopCategory.targetChangedBeforeInstall,
         stage: BootstrapExecutionStage.targetRevalidation,
         commands: commands,
         staging: staging,
         targetPath: targetPath,
+        ownedManifest: postGitInitManifest,
         validationFailure: 'The New Repository target changed before install.',
         targetUnchangedOrRestored: false,
       );
@@ -718,7 +892,22 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
         gitMetadataAffected: true,
       );
     }
-    final ownedManifest = ownedCapture.manifest;
+    if (!_sameSnapshot(postGitInitManifest, ownedCapture.manifest)) {
+      return _ownershipPartial(
+        stage: BootstrapExecutionStage.ownershipVerification,
+        targetPath: targetPath,
+        stagingPath: staging.path,
+        createdOrMovedEntries: const [],
+        commands: commands,
+        expectedManifest: postGitInitManifest,
+        actualManifest: ownedCapture.manifest,
+        failure:
+            'Staging changed before New Repository installation; no cleanup was performed.',
+        actualManifestAvailable: true,
+        rollbackFailed: [staging.path],
+      );
+    }
+    final ownedManifest = postGitInitManifest;
     try {
       await _runHook(
         BootstrapExecutionStage.ownershipVerification,
@@ -732,7 +921,7 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
       );
       await staging.rename(targetPath);
     } on FileSystemException catch (error) {
-      return _stopNewAfterOwnedCleanup(
+      return _stopAfterOwnedCleanup(
         category: BootstrapExecutionStopCategory.installFailed,
         stage: BootstrapExecutionStage.installation,
         commands: commands,
@@ -742,7 +931,7 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
         validationFailure: error.message,
       );
     } catch (error) {
-      return _stopNewAfterOwnedCleanup(
+      return _stopAfterOwnedCleanup(
         category: BootstrapExecutionStopCategory.installFailed,
         stage: BootstrapExecutionStage.installation,
         commands: commands,
@@ -998,6 +1187,7 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
     required List<BootstrapProcessResult> commands,
     required _ExistingBaseline baseline,
     required _GitState factoryBaseline,
+    required Map<String, String> ownedManifest,
   }) async {
     final targetPath = ready.normalizedOutputPath;
     final authoritativeCapture = await _captureSnapshot(
@@ -1016,7 +1206,22 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
         gitMetadataAffected: false,
       );
     }
-    final authoritativeManifest = authoritativeCapture.manifest;
+    if (!_sameSnapshot(ownedManifest, authoritativeCapture.manifest)) {
+      return _ownershipPartial(
+        stage: BootstrapExecutionStage.scaffoldVerification,
+        targetPath: targetPath,
+        stagingPath: staging.path,
+        createdOrMovedEntries: const [],
+        commands: commands,
+        expectedManifest: ownedManifest,
+        actualManifest: authoritativeCapture.manifest,
+        failure:
+            'Staging changed before Existing Repository installation; no cleanup was performed.',
+        actualManifestAvailable: true,
+        rollbackFailed: [staging.path],
+      );
+    }
+    final authoritativeManifest = ownedManifest;
     FileSystemEntityType generatedGitType;
     try {
       generatedGitType = await _inspectType(
@@ -1162,6 +1367,17 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
         staging.path,
         targetPath,
       );
+      if (!await _matchesExistingRootIdentity(targetPath, baseline)) {
+        return _existingRootIdentityPartial(
+          stage: BootstrapExecutionStage.installation,
+          targetPath: targetPath,
+          staging: staging,
+          moved: moved,
+          commands: commands,
+          failure:
+              'The Existing Repository root identity changed before installation; no additional move was attempted.',
+        );
+      }
       final preInstallCapture = await _captureSnapshot(
         staging.path,
         expectedType: FileSystemEntityType.directory,
@@ -1195,6 +1411,17 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
         );
       }
       for (final entry in generatedEntries) {
+        if (!await _matchesExistingRootIdentity(targetPath, baseline)) {
+          return _existingRootIdentityPartial(
+            stage: BootstrapExecutionStage.installation,
+            targetPath: targetPath,
+            staging: staging,
+            moved: moved,
+            commands: commands,
+            failure:
+                'The Existing Repository root identity changed during installation; no additional move was attempted.',
+          );
+        }
         final source = path.join(staging.path, entry);
         final destination = path.join(targetPath, entry);
         if (await _inspectType(destination) != FileSystemEntityType.notFound) {
@@ -1204,6 +1431,17 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
           );
         }
         final sourceType = await _inspectType(source);
+        if (!await _matchesExistingRootIdentity(targetPath, baseline)) {
+          return _existingRootIdentityPartial(
+            stage: BootstrapExecutionStage.installation,
+            targetPath: targetPath,
+            staging: staging,
+            moved: moved,
+            commands: commands,
+            failure:
+                'The Existing Repository root identity changed immediately before installation; no additional move was attempted.',
+          );
+        }
         if (sourceType == FileSystemEntityType.directory) {
           await Directory(source).rename(destination);
         } else {
@@ -1463,8 +1701,32 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
       failed.addAll(moved);
     }
 
+    if (failed.isEmpty &&
+        !await _matchesExistingRootIdentity(targetPath, baseline)) {
+      return _existingRootIdentityPartial(
+        stage: BootstrapExecutionStage.rollback,
+        targetPath: targetPath,
+        staging: staging,
+        moved: moved,
+        commands: commands,
+        failure:
+            'The Existing Repository root identity changed before rollback; no rollback move was attempted. Original failure: $failure',
+      );
+    }
+
     if (failed.isEmpty) {
       for (final entry in moved.reversed) {
+        if (!await _matchesExistingRootIdentity(targetPath, baseline)) {
+          return _existingRootIdentityPartial(
+            stage: BootstrapExecutionStage.rollback,
+            targetPath: targetPath,
+            staging: staging,
+            moved: moved,
+            commands: commands,
+            failure:
+                'The Existing Repository root identity changed during rollback; no additional rollback move was attempted. Original failure: $failure',
+          );
+        }
         final currentPath = path.join(targetPath, entry);
         final currentCapture = await _captureSnapshot(currentPath);
         if (currentCapture.status == _SnapshotStatus.failure) {
@@ -1492,6 +1754,17 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
             continue;
           }
           final type = await _inspectType(currentPath);
+          if (!await _matchesExistingRootIdentity(targetPath, baseline)) {
+            return _existingRootIdentityPartial(
+              stage: BootstrapExecutionStage.rollback,
+              targetPath: targetPath,
+              staging: staging,
+              moved: moved,
+              commands: commands,
+              failure:
+                  'The Existing Repository root identity changed immediately before rollback; no additional rollback move was attempted. Original failure: $failure',
+            );
+          }
           if (type == FileSystemEntityType.directory) {
             await Directory(currentPath).rename(
               path.join(staging.path, entry),
@@ -1592,50 +1865,15 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
       );
     }
 
-    try {
-      await staging.delete(recursive: true);
-    } on FileSystemException catch (error) {
-      final cleanupCapture = await _captureSnapshot(
-        staging.path,
-        expectedType: FileSystemEntityType.directory,
-      );
-      if (cleanupCapture.status == _SnapshotStatus.failure) {
-        return _inspectionPartial(
-          stage: BootstrapExecutionStage.rollback,
-          targetPath: targetPath,
-          stagingPath: await staging.exists() ? staging.path : null,
-          commands: commands,
-          failure: cleanupCapture.inspectionFailure!,
-          productMutationStarted: true,
-          gitMetadataAffected: true,
-        );
-      }
-      return _partial(
-        category: BootstrapExecutionStopCategory.rollbackFailed,
-        stage: BootstrapExecutionStage.rollback,
-        targetPath: targetPath,
-        stagingPath: await staging.exists() ? staging.path : null,
-        createdOrMovedEntries: moved,
-        rollbackSucceeded: succeeded,
-        rollbackFailed: [staging.path],
-        commands: commands,
-        failure: error.message,
-        gitMetadataAffected: false,
-        expectedManifest: authoritativeManifest,
-        actualManifest: cleanupCapture.manifest,
-        ownershipDifferences: _manifestDifferences(
-          authoritativeManifest,
-          cleanupCapture.manifest,
-        ),
-      );
-    }
-
-    return _stopped(
+    return _stopAfterOwnedCleanup(
       category: failureCategory,
       stage: failureCategory == BootstrapExecutionStopCategory.installFailed
           ? BootstrapExecutionStage.installation
           : BootstrapExecutionStage.finalVerification,
       commands: commands,
+      staging: staging,
+      targetPath: targetPath,
+      ownedManifest: authoritativeManifest,
       validationFailure: failure,
       facts: ['Existing Repository: $targetPath'],
       evidence: const [
@@ -1643,6 +1881,7 @@ final class FileSystemBootstrapExecutor implements BootstrapExecutor {
         'The root, Git metadata, branch, HEAD, remotes, and status matched the captured baseline.',
       ],
       notPerformed: const ['Ready result was not returned.'],
+      targetUnchangedOrRestored: true,
     );
   }
 
@@ -2182,32 +2421,10 @@ void main() {
     required Directory staging,
     required String targetPath,
     required BootstrapProcessResult failedCommand,
+    required Map<String, String> ownedManifest,
     required List<String> completedValidationSteps,
     required List<String> unperformedValidationSteps,
   }) async {
-    final ownedCapture = await _captureSnapshot(
-      staging.path,
-      expectedType: FileSystemEntityType.directory,
-    );
-    if (!ownedCapture.succeeded) {
-      final failure = ownedCapture.inspectionFailure ??
-          _inspectionFailureForCapture(ownedCapture);
-      return _partial(
-        category: BootstrapExecutionStopCategory.validationEvidenceUntrusted,
-        stage: stage,
-        targetPath: targetPath,
-        stagingPath: staging.path,
-        createdOrMovedEntries: const [],
-        rollbackFailed: [staging.path],
-        commands: commands,
-        failure:
-            'Validation failed and exact staging ownership could not be captured. '
-            '${_inspectionFailureDescription(failure, stage, productMutationStarted: false)}',
-        gitMetadataAffected: false,
-        actualManifest: ownedCapture.manifest,
-      );
-    }
-
     var hookEvidence = <String>[];
     try {
       await _runHook(
@@ -2246,13 +2463,13 @@ void main() {
         '${stage.name} did not pass; no automatic repair or retry was performed.';
 
     if (ready.confirmedRepositoryMode == RepositoryMode.newRepository) {
-      return _stopNewAfterOwnedCleanup(
+      return _stopAfterOwnedCleanup(
         category: category,
         stage: stage,
         commands: commands,
         staging: staging,
         targetPath: targetPath,
-        ownedManifest: ownedCapture.manifest,
+        ownedManifest: ownedManifest,
         validationFailure: validationFailure,
         failedCommand: failedCommand,
         facts: facts,
@@ -2266,7 +2483,7 @@ void main() {
       commands: commands,
       staging: staging,
       targetPath: targetPath,
-      authoritativeManifest: ownedCapture.manifest,
+      authoritativeManifest: ownedManifest,
       failedCommand: failedCommand,
       validationFailure: validationFailure,
       facts: facts,
@@ -2305,18 +2522,19 @@ void main() {
         );
   }
 
-  Future<BootstrapExecutionResult> _stopNewAfterOwnedCleanup({
+  Future<BootstrapExecutionResult> _stopAfterOwnedCleanup({
     required BootstrapExecutionStopCategory category,
     required BootstrapExecutionStage stage,
     required List<BootstrapProcessResult> commands,
     required Directory staging,
     required String targetPath,
     required Map<String, String> ownedManifest,
-    required String validationFailure,
+    required String? validationFailure,
     BootstrapProcessResult? failedCommand,
     List<String>? facts,
     List<String>? evidence,
     List<String>? notPerformed,
+    bool? targetUnchangedOrRestored,
   }) async {
     final stagingCapture = await _captureSnapshot(
       staging.path,
@@ -2359,7 +2577,7 @@ void main() {
         expectedManifest: ownedManifest,
         actualManifest: stagingCapture.manifest,
         failure:
-            'The post-manifest staging entity is missing or has an unexpected type; no cleanup was performed. Original failure: $validationFailure',
+            'The post-manifest staging entity is missing or has an unexpected type; no cleanup was performed. Original failure: ${validationFailure ?? 'No additional failure detail was available.'}',
         actualManifestAvailable: false,
         rollbackFailed: [staging.path, targetPath],
       );
@@ -2375,7 +2593,7 @@ void main() {
         expectedManifest: ownedManifest,
         actualManifest: stagingCapture.manifest,
         failure:
-            'Staging changed after the New Repository ownership manifest was captured; no cleanup was performed. Original failure: $validationFailure',
+            'Staging changed after the New Repository ownership manifest was captured; no cleanup was performed. Original failure: ${validationFailure ?? 'No additional failure detail was available.'}',
         actualManifestAvailable: true,
         rollbackFailed: [staging.path],
       );
@@ -2408,7 +2626,7 @@ void main() {
         rollbackFailed: [staging.path],
         commands: commands,
         failure:
-            'Guarded staging cleanup failed: ${error.message}. Original failure: $validationFailure',
+            'Guarded staging cleanup failed: ${error.message}. Original failure: ${validationFailure ?? 'No additional failure detail was available.'}',
         gitMetadataAffected: _gitMetadataAffected(
           ownedManifest,
           remainingCapture.manifest,
@@ -2443,54 +2661,8 @@ void main() {
           'Target type observed before guarded cleanup: $targetType',
       ],
       notPerformed: notPerformed ?? _notPerformedFrom(stage),
-      targetUnchangedOrRestored: !targetExists,
+      targetUnchangedOrRestored: targetUnchangedOrRestored ?? !targetExists,
     );
-  }
-
-  Future<BootstrapExecutionResult> _stopAfterCleanup({
-    required BootstrapExecutionStopCategory category,
-    required BootstrapExecutionStage stage,
-    required List<BootstrapProcessResult> commands,
-    required Directory staging,
-    required String targetPath,
-    BootstrapProcessResult? failedCommand,
-    String? validationFailure,
-    bool targetUnchangedOrRestored = true,
-    List<String>? facts,
-    List<String>? evidence,
-    List<String>? notPerformed,
-  }) async {
-    try {
-      if (await staging.exists()) {
-        await staging.delete(recursive: true);
-      }
-      return _stopped(
-        category: category,
-        stage: stage,
-        commands: commands,
-        failedCommand: failedCommand,
-        validationFailure: validationFailure,
-        facts: facts ?? ['Final target: $targetPath'],
-        evidence: [
-          ...?evidence,
-          'The execution-owned staging directory was removed.',
-        ],
-        notPerformed: notPerformed ?? _notPerformedFrom(stage),
-        targetUnchangedOrRestored: targetUnchangedOrRestored,
-      );
-    } on FileSystemException catch (error) {
-      return _partial(
-        category: BootstrapExecutionStopCategory.rollbackFailed,
-        stage: BootstrapExecutionStage.rollback,
-        targetPath: targetPath,
-        stagingPath: staging.path,
-        createdOrMovedEntries: const [],
-        rollbackFailed: [staging.path],
-        commands: commands,
-        failure: error.message,
-        gitMetadataAffected: false,
-      );
-    }
   }
 
   Future<BootstrapExecutionResult> _stopExistingAfterOwnedCleanup({
@@ -2539,12 +2711,13 @@ void main() {
         rollbackFailed: [staging.path],
       );
     }
-    return _stopAfterCleanup(
+    return _stopAfterOwnedCleanup(
       category: category,
       stage: stage,
       commands: commands,
       staging: staging,
       targetPath: targetPath,
+      ownedManifest: authoritativeManifest,
       failedCommand: failedCommand,
       validationFailure: validationFailure,
       targetUnchangedOrRestored: targetUnchangedOrRestored,
@@ -2813,6 +2986,56 @@ void main() {
           original.inspection.targetEntries,
           current.inspection.targetEntries,
         );
+  }
+
+  Future<bool> _matchesExistingRootIdentity(
+    String targetPath,
+    _ExistingBaseline baseline,
+  ) async {
+    try {
+      if (await _inspectType(targetPath) != FileSystemEntityType.directory ||
+          await _inspectType(path.join(targetPath, '.git')) !=
+              FileSystemEntityType.directory) {
+        return false;
+      }
+      final resolvedTarget = path.normalize(
+        await Directory(targetPath).resolveSymbolicLinks(),
+      );
+      if (!path.equals(resolvedTarget, baseline.rootIdentity)) {
+        return false;
+      }
+      final metadataCapture = await _captureSnapshot(
+        path.join(targetPath, '.git'),
+        expectedType: FileSystemEntityType.directory,
+      );
+      return metadataCapture.succeeded &&
+          _sameSnapshot(baseline.git.metadata, metadataCapture.manifest);
+    } on _InspectionFault {
+      return false;
+    } on FileSystemException {
+      return false;
+    }
+  }
+
+  BootstrapExecutionPartialFailure _existingRootIdentityPartial({
+    required BootstrapExecutionStage stage,
+    required String targetPath,
+    required Directory staging,
+    required List<String> moved,
+    required List<BootstrapProcessResult> commands,
+    required String failure,
+  }) {
+    return _partial(
+      category: BootstrapExecutionStopCategory.ownershipMismatch,
+      stage: stage,
+      targetPath: targetPath,
+      stagingPath: staging.path,
+      createdOrMovedEntries: moved,
+      rollbackFailed: [targetPath, staging.path],
+      commands: commands,
+      failure: failure,
+      gitMetadataAffected: true,
+    );
   }
 
   Future<_RootEntriesCapture> _captureRootEntries(Directory directory) async {
@@ -3235,10 +3458,12 @@ final class _GitState {
 final class _ExistingBaseline {
   _ExistingBaseline({
     required this.git,
+    required this.rootIdentity,
     required List<String> rootEntries,
   }) : rootEntries = List<String>.unmodifiable(rootEntries);
 
   final _GitState git;
+  final String rootIdentity;
   final List<String> rootEntries;
 }
 

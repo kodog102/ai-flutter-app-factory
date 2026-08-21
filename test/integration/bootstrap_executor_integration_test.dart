@@ -542,6 +542,62 @@ void main() {
   );
 
   test(
+    'New pre-ownership failure preserves external staging content',
+    () async {
+      final factoryStatusBefore = await _factoryStatus();
+      final fixture = await _fixture();
+      try {
+        final targetPath = path.join(
+          fixture.root.path,
+          'new_pre_ownership_guard',
+        );
+        final preflight = FileSystemBootstrapPreflight(
+          factoryRoot: fixture.factory,
+        );
+        final ready = await preflight.inspect(
+          _request(outputPath: targetPath),
+        ) as BootstrapPreflightReady;
+        var injected = false;
+
+        final result = await FileSystemBootstrapExecutor(
+          factoryRoot: fixture.factory,
+          preflight: preflight,
+          inspectionHook: (operation, inspectionPath) async {
+            if (!injected &&
+                operation == 'directoryList' &&
+                path.basename(inspectionPath).contains('.factory-bootstrap-')) {
+              injected = true;
+              await File(path.join(inspectionPath, 'external.txt'))
+                  .writeAsString('external');
+            }
+          },
+        ).execute(ready);
+
+        final partial = result as BootstrapExecutionPartialFailure;
+        expect(
+          partial.category,
+          BootstrapExecutionStopCategory.ownershipMismatch,
+        );
+        expect(partial.stagingPath, isNotNull);
+        expect(
+          await File(
+            path.join(partial.stagingPath!, 'external.txt'),
+          ).readAsString(),
+          'external',
+        );
+        expect(await Directory(targetPath).exists(), isFalse);
+        expect(await _factoryStatus(), factoryStatusBefore);
+      } finally {
+        await fixture.root.delete(recursive: true);
+      }
+    },
+    skip: _runIntegration
+        ? false
+        : 'Run with RUN_FACTORY_BOOTSTRAP_INTEGRATION=true.',
+    timeout: const Timeout(Duration(minutes: 12)),
+  );
+
+  test(
     'New post-manifest hook failure preserves external staging content',
     () async {
       final factoryStatusBefore = await _factoryStatus();

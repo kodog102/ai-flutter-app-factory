@@ -163,6 +163,21 @@ V1.1 command layer는 기존 Runtime의 preflight, 실행, ownership, rollback �
 
 안내 모드와 실제 실행 모드를 함께 지정하면 사용법 오류로 중단한다. `--doctor` 성공은 현재 확인한 도구가 사용 가능하다는 뜻이고 `--dry-run` 성공은 사전 검사 후보가 통과했다는 뜻이다. 어느 결과도 `Prepared`, `Ready` 또는 `Approved`를 선언하지 않는다. 기존 `--request <절대 경로>` 실행 계약과 종료 코드는 유지한다.
 
+#### Bootstrap 파일 시스템 위협 대응표
+
+Bootstrap은 검사한 경로가 실행 중 바뀔 수 있다는 전제로 동작한다. 안전 여부를 다시 증명할 수 없으면 자동 정리보다 보존과 사용자 검사를 우선한다.
+
+| 위협 | 실행 방어 | 회귀 검증 |
+|---|---|---|
+| Factory 안쪽 또는 다른 Repository와 겹치는 대상 | 사전 검사에서 실제 Git 최상위와 정규화 경계를 비교하고 중단 | `bootstrap_preflight_test.dart` 경계·중첩·심볼릭 링크 검사 |
+| 사전 검사 뒤 대상 파일 종류 또는 `.git` 교체 | 설치 직전에 같은 요청으로 사전 검사를 다시 수행하고 링크를 따르지 않은 파일 종류를 확인 | `bootstrap_executor_test.dart` 대상 디렉터리·심볼릭 링크 경쟁 조건 검사 |
+| 초기 staging에 알 수 없는 파일이 추가됨 | 생성 직후 소유권 manifest와 정리 직전 manifest가 정확히 같을 때만 재귀 삭제 | `bootstrap_executor_test.dart` 초기 소유권 획득 전 변경 검사 |
+| 실패한 외부 명령이 staging을 일부 변경함 | 명령 전 manifest와 달라지면 staging을 보존하고 구조화된 소유권 불일치를 반환 | `bootstrap_executor_test.dart` scaffold·검증 실패 변경 검사 |
+| 소유권 확정 뒤 staging 또는 최종 Product 변경 | 전체 파일 종류·내용·링크 대상을 포함한 manifest 차이를 반환하고 자동 삭제를 중단 | 단위 및 실제 `bootstrap_executor_integration_test.dart` 소유권 변경 검사 |
+| 기존 Repository 복구 중 외부 파일이 나타남 | 이동 항목별 snapshot과 기존 Git 기준선이 모두 복원된 경우에만 staging을 정리 | 기존 Repository rollback 단위·통합 검사 |
+
+manifest 검사와 실제 `rename` 또는 `delete` 사이에는 운영체제의 경로 기반 API가 제공하는 범위에서 짧은 TOCTOU 창이 남는다. 관찰된 편차, 검사 실패 또는 예상하지 못한 파일 종류는 실패 폐쇄로 처리하며 외부 경로를 따라가거나 소유권을 추정해 삭제하지 않는다. 이 잔여 위험을 없애려면 파일 설명자 기반 원자 연산과 플랫폼별 구현이 필요하므로 현재 공개 API와 V1 범위에서는 자동 안전을 선언하지 않는다.
+
 ### V1.2 제품 루프 보호 계약
 
 V1.2 Product Loop Guard는 Bootstrap 이후 Product Repository 안에서 수행되는 작은 Agreement의 기준선, 검증과 승인 경계를 정의한다. 이 계약은 특정 Provider, 모델 또는 IDE를 전제하지 않는다.

@@ -279,7 +279,7 @@ CLI, Template engine 또는 orchestration 기능은 검증된 필요가 생기�
 - 작업별 실행 시간: Product Loop Guard 5m52s, Executor Cross-domain 10m17s, Executor Staged and Rollback 11m26s, Executor Existing and Tracked 13m58s
 - 작업별 실행 시간: Executor Ownership and Hook 11m29s, Factory Product Loop Command 1m02s, Executor New Repository 5m51s, Factory Bootstrap Command 10m18s
 
-P2와 P3 종료 기준이 충족됐다. P4도 사용자 승인을 받아 완료됐으며 P5는 구현 결과 승인을 기다린다. 이후 단계의 진행 잠금은 유지한다.
+P2와 P3 종료 기준이 충족됐다. P4와 P5도 사용자 승인과 commit을 마쳤으며 P6-1은 구현 결과 승인을 기다린다. 이후 단계의 진행 잠금은 유지한다.
 
 ### P3 — 제품 권한 감사
 
@@ -327,7 +327,7 @@ P2와 P3 종료 기준이 충족됐다. P4도 사용자 승인을 받아 완료�
 
 ### P5 — 비개발자 사용성
 
-상태: **구현됨 — 사용자 결과 승인 대기**
+상태: **완료 — 사용자 승인**
 
 목표:
 
@@ -346,10 +346,11 @@ P2와 P3 종료 기준이 충족됐다. P4도 사용자 승인을 받아 완료�
 - 요청 예시는 파일을 만들지 않고 표준 출력에만 표시하며 필수 자리표시는 직접 수정해야 하는 값으로 제공한다
 - 실행 전 검사는 실제 실행과 같은 요청 해석 및 사전 검사를 재사용하지만 실행기를 호출하거나 Product와 Git을 변경하지 않는다
 - 안내 모드의 성공을 `Ready` 또는 `Approved`로 표현하지 않고 기존 실제 실행 경로와 종료 의미를 유지한다
+- User가 `main@0cfab7200437be4d8a22d5b8c4efc02d916a833f`의 P5 결과와 commit을 승인했다
 
 ### P6 — 보안과 복원력 강화
 
-상태: **대기 — P5에 의해 차단됨**
+상태: **진행 중 — P6-1 사용자 결과 승인 대기**
 
 목표:
 
@@ -360,6 +361,15 @@ P2와 P3 종료 기준이 충족됐다. P4도 사용자 승인을 받아 완료�
 - 승인된 위협 목록과 회귀 테스트가 존재하고 CI에서 검증된다
 - cleanup과 rollback의 ownership 보존 규칙에 회귀가 없다
 - dependency와 workflow 권한은 최소 권한 원칙으로 검토되고 기록된다
+
+P6-1 구현 결과:
+
+- 경로, 심볼릭 링크, 초기 staging, 실패한 외부 명령, 최종 소유권과 기존 Repository 복구 위협을 기존 방어 및 회귀 테스트와 연결했다
+- 모든 staging 재귀 정리는 승인된 소유권 manifest와 정리 직전 manifest가 정확히 일치할 때만 수행하도록 단일 경로로 통합했다
+- 초기 소유권 획득 전 외부 파일, 실패한 scaffold·검증 명령의 부분 변경과 설치 직전 심볼릭 링크 경쟁 조건을 실패 폐쇄로 검증한다
+- 실제 Git·Flutter 환경에서 초기 staging 외부 파일 보존을 검증하는 통합 후보를 추가했다
+- 운영체제 경로 API의 마지막 검사와 변경 사이에 남는 짧은 TOCTOU 창은 잔여 위험으로 유지한다
+- dependency와 workflow 최소 권한 검토는 P6-2 범위로 남긴다
 
 ### P7 — 구조와 이전 요소 마감
 
@@ -390,4 +400,4 @@ P2와 P3 종료 기준이 충족됐다. P4도 사용자 승인을 받아 완료�
 - 실패와 환경 차단은 Evidence로 기록하되 다음 단계로 건너뛰거나 우선순위를 자동 변경하지 않는다
 - 미완료 단계를 Ready 또는 Released로 표현하지 않는다
 
-현재 다음 작업은 **P3 — Product Authority Audit** 제안 하나뿐이다.
+현재 진행 중인 작업은 **P6-1 — 보안 경계 기준선 고정** 하나뿐이다.

@@ -329,6 +329,97 @@ void main() {
       expect(_ownedStaging(fixtureRoot), isEmpty);
     });
 
+    test('preserves external staging content added before ownership capture',
+        () async {
+      final ready = await newReady();
+
+      final result = await executor(
+        runner: _FakeProcessRunner(),
+        hook: (stage, {required stagingPath, required finalTargetPath}) async {
+          if (stage == BootstrapExecutionStage.stagingCreation) {
+            await File(path.join(stagingPath, 'external.txt'))
+                .writeAsString('external');
+            throw StateError('injected pre-ownership mutation');
+          }
+        },
+      ).execute(ready);
+
+      final partial = result as BootstrapExecutionPartialFailure;
+      expect(
+        partial.category,
+        BootstrapExecutionStopCategory.ownershipMismatch,
+      );
+      expect(partial.stagingPath, isNotNull);
+      expect(
+        await File(path.join(partial.stagingPath!, 'external.txt'))
+            .readAsString(),
+        'external',
+      );
+      expect(partial.expectedManifest, isNot(contains('external.txt')));
+      expect(partial.actualManifest, contains('external.txt'));
+      expect(partial.ownershipDifferences, contains('added:external.txt'));
+      expect(await Directory(ready.normalizedOutputPath).exists(), isFalse);
+    });
+
+    test('rejects content injected during the initial staging snapshot',
+        () async {
+      final ready = await newReady();
+      var injected = false;
+
+      final result = await executor(
+        runner: _FakeProcessRunner(),
+        inspectionHook: (operation, inspectionPath) async {
+          if (!injected &&
+              operation == 'directoryList' &&
+              path.basename(inspectionPath).contains('.factory-bootstrap-')) {
+            injected = true;
+            await File(path.join(inspectionPath, 'external.txt'))
+                .writeAsString('external');
+          }
+        },
+      ).execute(ready);
+
+      final partial = result as BootstrapExecutionPartialFailure;
+      expect(
+        partial.category,
+        BootstrapExecutionStopCategory.ownershipMismatch,
+      );
+      expect(partial.stagingPath, isNotNull);
+      expect(
+        await File(path.join(partial.stagingPath!, 'external.txt'))
+            .readAsString(),
+        'external',
+      );
+      expect(partial.expectedManifest.keys, ['.']);
+      expect(partial.actualManifest, contains('external.txt'));
+      expect(await Directory(ready.normalizedOutputPath).exists(), isFalse);
+    });
+
+    test('preserves staging changed by a failed scaffold process', () async {
+      final ready = await newReady();
+
+      final result = await executor(
+        runner: _FakeProcessRunner(
+          failFlutterCreate: true,
+          writeExternalOnFailedCreate: true,
+        ),
+      ).execute(ready);
+
+      final partial = result as BootstrapExecutionPartialFailure;
+      expect(
+        partial.category,
+        BootstrapExecutionStopCategory.ownershipMismatch,
+      );
+      expect(partial.stagingPath, isNotNull);
+      expect(
+        await File(path.join(partial.stagingPath!, 'external.txt'))
+            .readAsString(),
+        'external',
+      );
+      expect(partial.ownershipDifferences, contains('added:external.txt'));
+      expect(await Directory(ready.normalizedOutputPath).exists(), isFalse);
+    });
+
     test('rolls back staging when pub get fails', () async {
       final ready = await newReady();
       final runner = _FakeProcessRunner(failPubGet: true);
@@ -341,6 +432,31 @@ void main() {
       );
       expect(await Directory(ready.normalizedOutputPath).exists(), isFalse);
       expect(_ownedStaging(fixtureRoot), isEmpty);
+    });
+
+    test('preserves staging changed by a failed validation process', () async {
+      final ready = await newReady();
+
+      final result = await executor(
+        runner: _FakeProcessRunner(
+          failPubGet: true,
+          writeExternalOnFailedPubGet: true,
+        ),
+      ).execute(ready);
+
+      final partial = result as BootstrapExecutionPartialFailure;
+      expect(
+        partial.category,
+        BootstrapExecutionStopCategory.ownershipMismatch,
+      );
+      expect(partial.stagingPath, isNotNull);
+      expect(
+        await File(path.join(partial.stagingPath!, 'external.txt'))
+            .readAsString(),
+        'external',
+      );
+      expect(partial.ownershipDifferences, contains('added:external.txt'));
+      expect(await Directory(ready.normalizedOutputPath).exists(), isFalse);
     });
 
     test('rolls back staging when git init fails', () async {
@@ -395,6 +511,40 @@ void main() {
       );
       expect(_ownedStaging(fixtureRoot), isEmpty);
       expect(await Directory(ready.normalizedOutputPath).exists(), isTrue);
+    });
+
+    test('preserves an external symlink target that appears before install',
+        () async {
+      final ready = await newReady();
+      final external = await Directory(
+        path.join(fixtureRoot.path, 'external_target'),
+      ).create();
+      final marker = File(path.join(external.path, 'marker.txt'));
+      await marker.writeAsString('external');
+
+      final result = await executor(
+        runner: _FakeProcessRunner(),
+        hook: (stage, {required stagingPath, required finalTargetPath}) async {
+          if (stage == BootstrapExecutionStage.targetRevalidation) {
+            await Link(finalTargetPath).create(external.path);
+          }
+        },
+      ).execute(ready);
+
+      final stopped = result as BootstrapExecutionStopped;
+      expect(
+        stopped.category,
+        BootstrapExecutionStopCategory.targetChangedBeforeInstall,
+      );
+      expect(
+        await FileSystemEntity.type(
+          ready.normalizedOutputPath,
+          followLinks: false,
+        ),
+        FileSystemEntityType.link,
+      );
+      expect(await marker.readAsString(), 'external');
+      expect(_ownedStaging(fixtureRoot), isEmpty);
     });
 
     test('does not leave a target when final verification fails', () async {
@@ -1076,13 +1226,26 @@ void main() {
         },
       ).execute(ready);
 
-      final stopped = result as BootstrapExecutionStopped;
+      final partial = result as BootstrapExecutionPartialFailure;
       expect(
-        stopped.category,
-        BootstrapExecutionStopCategory.filesystemMutationFailed,
+        partial.category,
+        BootstrapExecutionStopCategory.ownershipMismatch,
       );
       expect(await Directory(ready.normalizedOutputPath).exists(), isFalse);
-      expect(_ownedStaging(fixtureRoot), isEmpty);
+      expect(partial.stagingPath, isNotNull);
+      expect(
+        await Directory(
+          path.join(
+            partial.stagingPath!,
+            '.README.md.factory-authority.tmp',
+          ),
+        ).exists(),
+        isTrue,
+      );
+      expect(
+        partial.ownershipDifferences,
+        contains('added:.README.md.factory-authority.tmp'),
+      );
     });
   });
 
@@ -1342,6 +1505,45 @@ void main() {
       expect(_ownedStaging(fixtureRoot), isNotEmpty);
     });
 
+    test('stops before install when the Existing root becomes a symlink',
+        () async {
+      final target = await _existingRepository(
+        fixtureRoot,
+        'existing_install_symlink',
+      );
+      final displacedPath = '${target.path}-displaced';
+      final external = await Directory(
+        path.join(fixtureRoot.path, 'external_install_target'),
+      ).create();
+      final marker = File(path.join(external.path, 'marker.txt'));
+      await marker.writeAsString('external');
+      final ready = await existingReady(target);
+
+      final result = await executor(
+        runner: _FakeProcessRunner(),
+        hook: (stage, {required stagingPath, required finalTargetPath}) async {
+          if (stage == BootstrapExecutionStage.installation) {
+            await Directory(finalTargetPath).rename(displacedPath);
+            await Link(finalTargetPath).create(external.path);
+          }
+        },
+      ).execute(ready);
+
+      final partial = result as BootstrapExecutionPartialFailure;
+      expect(
+        partial.category,
+        BootstrapExecutionStopCategory.ownershipMismatch,
+      );
+      expect(partial.stage, BootstrapExecutionStage.installation);
+      expect(await marker.readAsString(), 'external');
+      expect(await Directory(displacedPath).exists(), isTrue);
+      expect(
+        await FileSystemEntity.type(target.path, followLinks: false),
+        FileSystemEntityType.link,
+      );
+      expect(partial.stagingPath, isNotNull);
+    });
+
     test('preserves staging when it changes before Product installation',
         () async {
       final target = await _existingRepository(
@@ -1419,6 +1621,97 @@ void main() {
       expect(partial.gitMetadataAffected, isFalse);
       expect(_snapshot(target.path), productBefore);
       expect(result, isNot(isA<BootstrapExecutionStopped>()));
+    });
+
+    test('stops rollback when the Existing root becomes a symlink', () async {
+      final target = await _existingRepository(
+        fixtureRoot,
+        'existing_rollback_symlink',
+      );
+      final displacedPath = '${target.path}-displaced';
+      final external = await Directory(
+        path.join(fixtureRoot.path, 'external_rollback_target'),
+      ).create();
+      final marker = File(path.join(external.path, 'marker.txt'));
+      await marker.writeAsString('external');
+      final ready = await existingReady(target);
+
+      final result = await executor(
+        runner: _FakeProcessRunner(),
+        hook: (stage, {required stagingPath, required finalTargetPath}) async {
+          if (stage == BootstrapExecutionStage.finalVerification) {
+            throw StateError('trigger rollback root replacement');
+          }
+          if (stage == BootstrapExecutionStage.rollback) {
+            await Directory(finalTargetPath).rename(displacedPath);
+            await Link(finalTargetPath).create(external.path);
+          }
+        },
+      ).execute(ready);
+
+      final partial = result as BootstrapExecutionPartialFailure;
+      expect(
+        partial.category,
+        BootstrapExecutionStopCategory.ownershipMismatch,
+      );
+      expect(partial.stage, BootstrapExecutionStage.rollback);
+      expect(await marker.readAsString(), 'external');
+      expect(await Directory(displacedPath).exists(), isTrue);
+      expect(
+        await FileSystemEntity.type(target.path, followLinks: false),
+        FileSystemEntityType.link,
+      );
+      expect(partial.stagingPath, isNotNull);
+    });
+
+    test('preserves staging changed immediately before rollback cleanup',
+        () async {
+      final target = await _existingRepository(
+        fixtureRoot,
+        'existing_cleanup_race',
+      );
+      final ready = await existingReady(target);
+      var rollbackStarted = false;
+      String? rollbackStagingPath;
+      var stagingLists = 0;
+
+      final result = await executor(
+        runner: _FakeProcessRunner(),
+        hook: (stage, {required stagingPath, required finalTargetPath}) async {
+          if (stage == BootstrapExecutionStage.finalVerification) {
+            throw StateError('trigger guarded rollback cleanup');
+          }
+          if (stage == BootstrapExecutionStage.rollback) {
+            rollbackStarted = true;
+            rollbackStagingPath = stagingPath;
+          }
+        },
+        inspectionHook: (operation, inspectionPath) async {
+          if (rollbackStarted &&
+              rollbackStagingPath != null &&
+              operation == 'directoryList' &&
+              path.equals(inspectionPath, rollbackStagingPath!)) {
+            stagingLists += 1;
+            if (stagingLists == 2) {
+              await File(path.join(inspectionPath, 'external.txt'))
+                  .writeAsString('external');
+            }
+          }
+        },
+      ).execute(ready);
+
+      final partial = result as BootstrapExecutionPartialFailure;
+      expect(
+        partial.category,
+        BootstrapExecutionStopCategory.ownershipMismatch,
+      );
+      expect(partial.stagingPath, isNotNull);
+      expect(
+        await File(path.join(partial.stagingPath!, 'external.txt'))
+            .readAsString(),
+        'external',
+      );
+      expect(partial.ownershipDifferences, contains('added:external.txt'));
     });
 
     test('returns Stopped only after complete rollback restoration', () async {
@@ -2036,7 +2329,9 @@ final class _FakeProcessRunner implements BootstrapProcessRunner {
     this.unavailableFlutter = false,
     this.createHelp = '--empty --platforms --project-name --org --no-pub',
     this.failFlutterCreate = false,
+    this.writeExternalOnFailedCreate = false,
     this.failPubGet = false,
+    this.writeExternalOnFailedPubGet = false,
     this.failAnalyze = false,
     this.failDefaultTests = false,
     this.failAndroidBuild = false,
@@ -2059,7 +2354,9 @@ final class _FakeProcessRunner implements BootstrapProcessRunner {
   final bool unavailableFlutter;
   final String createHelp;
   final bool failFlutterCreate;
+  final bool writeExternalOnFailedCreate;
   final bool failPubGet;
+  final bool writeExternalOnFailedPubGet;
   final bool failAnalyze;
   final bool failDefaultTests;
   final bool failAndroidBuild;
@@ -2170,6 +2467,10 @@ final class _FakeProcessRunner implements BootstrapProcessRunner {
       }
       if (arguments.first == 'create') {
         if (failFlutterCreate) {
+          if (writeExternalOnFailedCreate) {
+            await File(path.join(workingDirectory, 'external.txt'))
+                .writeAsString('external');
+          }
           return _result(
             executable,
             arguments,
@@ -2197,6 +2498,10 @@ final class _FakeProcessRunner implements BootstrapProcessRunner {
       if (arguments.length == 2 &&
           arguments[0] == 'pub' &&
           arguments[1] == 'get') {
+        if (failPubGet && writeExternalOnFailedPubGet) {
+          await File(path.join(workingDirectory, 'external.txt'))
+              .writeAsString('external');
+        }
         return _result(
           executable,
           arguments,
