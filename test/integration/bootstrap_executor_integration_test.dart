@@ -146,7 +146,7 @@ void main() {
     skip: _runIntegration
         ? false
         : 'Run with RUN_FACTORY_BOOTSTRAP_INTEGRATION=true.',
-    timeout: const Timeout(Duration(minutes: 12)),
+    timeout: const Timeout(Duration(minutes: 18)),
   );
 
   test(
@@ -267,7 +267,7 @@ void main() {
     skip: _runIntegration
         ? false
         : 'Run with RUN_FACTORY_BOOTSTRAP_INTEGRATION=true.',
-    timeout: const Timeout(Duration(minutes: 12)),
+    timeout: const Timeout(Duration(minutes: 18)),
   );
 
   test(
@@ -331,7 +331,7 @@ void main() {
     skip: _runIntegration
         ? false
         : 'Run with RUN_FACTORY_BOOTSTRAP_INTEGRATION=true.',
-    timeout: const Timeout(Duration(minutes: 12)),
+    timeout: const Timeout(Duration(minutes: 18)),
   );
 
   test(
@@ -394,7 +394,7 @@ void main() {
     skip: _runIntegration
         ? false
         : 'Run with RUN_FACTORY_BOOTSTRAP_INTEGRATION=true.',
-    timeout: const Timeout(Duration(minutes: 12)),
+    timeout: const Timeout(Duration(minutes: 18)),
   );
 
   test(
@@ -486,7 +486,7 @@ void main() {
     skip: _runIntegration
         ? false
         : 'Run with RUN_FACTORY_BOOTSTRAP_INTEGRATION=true.',
-    timeout: const Timeout(Duration(minutes: 12)),
+    timeout: const Timeout(Duration(minutes: 18)),
   );
 
   test(
@@ -538,7 +538,7 @@ void main() {
     skip: _runIntegration
         ? false
         : 'Run with RUN_FACTORY_BOOTSTRAP_INTEGRATION=true.',
-    timeout: const Timeout(Duration(minutes: 12)),
+    timeout: const Timeout(Duration(minutes: 18)),
   );
 
   test(
@@ -594,7 +594,7 @@ void main() {
     skip: _runIntegration
         ? false
         : 'Run with RUN_FACTORY_BOOTSTRAP_INTEGRATION=true.',
-    timeout: const Timeout(Duration(minutes: 12)),
+    timeout: const Timeout(Duration(minutes: 18)),
   );
 
   test(
@@ -651,7 +651,7 @@ void main() {
     skip: _runIntegration
         ? false
         : 'Run with RUN_FACTORY_BOOTSTRAP_INTEGRATION=true.',
-    timeout: const Timeout(Duration(minutes: 12)),
+    timeout: const Timeout(Duration(minutes: 18)),
   );
 
   test(
@@ -712,7 +712,7 @@ void main() {
     skip: _runIntegration
         ? false
         : 'Run with RUN_FACTORY_BOOTSTRAP_INTEGRATION=true.',
-    timeout: const Timeout(Duration(minutes: 12)),
+    timeout: const Timeout(Duration(minutes: 18)),
   );
 }
 

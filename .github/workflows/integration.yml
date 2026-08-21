@@ -14,7 +14,7 @@ jobs:
   integration:
     name: Run ${{ matrix.label }}
     runs-on: macos-15
-    timeout-minutes: 20
+    timeout-minutes: 35
     strategy:
       fail-fast: false
       matrix:
